@@ -42,7 +42,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         entity.setAttribute(Attributes.LOG_FILE_LOCATION, getLogFileLocation());
     }
 
-    /** @return The absolute path to the OpenGamma application on the server */
+    /** The path to the root directory of the running CloudVM */
     protected String getWaratekDirectory() {
         return getRunDir();
     }

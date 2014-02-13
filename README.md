@@ -1,7 +1,8 @@
 Brooklyn Waratek
 ================
 
-Entities to allow Brooklyn to deploy and manage the Waratek CloudVM for multi-tenant virualized Java.
+Entities to allow Brooklyn to deploy and manage the Waratek CloudVM
+for multi-tenant virtualized Java.
 
     % mvn clean install assembly:single
     % tar zxvf brooklyn-waratek-0.1.0-SNAPSHOT-dist.tar.gz
