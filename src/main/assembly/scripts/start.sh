@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2014 by Cloudsoft Corp.
+# Copyright 2014 by Cloudsoft Corporation Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
