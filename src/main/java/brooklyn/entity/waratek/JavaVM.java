@@ -41,6 +41,9 @@ public interface JavaVM extends SoftwareProcess, UsesJmx {
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>(
             SoftwareProcess.DOWNLOAD_URL, "http://download.waratek.com/tgz/waratek_release_${version}_package.tar.gz?src=brooklyn");
 
+    @SetFromFlag("debug")
+    ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey("waratek.debug", "Enable debug options", false);
+
     @SetFromFlag("highAvailabilty")
     ConfigKey<Boolean> HA_POLICY_ENABLE = ConfigKeys.newBooleanConfigKey("waratek.policy.ha.enable", "Enable high-availability and resilience/restart policies", false);
 

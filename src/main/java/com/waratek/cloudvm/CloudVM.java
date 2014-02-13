@@ -44,6 +44,12 @@ public class CloudVM extends AbstractApplication {
             "waratek.runAs", "Run the CloudVM as a the waratek user (default true)",
             Boolean.TRUE);
 
+    @SetFromFlag("debug")
+    @CatalogConfig(label="Enable Debug", priority=0)
+    public static final ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey(
+            "waratek.policy.ha", "Enable debug options (default false)",
+            Boolean.FALSE);
+
     @SetFromFlag("highAvailabilty")
     @CatalogConfig(label="Enable HA Policies", priority=0)
     public static final ConfigKey<Boolean> HA_POLICY_ENABLE = ConfigKeys.newBooleanConfigKey(
@@ -64,6 +70,7 @@ public class CloudVM extends AbstractApplication {
     public void init() {
         addChild(EntitySpec.create(JavaVM.class)
                 .configure(JavaVM.WARATEK_USER, getConfig(USE_WARATEK_USER))
+                .configure(JavaVM.DEBUG, getConfig(DEBUG))
                 .configure(JavaVM.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
                 .configure(JavaVM.JVC_CLUSTER_SIZE, getConfig(JVC_CLUSTER_SIZE))
                 .configure(JavaVM.HEAP_SIZE, getConfig(HEAP_SIZE))

@@ -27,8 +27,6 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
-import brooklyn.util.text.ByteSizeStrings;
-import brooklyn.util.text.Strings;
 
 public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
@@ -39,7 +37,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
     @Override
     public void init() {
-        log.info("Starting CloudVM id %s", getId());
+        log.info("Starting CloudVM id {}", getId());
     }
 
     @Override
@@ -50,7 +48,9 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected Map<String,Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
         Map flags = super.obtainProvisioningFlags(location);
-        flags.put("templateBuilder", new PortableTemplateBuilder().os64Bit(true).osFamily(OsFamily.CENTOS));
+        Long heapSize = getConfig(HEAP_SIZE, 512 * (1024L * 1024L));
+        int megabytes = (int) (heapSize / (1024L * 1024L));
+        flags.put("templateBuilder", new PortableTemplateBuilder().os64Bit(true).osFamily(OsFamily.CENTOS).minRam(megabytes));
         return flags;
     }
 
@@ -63,6 +63,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     @Override
     protected void connectSensors() {
         super.connectSensors();
+
 //        String waratekMBean = "com.waratek:type=Management";
 //        jmxFeed = JmxFeed.builder().entity(this).period(Duration.ONE_SECOND)
 //                    .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
