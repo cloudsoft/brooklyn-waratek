@@ -22,11 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.basic.SoftwareProcessImpl;
+import brooklyn.entity.effector.EffectorBody;
+import brooklyn.entity.group.Cluster;
+import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
+import brooklyn.util.config.ConfigBag;
 
 public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
@@ -34,10 +39,27 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
     private volatile JmxFeed jmxFeed;
     private JmxFeed jmxMxBeanFeed;
+    private DynamicCluster containers;
 
     @Override
     public void init() {
-        log.info("Starting CloudVM id {}", getId());
+        log.info("Starting JVM id {}", getId());
+
+        setAttribute(JVM_NAME, String.format(JavaVM.JVM_NAME_FORMAT, getId()));
+
+        int initialSize = getConfig(JVC_CLUSTER_SIZE);
+        EntitySpec memberSpec = getConfig(JVC_SPEC);
+        containers = addChild(EntitySpec.create(DynamicCluster.class)
+                .configure(Cluster.INITIAL_SIZE, initialSize)
+                .configure(DynamicCluster.MEMBER_SPEC, memberSpec)
+                .displayName("Java Containers"));
+
+        getMutableEntityType().addEffector(NEW_CONTAINER, new EffectorBody<String>() {
+            @Override
+            public String call(ConfigBag parameters) {
+                return newContainer();
+            }
+        });
     }
 
     @Override
@@ -61,6 +83,19 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     public Integer getHttpPort() { return getConfig(HTTP_ADMIN_ENABLE) ? getAttribute(HTTP_PORT) :  null; }
 
     @Override
+    public String getJvmName() { return getAttribute(JVM_NAME); }
+
+    @Override
+    public Cluster getJvcList() { return containers; }
+
+    @Override
+    public String newContainer() {
+        EntitySpec memberSpec = getConfig(JVC_SPEC);
+        JavaContainer container = containers.addChild(memberSpec);
+        return container.getJvcName();
+    }
+
+    @Override
     protected void connectSensors() {
         super.connectSensors();
 
@@ -81,5 +116,8 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
         if (jmxFeed != null) jmxFeed.stop();
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
     }
+
+    @Override
+    public String getShortName() { return "JVM"; }
 
 }

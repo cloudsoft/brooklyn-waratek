@@ -72,11 +72,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     }
 
     protected String getPidFile() {
-        return Os.mergePaths(getLibDirectory(), "javad", getJvmName(), "jvm.pid");
-    }
-
-    protected String getJvmName() {
-        return String.format(JavaVM.JVM_NAME_FORMAT, getEntity().getId());
+        return Os.mergePaths(getLibDirectory(), "javad", getEntity().getJvmName(), "jvm.pid");
     }
 
     @Override
