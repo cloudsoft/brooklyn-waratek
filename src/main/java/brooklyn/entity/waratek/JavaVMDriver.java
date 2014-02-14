@@ -23,4 +23,6 @@ public interface JavaVMDriver extends JavaSoftwareProcessDriver {
 
     String getHeapSize();
 
+    String getRootDirectory();
+
 }

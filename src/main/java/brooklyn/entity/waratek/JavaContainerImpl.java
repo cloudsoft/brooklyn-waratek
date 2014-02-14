@@ -15,61 +15,70 @@
  */
 package brooklyn.entity.waratek;
 
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.entity.basic.SoftwareProcessImpl;
-import brooklyn.entity.java.JavaAppUtils;
-import brooklyn.entity.java.UsesJmx;
-import brooklyn.event.feed.jmx.JmxFeed;
+import brooklyn.entity.java.VanillaJavaAppImpl;
+import brooklyn.location.Location;
 
-public class JavaContainerImpl extends SoftwareProcessImpl implements JavaContainer, UsesJmx {
+public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContainer {
 
     private static final Logger log = LoggerFactory.getLogger(JavaContainerImpl.class);
-
-    private volatile JmxFeed jmxFeed;
-    private JmxFeed jmxMxBeanFeed;
+    private static final AtomicInteger counter = new AtomicInteger(0);
 
     @Override
     public void init() {
         log.info("Starting JVC id {}", getId());
-    }
 
-    @Override
-    public Class<?> getDriverInterface() {
-        return JavaContainerDriver.class;
+        setAttribute(JVC_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
     }
 
     @Override
     public String getJvcName() { return getAttribute(JVC_NAME); }
 
     @Override
-    protected void connectSensors() {
-        super.connectSensors();
+    public JavaVM getJavaVM() { return getConfig(JVM); }
 
-//        String waratekMBean = "com.waratek:type=Management";
-//        jmxFeed = JmxFeed.builder().entity(this).period(Duration.ONE_SECOND)
-//                    .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
-//                            .objectName(waratekMBean)
-//                            .attributeName("Running")
-//                            .setOnFailureOrException(false))
-//                    .build();
-
-        jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
-    }
-    
     @Override
-    protected void disconnectSensors() {
-        super.disconnectSensors();
-        if (jmxFeed != null) jmxFeed.stop();
-        if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
+    protected void connectSensors() {
+//      String waratekMBean = "com.waratek:type=Management";
+//      jmxFeed = JmxFeed.builder().entity(getJavaVM()).period(Duration.ONE_SECOND)
+//                  .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
+//                          .objectName(waratekMBean)
+//                          .attributeName("Running")
+//                          .setOnFailureOrException(false))
+//                  .build();
+        setAttribute(SERVICE_UP, true);
+    }
+
+    @Override
+    public void disconnectSensors() {
+    }
+
+    @Override
+    protected void doStart(Collection<? extends Location> locations) {
+        super.doStart(locations);
+    }
+
+    @Override
+    protected void doStop() {
+        super.doStop();
+    }
+
+    @Override
+    public void doRestart() {
+        super.doRestart();
+    }
+
+    @Override
+    public Class<? extends JavaContainerDriver> getDriverInterface() {
+        return JavaContainerDriver.class;
     }
 
     @Override
     public String getShortName() { return "JVC"; }
-
-    public JavaVM getJavaVM() {
-        
-    }
 
 }

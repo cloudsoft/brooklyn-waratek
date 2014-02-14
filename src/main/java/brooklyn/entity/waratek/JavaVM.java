@@ -39,14 +39,18 @@ import brooklyn.util.flags.SetFromFlag;
 @ImplementedBy(JavaVMImpl.class)
 public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
 
-    String JVM_NAME_FORMAT = "jvm-brooklyn-%s";
+    String DEFAULT_JVM_NAME_FORMAT = "jvm-brooklyn-%1$s";
+    String ALTERNATIVE_JVM_NAME_FORMAT = "jvm-%2$d";
 
     @SetFromFlag("version")
-    ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION, "2.5.4.GA.2-86");
+    ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION,
+            // "2.5.4.GA.2-86");
+            "2.5.5.BK.1-1");
 
     @SetFromFlag("downloadUrl")
-    BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>(
-            SoftwareProcess.DOWNLOAD_URL, "http://download.waratek.com/tgz/waratek_release_${version}_package.tar.gz?src=brooklyn");
+    BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>( SoftwareProcess.DOWNLOAD_URL,
+            // "http://download.waratek.com/tgz/waratek_release_${version}_package.tar.gz?src=brooklyn");
+            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz");
 
     @SetFromFlag("debug")
     ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey("waratek.debug", "Enable debug options", false);
@@ -90,17 +94,15 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
             EntitySpec.class, "waratek.jvc.spec", "Specification to use when creating child JVCs",
             EntitySpec.create(JavaContainer.class));
 
+    ConfigKey<String> JVM_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvm.nameFormat", "Format for generating JVM names", DEFAULT_JVM_NAME_FORMAT);
+
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
-
-    Effector<String> NEW_CONTAINER = Effectors.effector(String.class, "newContainer")
-            .description("Creates a new JavaContainer inside this JVM")
-            .buildAbstract();
-
-    String newContainer();
 
     Cluster getJvcList();
 
     String getJvmName();
+
+    String getRootDirectory();
 
     Integer getSshPort();
 

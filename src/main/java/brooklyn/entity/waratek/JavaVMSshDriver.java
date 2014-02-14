@@ -42,7 +42,6 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements JavaVMDriver {
@@ -54,16 +53,17 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     }
 
     /** The path to the root directory of the running CloudVM */
-    protected String getWaratekDirectory() {
+    @Override
+    public String getRootDirectory() {
         return getRunDir();
     }
 
     protected String getLibDirectory() {
-        return Os.mergePaths(getWaratekDirectory(), "var", "lib");
+        return Os.mergePaths(getRootDirectory(), "var", "lib");
     }
 
     protected String getLogDirectory() {
-        return Os.mergePaths(getWaratekDirectory(), "var", "log");
+        return Os.mergePaths(getRootDirectory(), "var", "log");
     }
 
     @Override
@@ -72,7 +72,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     }
 
     protected String getPidFile() {
-        return Os.mergePaths(getLibDirectory(), "javad", getEntity().getJvmName(), "jvm.pid");
+        return Os.mergePaths(getLibDirectory(), "javad", getEntity().getAttribute(JavaVM.JVM_NAME), "jvm.pid");
     }
 
     @Override
@@ -92,8 +92,6 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     public Map<String, String> getShellEnvironment() {
         Map<String,String> env = super.getShellEnvironment();
         if (installed.get()) {
-            // Environment needed for launch only
-            // String javaHome = Os.mergePaths(getExpandedInstallDir(), "jdk", "jre");
             String javaHome = Os.mergePaths(getRunDir(), "usr/lib/jvm", String.format("java-1.6.0-waratek-%s.x86_64", getVersion()), "jre");
             env.put("JAVA_HOME", javaHome);
         }
@@ -112,8 +110,8 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         Map<String,String> props = super.getCustomJavaSystemProperties();
         if (installed.get()) {
             // Java options needed for launch only
-            props.put("com.waratek.jvm.name", getJvmName());
-            props.put("com.waratek.rootdir", getWaratekDirectory());
+            props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVM.JVM_NAME));
+            props.put("com.waratek.rootdir", getRootDirectory());
             if (getEntity().getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
                 props.put("com.waratek.ssh.server", "on");
                 props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVM.SSH_PORT).toString());
@@ -159,7 +157,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void install() {
-        log.info("Installing {}", getJvmName());
+        log.info("Installing {}", getEntity().getAttribute(JavaVM.JVM_NAME));
 
         DownloadResolver resolver = Entities.newDownloader(this);
         List<String> urls = resolver.getTargets();
@@ -182,7 +180,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void customize() {
-        log.info("Customizing {}", getJvmName());
+        log.info("Customizing {}", getEntity().getAttribute(JavaVM.JVM_NAME));
 
         Networking.checkPortsValid(getPortMap());
         String installScript = Os.mergePaths(getExpandedInstallDir(), "tools", "autoinstall.sh");
@@ -197,7 +195,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void launch() {
-        log.info("Launching {}", getJvmName());
+        log.info("Launching {}", getEntity().getAttribute(JavaVM.JVM_NAME));
 
         String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
                 Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());

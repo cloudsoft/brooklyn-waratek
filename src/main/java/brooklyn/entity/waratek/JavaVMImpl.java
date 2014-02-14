@@ -16,13 +16,13 @@
 package brooklyn.entity.waratek;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.basic.SoftwareProcessImpl;
-import brooklyn.entity.effector.EffectorBody;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
@@ -31,11 +31,11 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
-import brooklyn.util.config.ConfigBag;
 
 public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
     private static final Logger log = LoggerFactory.getLogger(JavaVMImpl.class);
+    private static final AtomicInteger counter = new AtomicInteger(0);
 
     private volatile JmxFeed jmxFeed;
     private JmxFeed jmxMxBeanFeed;
@@ -45,26 +45,29 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     public void init() {
         log.info("Starting JVM id {}", getId());
 
-        setAttribute(JVM_NAME, String.format(JavaVM.JVM_NAME_FORMAT, getId()));
+        setAttribute(JVM_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
 
+        String mainClass = getConfig(JavaContainer.MAIN_CLASS);
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
-        EntitySpec memberSpec = getConfig(JVC_SPEC);
+        EntitySpec jvcSpec = getConfig(JVC_SPEC)
+                .configure(JavaContainer.JVM, this)
+                .displayName("Java " + mainClass + " Application");
+
         containers = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
-                .configure(DynamicCluster.MEMBER_SPEC, memberSpec)
+                .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Java Containers"));
 
-        getMutableEntityType().addEffector(NEW_CONTAINER, new EffectorBody<String>() {
-            @Override
-            public String call(ConfigBag parameters) {
-                return newContainer();
-            }
-        });
     }
 
     @Override
     public Class<?> getDriverInterface() {
         return JavaVMDriver.class;
+    }
+
+    @Override
+    public JavaVMDriver getDriver() {
+        return (JavaVMDriver) super.getDriver();
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -88,11 +91,10 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     @Override
     public Cluster getJvcList() { return containers; }
 
+    /** The path to the root directory of the running CloudVM */
     @Override
-    public String newContainer() {
-        EntitySpec memberSpec = getConfig(JVC_SPEC);
-        JavaContainer container = containers.addChild(memberSpec);
-        return container.getJvcName();
+    public String getRootDirectory() {
+        return getDriver().getRootDirectory();
     }
 
     @Override

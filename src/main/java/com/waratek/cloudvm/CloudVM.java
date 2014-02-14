@@ -15,6 +15,9 @@
  */
 package com.waratek.cloudvm;
 
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +28,13 @@ import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.entity.waratek.JavaContainer;
 import brooklyn.entity.waratek.JavaVM;
 import brooklyn.util.flags.SetFromFlag;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
 /** 
  * Brooklyn managed Waratek CloudVM.
@@ -47,7 +55,7 @@ public class CloudVM extends AbstractApplication {
     @SetFromFlag("debug")
     @CatalogConfig(label="Enable Debug", priority=0)
     public static final ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey(
-            "waratek.policy.ha", "Enable debug options (default false)",
+            "waratek.debug", "Enable debug options (default false)",
             Boolean.FALSE);
 
     @SetFromFlag("highAvailabilty")
@@ -62,12 +70,41 @@ public class CloudVM extends AbstractApplication {
             "waratek.heap.size", "Amount of memory to allocate to the CloudVM (in bytes, default 1GB)",
             1000000000L);
 
+    @SetFromFlag("args")
+    @CatalogConfig(label="Java Args", priority=1)
+    public static final ConfigKey<List> ARGS = ConfigKeys.<List>newConfigKey(
+            "waratek.javaApp.args", "Arguments for the application",
+            Lists.newArrayList());
+
+    @SetFromFlag(value="main")
+    @CatalogConfig(label="Java Main Class", priority=1)
+    public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newStringConfigKey("vanillaJavaApp.mainClass", "Java class to launch");
+
+    @SetFromFlag("classpath")
+    @CatalogConfig(label="Java Classpath", priority=1)
+    public static final ConfigKey<List<String>> CLASSPATH = ConfigKeys.<List<String>>newConfigKey(new TypeToken<List<String>>() { },
+            "waratek.javaApp.classpath", "Java classpath for the application",
+            Lists.<String>newArrayList());
+
+    @SetFromFlag("jvmDefines")
+    @CatalogConfig(label="Java Properties", priority=1)
+    public static final ConfigKey<Map<String, ?>> JVM_DEFINES = ConfigKeys.<Map<String, ?>>newConfigKey(new TypeToken<Map<String, ?>>() { },
+            "waratek.javaApp.jvmDefines", "Java system properties for the application",
+            Maps.<String, Object>newLinkedHashMap());
+
     @SetFromFlag("initialSize")
     @CatalogConfig(label="Cluster Size", priority=0)
     public static final ConfigKey<Integer> JVC_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 1);
 
     @Override
     public void init() {
+        EntitySpec jvcSpec = EntitySpec.create(JavaContainer.class)
+                .configure(JavaContainer.ARGS, getConfig(ARGS))
+                .configure(JavaContainer.MAIN_CLASS, getConfig(MAIN_CLASS))
+                .configure(JavaContainer.CLASSPATH, getConfig(CLASSPATH))
+                .configure(JavaContainer.JVM_DEFINES, getConfig(JVM_DEFINES))
+                .configure(JavaContainer.JVM_XARGS, Lists.<String>newArrayList());
+
         addChild(EntitySpec.create(JavaVM.class)
                 .configure(JavaVM.WARATEK_USER, getConfig(USE_WARATEK_USER))
                 .configure(JavaVM.DEBUG, getConfig(DEBUG))
@@ -76,6 +113,7 @@ public class CloudVM extends AbstractApplication {
                 .configure(JavaVM.HEAP_SIZE, getConfig(HEAP_SIZE))
                 .configure(JavaVM.SSH_ADMIN_ENABLE, Boolean.TRUE)
                 .configure(JavaVM.HTTP_ADMIN_ENABLE, Boolean.TRUE)
+                .configure(JavaVM.JVC_SPEC, jvcSpec)
                 .displayName("Waratek CloudVM"));
     }
 

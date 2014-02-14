@@ -15,40 +15,31 @@
  */
 package brooklyn.entity.waratek;
 
-import java.util.List;
-
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.VanillaJavaApp;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
+import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 
-import com.google.common.reflect.TypeToken;
-
 @ImplementedBy(JavaContainerImpl.class)
-public interface JavaContainer extends SoftwareProcess, UsesJmx, HasShortName {
+public interface JavaContainer extends VanillaJavaApp, Startable, UsesJmx, HasShortName {
 
-    String JVC_NAME_FORMAT = "jvc-brooklyn-%s";
+    String DEFAULT_JVC_NAME_FORMAT = "jvc-brooklyn-%1$s";
+    String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-brooklyn-%2$d";
 
     @SetFromFlag("heapSize")
     ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey(
             "waratek.jvc.heap.size", "Size of heap memory to allocate (in bytes, default to 0; or unlimited)", 0L);
 
     @SetFromFlag("jvm")
-    ConfigKey<JavaVM> JVM = ConfigKeys.newConfigKey(JavaVM.class,
-            "waratek.jvc.jvm", "The parent JVM");
-    
-    @SetFromFlag("classpath")
-    ConfigKey<List<String>> CLASSPATH = ConfigKeys.newConfigKey(new TypeToken<List<String>>() { },
-            "waratek.jvc.classpath", "The JVC classpath to load");
-    
-    @SetFromFlag("mainClass")
-    ConfigKey<String> MAIN_CLASS = ConfigKeys.newStringConfigKey(
-            "waratek.jvc.mainClass", "The JVC main class to execute");
+    ConfigKey<JavaVM> JVM = ConfigKeys.newConfigKey(JavaVM.class, "waratek.jvm", "The parent JVM");
+
+    ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
 
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
 

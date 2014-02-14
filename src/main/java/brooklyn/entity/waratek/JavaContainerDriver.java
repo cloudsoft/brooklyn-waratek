@@ -15,10 +15,12 @@
  */
 package brooklyn.entity.waratek;
 
-import brooklyn.entity.java.JavaSoftwareProcessDriver;
+import brooklyn.entity.java.VanillaJavaAppDriver;
 
-public interface JavaContainerDriver extends JavaSoftwareProcessDriver {
+public interface JavaContainerDriver extends VanillaJavaAppDriver {
 
     String getHeapSize();
+
+    String getRootDirectory();
 
 }
