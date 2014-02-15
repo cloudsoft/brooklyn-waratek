@@ -101,7 +101,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     protected void connectSensors() {
         super.connectSensors();
 
-//        String waratekMBean = "com.waratek:type=Management";
+//        String waratekMBean = "com.waratek:type=VirtualMachine";
 //        jmxFeed = JmxFeed.builder().entity(this).period(Duration.ONE_SECOND)
 //                    .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
 //                            .objectName(waratekMBean)

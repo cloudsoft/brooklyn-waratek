@@ -17,6 +17,7 @@ package brooklyn.entity.waratek;
 
 import static java.lang.String.format;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +46,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements JavaVMDriver {
+
+    public static final String BROOKLYN_WARATEK_DOM0_JAR = "brooklyn-waratek-dom0-main.jar";
 
     private AtomicBoolean installed = new AtomicBoolean(false);
 
@@ -106,6 +109,14 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     }
 
     @Override
+    protected Map<String, ?> getJmxJavaSystemProperties() {
+        return MutableMap.<String, Object>builder()
+                .putAll(super.getJmxJavaSystemProperties())
+                .put("com.sun.management.jmxremote.registry.ssl", "false")
+                .build();
+    }
+
+    @Override
     public Map<String, String> getCustomJavaSystemProperties() {
         Map<String,String> props = super.getCustomJavaSystemProperties();
         if (installed.get()) {
@@ -115,18 +126,17 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
             if (getEntity().getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
                 props.put("com.waratek.ssh.server", "on");
                 props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVM.SSH_PORT).toString());
-                props.put("com.waratek.jirsh.shell", "ascii");
+                props.put("com.waratek.jirsh.shell", "ascii"); // TODO check if requried?
                 /* -Dcom.waratek.ssh.ip=n.n.n.n */
             } else {
                 props.put("com.waratek.ssh.server", "off");
             }
             if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
-                props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVM.SSH_PORT).toString());
+                props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVM.HTTP_PORT).toString());
             }
             String javaagent = Iterables.find(super.getJmxJavaConfigOptions(), Predicates.containsPattern("javaagent"));
             props.put("com.waratek.javaagent", javaagent);
 
-            log.info("Java property map: " + Joiner.on(",").useForNull("").withKeyValueSeparator("=").join(props));
         }
         return props;
     }
@@ -145,8 +155,8 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         if (entity.getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
             builder.put("sshPort", entity.getAttribute(JavaVM.SSH_PORT));
         }
-        if (entity.getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
-            builder.put("httpPort:", entity.getAttribute(JavaVM.SSH_PORT));
+        if (entity.getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
+            builder.put("httpPort", entity.getAttribute(JavaVM.HTTP_PORT));
         }
         return builder.build();
     }
@@ -186,9 +196,12 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         String installScript = Os.mergePaths(getExpandedInstallDir(), "tools", "autoinstall.sh");
         String debug = entity.getConfig(JavaVM.DEBUG) ? " -x" : "";
         newScript(CUSTOMIZING)
-                 /* .failOnNonZeroResultCode() */ // FIXME issue with autoinstall.sh script
+                .failOnNonZeroResultCode()
                 .body.append(BashCommands.sudo(installScript + debug + " -s -p " + getRunDir() + " -u " + getApplicationUser()))
                 .execute();
+
+        int result = getMachine().copyTo(new File(BROOKLYN_WARATEK_DOM0_JAR), Os.mergePaths(getRunDir(), BROOKLYN_WARATEK_DOM0_JAR));
+        log.info("Copied {}; result {}", BROOKLYN_WARATEK_DOM0_JAR, result);
 
         installed.set(true);
     }
@@ -197,19 +210,19 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     public void launch() {
         log.info("Launching {}", getEntity().getAttribute(JavaVM.JVM_NAME));
 
-        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
-                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
+        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s -classpath %3$s com.waratek.cloudvm.Brooklyn",
+                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize(), Os.mergePaths(getRunDir(), BROOKLYN_WARATEK_DOM0_JAR));
         if (log.isDebugEnabled()) {
             log.debug("JVM command: {}", javad);
         }
-        newScript(LAUNCHING)
+        newScript(MutableMap.of("usePidFile", false), LAUNCHING)
                 .body.append(BashCommands.sudoAsUser(getApplicationUser(), javad))
                 .execute();
     }
 
     @Override
     public boolean isRunning() {
-        return newScript(MutableMap.of("usePidFile", getPidFile()), CHECK_RUNNING).execute() == 0;
+        return newScript(MutableMap.of("usePidFile", getPidFile(), "processOwner", getApplicationUser()), CHECK_RUNNING).execute() == 0;
     }
 
     @Override

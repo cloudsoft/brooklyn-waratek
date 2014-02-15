@@ -65,35 +65,27 @@ public class CloudVM extends AbstractApplication {
             Boolean.FALSE);
 
     @SetFromFlag("heapSize")
-    @CatalogConfig(label="Heap Size", priority=0)
+    @CatalogConfig(label="Heap Size", priority=1.1)
     public static final ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey(
             "waratek.heap.size", "Amount of memory to allocate to the CloudVM (in bytes, default 1GB)",
             1000000000L);
 
     @SetFromFlag("args")
-    @CatalogConfig(label="Java Args", priority=1)
-    public static final ConfigKey<List> ARGS = ConfigKeys.<List>newConfigKey(
-            "waratek.javaApp.args", "Arguments for the application",
-            Lists.newArrayList());
+    @CatalogConfig(label="Java Args", priority=1.2)
+    public static final ConfigKey<List> ARGS = ConfigKeys.<List>newConfigKey(List.class,
+            "waratek.javaApp.args", "Arguments for the application");
 
     @SetFromFlag(value="main")
-    @CatalogConfig(label="Java Main Class", priority=1)
+    @CatalogConfig(label="Java Main Class", priority=1.2)
     public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newStringConfigKey("vanillaJavaApp.mainClass", "Java class to launch");
 
     @SetFromFlag("classpath")
-    @CatalogConfig(label="Java Classpath", priority=1)
+    @CatalogConfig(label="Java Classpath", priority=1.2)
     public static final ConfigKey<List<String>> CLASSPATH = ConfigKeys.<List<String>>newConfigKey(new TypeToken<List<String>>() { },
-            "waratek.javaApp.classpath", "Java classpath for the application",
-            Lists.<String>newArrayList());
-
-    @SetFromFlag("jvmDefines")
-    @CatalogConfig(label="Java Properties", priority=1)
-    public static final ConfigKey<Map<String, ?>> JVM_DEFINES = ConfigKeys.<Map<String, ?>>newConfigKey(new TypeToken<Map<String, ?>>() { },
-            "waratek.javaApp.jvmDefines", "Java system properties for the application",
-            Maps.<String, Object>newLinkedHashMap());
+            "waratek.javaApp.classpath", "Java classpath for the application");
 
     @SetFromFlag("initialSize")
-    @CatalogConfig(label="Cluster Size", priority=0)
+    @CatalogConfig(label="Cluster Size", priority=2)
     public static final ConfigKey<Integer> JVC_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 1);
 
     @Override
@@ -102,7 +94,7 @@ public class CloudVM extends AbstractApplication {
                 .configure(JavaContainer.ARGS, getConfig(ARGS))
                 .configure(JavaContainer.MAIN_CLASS, getConfig(MAIN_CLASS))
                 .configure(JavaContainer.CLASSPATH, getConfig(CLASSPATH))
-                .configure(JavaContainer.JVM_DEFINES, getConfig(JVM_DEFINES))
+                .configure(JavaContainer.JVM_DEFINES, Maps.<String, Object>newHashMap())
                 .configure(JavaContainer.JVM_XARGS, Lists.<String>newArrayList());
 
         addChild(EntitySpec.create(JavaVM.class)
