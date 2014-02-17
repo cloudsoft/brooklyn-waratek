@@ -33,7 +33,7 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
     public void init() {
         log.info("Starting JVC id {}", getId());
 
-        setAttribute(JVC_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
+        setAttribute(JVC_NAME, String.format(getConfig(JavaContainer.JVC_NAME_FORMAT), getId(), counter.incrementAndGet()));
     }
 
     @Override
@@ -44,18 +44,15 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
 
     @Override
     protected void connectSensors() {
-//      String waratekMBean = "com.waratek:type=Management";
-//      jmxFeed = JmxFeed.builder().entity(getJavaVM()).period(Duration.ONE_SECOND)
-//                  .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
-//                          .objectName(waratekMBean)
-//                          .attributeName("Running")
-//                          .setOnFailureOrException(false))
-//                  .build();
-        setAttribute(SERVICE_UP, true);
+        connectServiceUpIsRunning();
     }
 
     @Override
     public void disconnectSensors() {
+        disconnectServiceUpIsRunning();
+        
+        
+        
     }
 
     @Override

@@ -1,7 +1,5 @@
 package brooklyn.entity.waratek;
 
-import static java.lang.String.format;
-
 import java.util.List;
 
 import javax.management.ObjectInstance;
@@ -11,7 +9,9 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.VanillaJavaAppSshDriver;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.util.GroovyJavaMethods;
 import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.os.Os;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -21,8 +21,10 @@ import com.google.common.collect.Lists;
  */
 public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements JavaContainerDriver {
 
+    private static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
+
     private volatile JmxHelper helper;
-    
+
     public JavaContainerSshDriver(JavaContainerImpl entity, SshMachineLocation machine) {
         super(entity, machine);
 
@@ -35,20 +37,25 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         }
     }
 
+    @Override
     protected String getLogFileLocation() {
-        return format("%s/console", getRunDir());
+        JavaVM jvm = getEntity().getConfig(JavaContainer.JVM);
+        return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), getEntity().getAttribute(JavaContainer.JVC_NAME), "console.log");
     }
 
     public String getJavaCommandLine() {
         String javaOpts = getShellEnvironment().get("JAVA_OPTS");
+        String mainClass = getEntity().getMainClass();
         String args = getArgs();
-        
+
         StringBuilder command = new StringBuilder()
                 .append("java")
                 .append(" ")
                 .append(javaOpts)
                 .append(" ")
                 .append("-cp lib/*")
+                .append(" ")
+                .append(mainClass)
                 .append(" ")
                 .append(args);
         return command.toString();
@@ -60,17 +67,24 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         return Optional.of("1.6.0");
     }
 
-    // Not used by JVC
-    @Override
-    protected List<String> getJmxJavaConfigOptions() { return Lists.newArrayList(); }
+    /*
+     * Not required by JVCs using Waratek parent JVM.
+     */
 
-    // Not used by JVC
     @Override
-    public boolean installJava() { return true; }
+    protected final List<String> getJmxJavaConfigOptions() { return Lists.newArrayList(); }
 
-    // Not used by JVC
     @Override
-    public void installJmxSupport() { }
+    public final boolean installJava() { return true; }
+
+    @Override
+    public final void installJmxSupport() { }
+
+    @Override
+    public final boolean isJmxEnabled() { return false; }
+
+    @Override
+    public final boolean isJmxSslEnabled() { return false; }
 
     @Override
     public void install() {
@@ -80,7 +94,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         String cmd = getJavaCommandLine();
         log.info("Command line: {}", cmd);
         try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(""));
+            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             helper.operation(object.getObjectName(), "defineContainer", jvc, cmd, getRootDirectory());
         } catch (Exception e) {
             Exceptions.propagate(e);
@@ -93,7 +107,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         log.info("Launching {}", jvc);
 
         try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(""));
+            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             helper.operation(object.getObjectName(), "startContainer", jvc);
         } catch (Exception e) {
             Exceptions.propagate(e);
@@ -114,7 +128,12 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         String jvc = getEntity().getAttribute(JavaContainer.JVC_NAME);
         log.info("Stopping {}", jvc);
 
-        // JMX operation to destroy JVC
+        try {
+            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+            helper.operation(object.getObjectName(), "shutdownContainer", jvc);
+        } catch (Exception e) {
+            Exceptions.propagate(e);
+        }
     }
 
     @Override
@@ -122,7 +141,13 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         String jvc = getEntity().getAttribute(JavaContainer.JVC_NAME);
         log.info("Killling {}", jvc);
 
-        // JMX operation to undefine JVC
+        stop(); // Must stop JVC first
+        try {
+            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+            helper.operation(object.getObjectName(), "undefineContainer", jvc);
+        } catch (Exception e) {
+            Exceptions.propagate(e);
+        }
         if (helper != null) helper.disconnect();
     }
 

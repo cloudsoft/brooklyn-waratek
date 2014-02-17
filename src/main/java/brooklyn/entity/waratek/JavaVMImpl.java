@@ -15,29 +15,44 @@
  */
 package brooklyn.entity.waratek;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+
+import brooklyn.entity.Entity;
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.proxy.LoadBalancer;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.entity.trait.Startable;
+import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
+import brooklyn.location.Location;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
+import brooklyn.util.collections.MutableList;
+import brooklyn.util.collections.MutableMap;
+import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.task.DynamicTasks;
 
 public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
     private static final Logger log = LoggerFactory.getLogger(JavaVMImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private volatile JmxFeed jmxFeed;
     private JmxFeed jmxMxBeanFeed;
     private DynamicCluster containers;
 
@@ -47,17 +62,15 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
         setAttribute(JVM_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
 
-        String mainClass = getConfig(JavaContainer.MAIN_CLASS);
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
         EntitySpec jvcSpec = getConfig(JVC_SPEC)
-                .configure(JavaContainer.JVM, this)
-                .displayName("Java " + mainClass + " Application");
+                .configure(JavaContainer.JVM, this);
 
         containers = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Java Containers"));
-
+        if (Entities.isManaged(this)) Entities.manage(containers);
     }
 
     @Override
@@ -100,23 +113,27 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     @Override
     protected void connectSensors() {
         super.connectSensors();
-
-//        String waratekMBean = "com.waratek:type=VirtualMachine";
-//        jmxFeed = JmxFeed.builder().entity(this).period(Duration.ONE_SECOND)
-//                    .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
-//                            .objectName(waratekMBean)
-//                            .attributeName("Running")
-//                            .setOnFailureOrException(false))
-//                    .build();
-
+        connectServiceUpIsRunning();
         jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
     }
-    
+
     @Override
     protected void disconnectSensors() {
-        super.disconnectSensors();
-        if (jmxFeed != null) jmxFeed.stop();
+        disconnectServiceUpIsRunning();
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
+        super.disconnectSensors();
+    }
+
+    @Override
+    public void doStart(Collection<? extends Location> locations) {
+        super.doStart(locations);
+        DynamicTasks.queue(StartableMethods.startingChildren(this));
+    }
+
+    @Override
+    public void doStop() {
+        DynamicTasks.queue(StartableMethods.stoppingChildren(this));
+        super.doStop();
     }
 
     @Override
