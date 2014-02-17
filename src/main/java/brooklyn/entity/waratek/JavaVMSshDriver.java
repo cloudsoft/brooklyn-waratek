@@ -17,7 +17,6 @@ package brooklyn.entity.waratek;
 
 import static java.lang.String.format;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +37,6 @@ import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
 import brooklyn.util.text.Strings;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -46,8 +44,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements JavaVMDriver {
-
-    public static final String BROOKLYN_WARATEK_DOM0_JAR = "brooklyn-waratek-dom0-main.jar";
 
     private AtomicBoolean installed = new AtomicBoolean(false);
 
@@ -200,9 +196,6 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
                 .body.append(BashCommands.sudo(installScript + debug + " -s -p " + getRunDir() + " -u " + getApplicationUser()))
                 .execute();
 
-        int result = getMachine().copyTo(new File(BROOKLYN_WARATEK_DOM0_JAR), Os.mergePaths(getRunDir(), BROOKLYN_WARATEK_DOM0_JAR));
-        log.info("Copied {}; result {}", BROOKLYN_WARATEK_DOM0_JAR, result);
-
         installed.set(true);
     }
 
@@ -210,8 +203,8 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     public void launch() {
         log.info("Launching {}", getEntity().getAttribute(JavaVM.JVM_NAME));
 
-        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s -classpath %3$s com.waratek.cloudvm.Brooklyn",
-                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize(), Os.mergePaths(getRunDir(), BROOKLYN_WARATEK_DOM0_JAR));
+        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
+                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
         if (log.isDebugEnabled()) {
             log.debug("JVM command: {}", javad);
         }

@@ -45,7 +45,7 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION,
             // "2.5.4.GA.2-86");
-            "2.5.5.BK.1-1");
+            "2.5.5.BK.2-1");
 
     @SetFromFlag("downloadUrl")
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>( SoftwareProcess.DOWNLOAD_URL,
