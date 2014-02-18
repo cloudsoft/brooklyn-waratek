@@ -9,7 +9,6 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.VanillaJavaAppSshDriver;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.GroovyJavaMethods;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
 
@@ -22,16 +21,18 @@ import com.google.common.collect.Lists;
 public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements JavaContainerDriver {
 
     private static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
+    private static final String VIRTUAL_CONTAINER_MX_BEAN = "com.waratek:type=%s,name=VirtualContainer";
+    private static final String STATUS_RUNNING = "Running";
 
-    private volatile JmxHelper helper;
+    private volatile JmxHelper jmxHelper;
 
     public JavaContainerSshDriver(JavaContainerImpl entity, SshMachineLocation machine) {
         super(entity, machine);
 
         JavaVM jvm = getEntity().getConfig(JavaContainer.JVM);
-        helper = new JmxHelper(jvm.getAttribute(UsesJmx.JMX_URL));
+        jmxHelper = new JmxHelper(jvm.getAttribute(UsesJmx.JMX_URL));
         try {
-            helper.connect();
+            jmxHelper.connect();
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
@@ -94,8 +95,8 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         String cmd = getJavaCommandLine();
         log.info("Command line: {}", cmd);
         try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            helper.operation(object.getObjectName(), "defineContainer", jvc, cmd, getRootDirectory());
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, cmd, getRootDirectory());
         } catch (Exception e) {
             Exceptions.propagate(e);
         }
@@ -107,8 +108,8 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         log.info("Launching {}", jvc);
 
         try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            helper.operation(object.getObjectName(), "startContainer", jvc);
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+            jmxHelper.operation(object.getObjectName(), "startContainer", jvc);
         } catch (Exception e) {
             Exceptions.propagate(e);
         }
@@ -117,10 +118,15 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
     @Override
     public boolean isRunning() {
         String jvc = getEntity().getAttribute(JavaContainer.JVC_NAME);
-        log.info("Checking {}", jvc);
+        log.debug("Checking {}", jvc);
 
-        // JMX operation to get status
-        return true;
+        try {
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
+            String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
+            return STATUS_RUNNING.equals(status);
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
     }
 
     @Override
@@ -129,26 +135,13 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         log.info("Stopping {}", jvc);
 
         try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            helper.operation(object.getObjectName(), "shutdownContainer", jvc);
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+            jmxHelper.operation(object.getObjectName(), "shutdownContainer", jvc);
+            jmxHelper.operation(object.getObjectName(), "undefineContainer", jvc);
         } catch (Exception e) {
             Exceptions.propagate(e);
         }
-    }
-
-    @Override
-    public void kill() {
-        String jvc = getEntity().getAttribute(JavaContainer.JVC_NAME);
-        log.info("Killling {}", jvc);
-
-        stop(); // Must stop JVC first
-        try {
-            ObjectInstance object = helper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            helper.operation(object.getObjectName(), "undefineContainer", jvc);
-        } catch (Exception e) {
-            Exceptions.propagate(e);
-        }
-        if (helper != null) helper.disconnect();
+        if (jmxHelper != null) jmxHelper.disconnect();
     }
 
     @Override

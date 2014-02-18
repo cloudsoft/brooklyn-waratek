@@ -17,7 +17,7 @@ package brooklyn.entity.waratek;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.java.VanillaJavaApp;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
@@ -27,7 +27,7 @@ import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(JavaContainerImpl.class)
-public interface JavaContainer extends VanillaJavaApp, Startable, UsesJmx, HasShortName {
+public interface JavaContainer extends VanillaJavaApp, Startable, UsesJavaMXBeans, HasShortName {
 
     String DEFAULT_JVC_NAME_FORMAT = "jvc-brooklyn-%1$s";
     String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-brooklyn-%2$d";

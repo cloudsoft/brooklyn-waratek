@@ -15,19 +15,35 @@
  */
 package brooklyn.entity.waratek;
 
+import java.lang.management.MemoryUsage;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.entity.java.JavaAppUtils;
+import brooklyn.entity.java.UsesJavaMXBeans;
+import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.VanillaJavaAppImpl;
+import brooklyn.event.feed.http.HttpValueFunctions;
+import brooklyn.event.feed.jmx.JmxAttributePollConfig;
+import brooklyn.event.feed.jmx.JmxFeed;
+import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
+import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.time.Duration;
+
+import com.google.common.base.Function;
 
 public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContainer {
 
     private static final Logger log = LoggerFactory.getLogger(JavaContainerImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
+
+    private JmxHelper jmxHelper;
+    private JmxFeed jmxMxBeanFeed;
 
     @Override
     public void init() {
@@ -44,30 +60,108 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
 
     @Override
     protected void connectSensors() {
+        jmxHelper = new JmxHelper(getJavaVM().getAttribute(UsesJmx.JMX_URL));
+        try {
+            jmxHelper.connect();
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
+        jmxMxBeanFeed = connectMXBeanSensors(Duration.FIVE_SECONDS);
         connectServiceUpIsRunning();
+    }
+
+    public String waratekMXBeanName(String type) {
+        return String.format("com.waratek:type=%s,name=%s", getJvcName(), type);
+    }
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    public JmxFeed connectMXBeanSensors(Duration jmxPollPeriod) {
+        JmxFeed jmxFeed = JmxFeed.builder()
+                .helper(jmxHelper)
+                .entity(this)
+                .period(jmxPollPeriod)
+
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.USED_HEAP_MEMORY)
+                        .objectName(waratekMXBeanName("Memory"))
+                        .attributeName("HeapMemoryUsage")
+                        .onSuccess((Function) HttpValueFunctions.chain(JavaAppUtils.compositeDataToMemoryUsage(), new Function<MemoryUsage, Long>() {
+                            @Override public Long apply(MemoryUsage input) {
+                                return (input == null) ? null : input.getUsed();
+                            }})))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.INIT_HEAP_MEMORY)
+                        .objectName(waratekMXBeanName("Memory"))
+                        .attributeName("HeapMemoryUsage")
+                        .onSuccess((Function) HttpValueFunctions.chain(JavaAppUtils.compositeDataToMemoryUsage(), new Function<MemoryUsage, Long>() {
+                            @Override public Long apply(MemoryUsage input) {
+                                return (input == null) ? null : input.getInit();
+                            }})))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.COMMITTED_HEAP_MEMORY)
+                        .objectName(waratekMXBeanName("Memory"))
+                        .attributeName("HeapMemoryUsage")
+                        .onSuccess((Function) HttpValueFunctions.chain(JavaAppUtils.compositeDataToMemoryUsage(), new Function<MemoryUsage, Long>() {
+                            @Override public Long apply(MemoryUsage input) {
+                                return (input == null) ? null : input.getCommitted();
+                            }})))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.MAX_HEAP_MEMORY)
+                        .objectName(waratekMXBeanName("Memory"))
+                        .attributeName("HeapMemoryUsage")
+                        .onSuccess((Function) HttpValueFunctions.chain(JavaAppUtils.compositeDataToMemoryUsage(), new Function<MemoryUsage, Long>() {
+                            @Override public Long apply(MemoryUsage input) {
+                                return (input == null) ? null : input.getMax();
+                            }})))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.NON_HEAP_MEMORY_USAGE)
+                        .objectName(waratekMXBeanName("Memory"))
+                        .attributeName("NonHeapMemoryUsage")
+                        .onSuccess((Function) HttpValueFunctions.chain(JavaAppUtils.compositeDataToMemoryUsage(), new Function<MemoryUsage, Long>() {
+                            @Override public Long apply(MemoryUsage input) {
+                                return (input == null) ? null : input.getUsed();
+                            }})))
+
+                .pollAttribute(new JmxAttributePollConfig<Integer>(UsesJavaMXBeans.CURRENT_THREAD_COUNT)
+                        .objectName(waratekMXBeanName("Threading"))
+                        .attributeName("ThreadCount"))
+                .pollAttribute(new JmxAttributePollConfig<Integer>(UsesJavaMXBeans.PEAK_THREAD_COUNT)
+                        .objectName(waratekMXBeanName("Threading"))
+                        .attributeName("PeakThreadCount"))
+
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.START_TIME)
+                        .objectName(waratekMXBeanName("Runtime"))
+                        .period(60, TimeUnit.SECONDS)
+                        .attributeName("StartTime"))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.UP_TIME)
+                        .objectName(waratekMXBeanName("Runtime"))
+                        .period(60, TimeUnit.SECONDS)
+                        .attributeName("Uptime"))
+
+                .pollAttribute(new JmxAttributePollConfig<Double>(UsesJavaMXBeans.PROCESS_CPU_TIME)
+                        .objectName(waratekMXBeanName("OperatingSystem"))
+                        .attributeName("ProcessCpuTime")
+                        .onSuccess((Function)JavaAppUtils.times(0.001*0.001)))   // nanos to millis
+                .pollAttribute(new JmxAttributePollConfig<Double>(UsesJavaMXBeans.SYSTEM_LOAD_AVERAGE)
+                        .objectName(waratekMXBeanName("OperatingSystem"))
+                        .attributeName("SystemLoadAverage"))
+                .pollAttribute(new JmxAttributePollConfig<Integer>(UsesJavaMXBeans.AVAILABLE_PROCESSORS)
+                        .objectName(waratekMXBeanName("OperatingSystem"))
+                        .period(60, TimeUnit.SECONDS)
+                        .attributeName("AvailableProcessors"))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.TOTAL_PHYSICAL_MEMORY_SIZE)
+                        .objectName(waratekMXBeanName("OperatingSystem"))
+                        .period(60, TimeUnit.SECONDS)
+                        .attributeName("TotalPhysicalMemorySize"))
+                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.FREE_PHYSICAL_MEMORY_SIZE)
+                        .objectName(waratekMXBeanName("OperatingSystem"))
+                        .period(60, TimeUnit.SECONDS)
+                        .attributeName("FreePhysicalMemorySize"))
+
+                .build();
+        return jmxFeed;
     }
 
     @Override
     public void disconnectSensors() {
         disconnectServiceUpIsRunning();
-        
-        
-        
-    }
-
-    @Override
-    protected void doStart(Collection<? extends Location> locations) {
-        super.doStart(locations);
-    }
-
-    @Override
-    protected void doStop() {
-        super.doStop();
-    }
-
-    @Override
-    public void doRestart() {
-        super.doRestart();
+        if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
+        if (jmxHelper != null) jmxHelper.disconnect();
     }
 
     @Override

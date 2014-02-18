@@ -15,14 +15,10 @@
  */
 package brooklyn.entity.waratek;
 
-import java.util.List;
-
 import brooklyn.config.ConfigKey;
-import brooklyn.entity.Effector;
 import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.effector.Effectors;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJmx;

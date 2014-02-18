@@ -113,8 +113,8 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     @Override
     protected void connectSensors() {
         super.connectSensors();
-        connectServiceUpIsRunning();
         jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
+        connectServiceUpIsRunning();
     }
 
     @Override
