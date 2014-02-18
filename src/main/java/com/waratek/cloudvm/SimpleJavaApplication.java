@@ -16,7 +16,6 @@
 package com.waratek.cloudvm;
 
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,26 +25,27 @@ import brooklyn.catalog.CatalogConfig;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.JavaContainer;
 import brooklyn.entity.waratek.JavaVM;
 import brooklyn.entity.waratek.WaratekJavaApp;
 import brooklyn.util.flags.SetFromFlag;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 
 /** 
- * Brooklyn managed Waratek CloudVM.
+ * Brooklyn managed Waratek SimpleJavaApplication.
  */
-@Catalog(name="CloudVM",
-    description="Deploys the Waratek Java CloudVM.",
+@Catalog(name="SimpleJavaApplication",
+    description="Deploys the Waratek Java SimpleJavaApplication.",
     iconUrl="classpath://com/waratek/waratek-logo.png")
-public class CloudVM extends AbstractApplication {
+public class SimpleJavaApplication extends AbstractApplication {
 
-    public static final Logger LOG = LoggerFactory.getLogger(CloudVM.class);
+    public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
 
     @SetFromFlag("runAs")
     @CatalogConfig(label="Separate User", priority=0)
@@ -65,15 +65,16 @@ public class CloudVM extends AbstractApplication {
 
     @SetFromFlag("args")
     @CatalogConfig(label="Java Args", priority=1.2)
-    public static final ConfigKey<List> ARGS = JavaContainer.ARGS;
+    public static final ConfigKey<List> ARGS = ConfigKeys.newConfigKeyWithDefault(JavaContainer.ARGS,
+            ImmutableList.of(Integer.toString(1024 * 64))); // 64KiB
 
     @SetFromFlag(value="main")
     @CatalogConfig(label="Java Main Class", priority=1.2)
-    public static final ConfigKey<String> MAIN_CLASS = JavaContainer.MAIN_CLASS;
+    public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newConfigKeyWithDefault(JavaContainer.MAIN_CLASS, "com.example.HelloWorld");
 
     @SetFromFlag("classpath")
     @CatalogConfig(label="Java Classpath", priority=1.2)
-    public static final ConfigKey<List> CLASSPATH = JavaContainer.CLASSPATH;
+    public static final ConfigKey<List> CLASSPATH = ConfigKeys.newConfigKeyWithDefault(JavaContainer.CLASSPATH, ImmutableList.of("brooklyn-waratek-examples.jar"));
 
     @SetFromFlag("jvmClusterSize")
     @CatalogConfig(label="JVM Cluster Size", priority=2.1)
@@ -85,11 +86,11 @@ public class CloudVM extends AbstractApplication {
 
     @Override
     public void init() {
-        String mainClass = getConfig(MAIN_CLASS);
+        String mainClass = Iterables.getLast(Splitter.on(".").split(getConfig(MAIN_CLASS)));
 
         EntitySpec jvcSpec = EntitySpec.create(JavaContainer.class)
                 .configure(JavaContainer.ARGS, getConfig(ARGS))
-                .configure(JavaContainer.MAIN_CLASS, mainClass)
+                .configure(JavaContainer.MAIN_CLASS, getConfig(MAIN_CLASS))
                 .configure(JavaContainer.CLASSPATH, getConfig(CLASSPATH))
                 .configure(JavaContainer.JVM_DEFINES, Maps.<String, Object>newHashMap())
                 .configure(JavaContainer.JVM_XARGS, Lists.<String>newArrayList());

@@ -35,7 +35,7 @@ public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
-    public static final String DEFAULT_LOCATION = "localhost";
+    public static final String DEFAULT_LOCATION = "waratek";
 
     public static void main(String...argv) throws Exception {
         if (log.isDebugEnabled()) {
@@ -76,7 +76,7 @@ public class Main {
             }
 
             if ("launch".equals(command)) {
-                applicationClass = CloudVM.class;
+                applicationClass = SimpleJavaApplication.class;
             } else if ("server".equals(command)) {
                 // no-op
             } else {
@@ -88,7 +88,7 @@ public class Main {
         launcher.webconsolePort(port);
 
         if (applicationClass != null) {
-            launcher.application(EntitySpec.create(StartableApplication.class, applicationClass).displayName("CloudVM"));
+            launcher.application(EntitySpec.create(StartableApplication.class, applicationClass).displayName("CloudVM Java Application"));
             launcher.location(location != null ? location : DEFAULT_LOCATION);
         } else {
             if (location != null) {
@@ -123,7 +123,7 @@ public class Main {
         System.out.println("        server       start the Brooklyn server (no applications)");
         System.out.println("        application  start the applicaton specified by the --class option");
         System.out.println("        help         display this help list");
-        System.out.println("        launch       start the CloudVM appplication");
+        System.out.println("        launch       start the SimpleJavaApplication appplication");
         System.out.println();
     }
 
