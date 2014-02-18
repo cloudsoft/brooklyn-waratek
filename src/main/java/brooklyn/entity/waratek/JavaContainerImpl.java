@@ -131,10 +131,22 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
                         .period(60, TimeUnit.SECONDS)
                         .attributeName("Uptime"))
 
-                .pollAttribute(new JmxAttributePollConfig<Double>(UsesJavaMXBeans.PROCESS_CPU_TIME)
-                        .objectName(waratekMXBeanName("OperatingSystem"))
-                        .attributeName("ProcessCpuTime")
-                        .onSuccess((Function)JavaAppUtils.times(0.001*0.001)))   // nanos to millis
+                .pollAttribute(new JmxAttributePollConfig<Long>(JavaContainer.BYTES_SENT)
+                        .objectName(waratekMXBeanName("Info"))
+                        .attributeName("BytesSent"))
+                .pollAttribute(new JmxAttributePollConfig<Long>(JavaContainer.BYTES_RECEIVED)
+                        .objectName(waratekMXBeanName("Info"))
+                        .attributeName("BytesReceived"))
+                .pollAttribute(new JmxAttributePollConfig<Integer>(JavaContainer.FILE_DESCRIPTOR_COUNT)
+                        .objectName(waratekMXBeanName("Info"))
+                        .attributeName("FileDescriptorCount"))
+                .pollAttribute(new JmxAttributePollConfig<Double>(JavaContainer.CPU_USAGE)
+                        .objectName(waratekMXBeanName("Info"))
+                        .attributeName("CpuUsage"))
+                .pollAttribute(new JmxAttributePollConfig<String>(JavaContainer.STATUS)
+                        .objectName(waratekMXBeanName("Info"))
+                        .attributeName("Status"))
+
                 .pollAttribute(new JmxAttributePollConfig<Double>(UsesJavaMXBeans.SYSTEM_LOAD_AVERAGE)
                         .objectName(waratekMXBeanName("OperatingSystem"))
                         .attributeName("SystemLoadAverage"))
@@ -142,14 +154,6 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
                         .objectName(waratekMXBeanName("OperatingSystem"))
                         .period(60, TimeUnit.SECONDS)
                         .attributeName("AvailableProcessors"))
-                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.TOTAL_PHYSICAL_MEMORY_SIZE)
-                        .objectName(waratekMXBeanName("OperatingSystem"))
-                        .period(60, TimeUnit.SECONDS)
-                        .attributeName("TotalPhysicalMemorySize"))
-                .pollAttribute(new JmxAttributePollConfig<Long>(UsesJavaMXBeans.FREE_PHYSICAL_MEMORY_SIZE)
-                        .objectName(waratekMXBeanName("OperatingSystem"))
-                        .period(60, TimeUnit.SECONDS)
-                        .attributeName("FreePhysicalMemorySize"))
 
                 .build();
         return jmxFeed;

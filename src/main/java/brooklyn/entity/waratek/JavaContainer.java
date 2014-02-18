@@ -43,6 +43,12 @@ public interface JavaContainer extends VanillaJavaApp, Startable, UsesJavaMXBean
 
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
 
+    AttributeSensor<Long> BYTES_SENT = Sensors.newLongSensor("waratek.jvc.bytesSent", "Total network bytes sent");
+    AttributeSensor<Long> BYTES_RECEIVED = Sensors.newLongSensor("waratek.jvc.bytesReceived", "Total network bytes received");
+    AttributeSensor<Integer> FILE_DESCRIPTOR_COUNT = Sensors.newIntegerSensor("waratek.jvc.fileDescriptorCount", "Current open file descriptors");
+    AttributeSensor<Double> CPU_USAGE = Sensors.newDoubleSensor("waratek.jvc.cpuUsage", "Current CPU usage");
+    AttributeSensor<String> STATUS = Sensors.newStringSensor("waratek.jvc.status", "Current JVC status");
+
     String getJvcName();
 
     JavaVM getJavaVM();
