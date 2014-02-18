@@ -23,6 +23,7 @@ import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.group.Cluster;
@@ -91,7 +92,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     public String getJvmName() { return getAttribute(JVM_NAME); }
 
     @Override
-    public Cluster getJvcList() { return containers; }
+    public Collection<Entity> getJvcList() { return containers.getMembers(); }
 
     /** The path to the root directory of the running CloudVM */
     @Override

@@ -76,7 +76,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public String getApplicationUser() {
-        return getEntity().getConfig(JavaVM.WARATEK_USER) ? "waratek" : getMachine().getUser();
+        return getEntity().getConfig(JavaVM.USE_WARATEK_USER) ? "waratek" : getMachine().getUser();
     }
 
     @Override

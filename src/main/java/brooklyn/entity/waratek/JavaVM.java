@@ -15,11 +15,13 @@
  */
 package brooklyn.entity.waratek;
 
+import java.util.Collection;
+
 import brooklyn.config.ConfigKey;
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.proxying.EntitySpec;
@@ -59,11 +61,10 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
     ConfigKey<Integer> START_TIMEOUT = ConfigKeys.newConfigKeyWithDefault(BrooklynConfigKeys.START_TIMEOUT, 2*60);
 
     @SetFromFlag("runAs")
-    ConfigKey<Boolean> WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", true);
+    ConfigKey<Boolean> USE_WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", true);
 
     @SetFromFlag("heapSize")
-    ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey(
-            "waratek.jvm.heap.size", "Size of heap memory to allocate (in bytes)");
+    ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey("waratek.jvm.heap.size", "Size of heap memory to allocate (in bytes)");
 
     @SetFromFlag("jmxAgentMode")
     ConfigKey<JmxAgentModes> JMX_AGENT_MODE = ConfigKeys.newConfigKeyWithDefault(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT);
@@ -83,7 +84,10 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
             "waratek.admin.http.port", "Port to use for JVM administration over HTTP", PortRanges.fromString("7777+"));
 
     @SetFromFlag("initialSize")
-    ConfigKey<Integer> JVC_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 1);
+    ConfigKey<Integer> JVC_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvc", DynamicCluster.INITIAL_SIZE);
+
+    @SetFromFlag("maxSize")
+    ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = ConfigKeys.newIntegerConfigKey("waratek.jvc.maxSize", "Maximum size of the JVC cluster");
 
     @SetFromFlag("jvcSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVC_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(
@@ -94,7 +98,7 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
 
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
 
-    Cluster getJvcList();
+    Collection<Entity> getJvcList();
 
     String getJvmName();
 
