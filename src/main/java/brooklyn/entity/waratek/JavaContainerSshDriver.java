@@ -68,22 +68,23 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         return Optional.of("1.6.0");
     }
 
-    /*
-     * Not required by JVCs using Waratek parent JVM.
-     */
-
+    /** Does nothing; we are using the Waratek JVM instead. */
     @Override
     protected final List<String> getJmxJavaConfigOptions() { return Lists.newArrayList(); }
 
+    /** Does nothing; we are using the Waratek JVM instead. */
     @Override
     public final boolean installJava() { return true; }
 
+    /** Does nothing; we are using the Waratek JVM instead. */
     @Override
     public final void installJmxSupport() { }
 
+    /** Does nothing; we are using the Waratek JVM instead. */
     @Override
     public final boolean isJmxEnabled() { return false; }
 
+    /** Does nothing; we are using the Waratek JVM instead. */
     @Override
     public final boolean isJmxSslEnabled() { return false; }
 

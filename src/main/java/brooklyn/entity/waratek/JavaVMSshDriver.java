@@ -97,8 +97,6 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         return env;
     }
 
-    // TODO check the JMX options are passed through OK
-
     @Override
     protected List<String> getJmxJavaConfigOptions() {
         return MutableList.copyOf(Iterables.filter(super.getJmxJavaConfigOptions(), Predicates.not(Predicates.containsPattern("javaagent"))));

@@ -16,7 +16,6 @@
 package brooklyn.entity.waratek;
 
 import java.lang.management.MemoryUsage;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,7 +30,6 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.event.feed.jmx.JmxAttributePollConfig;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
-import brooklyn.location.Location;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.time.Duration;
 
