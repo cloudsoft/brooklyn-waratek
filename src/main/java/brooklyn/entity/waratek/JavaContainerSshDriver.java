@@ -119,7 +119,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
     @Override
     public boolean isRunning() {
         String jvc = getEntity().getAttribute(JavaContainer.JVC_NAME);
-        log.debug("Checking {}", jvc);
+        if (log.isTraceEnabled()) log.trace("Checking {}", jvc);
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
@@ -137,7 +137,9 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            jmxHelper.operation(object.getObjectName(), "shutdownContainer", jvc);
+            if (isRunning()) {
+                jmxHelper.operation(object.getObjectName(), "shutdownContainer", jvc);
+            }
             jmxHelper.operation(object.getObjectName(), "undefineContainer", jvc);
         } catch (Exception e) {
             Exceptions.propagate(e);

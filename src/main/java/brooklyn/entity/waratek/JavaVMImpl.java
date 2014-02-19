@@ -97,7 +97,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     /** The path to the root directory of the running CloudVM */
     @Override
     public String getRootDirectory() {
-        return getDriver().getRootDirectory();
+        return getAttribute(ROOT_DIRECTORY);
     }
 
     @Override

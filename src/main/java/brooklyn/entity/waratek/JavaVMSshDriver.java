@@ -49,6 +49,8 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     public JavaVMSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
+
+        entity.setAttribute(JavaVM.ROOT_DIRECTORY, getRootDirectory());
     }
 
     /** The path to the root directory of the running CloudVM */

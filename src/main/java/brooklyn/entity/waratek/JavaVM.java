@@ -98,6 +98,8 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
 
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
 
+    AttributeSensor<String> ROOT_DIRECTORY = Sensors.newStringSensor("waratek.jvm.rootDirectory", "The JVM installation root directory");
+
     Collection<Entity> getJvcList();
 
     String getJvmName();
