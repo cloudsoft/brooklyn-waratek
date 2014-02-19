@@ -47,7 +47,7 @@ public interface WaratekJavaApp extends BasicEntity, Startable, HasShortName {
 
     @SetFromFlag("jvmSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVM_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(
-            EntitySpec.class, "waratek.jvc.spec", "Specification to use when creating child JVMs",
+            EntitySpec.class, "waratek.jvm.spec", "Specification to use when creating child JVMs",
             EntitySpec.create(JavaVM.class));
 
     Collection<Entity> getJvmList();

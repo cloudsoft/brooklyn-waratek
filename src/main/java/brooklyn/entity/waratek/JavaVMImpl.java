@@ -53,7 +53,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
         setAttribute(JVM_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
 
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
-        EntitySpec jvcSpec = getConfig(JVC_SPEC)
+        EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
                 .configure(JavaContainer.JVM, this);
 
         containers = addChild(EntitySpec.create(DynamicCluster.class)
