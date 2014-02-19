@@ -20,17 +20,20 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.enricher.Enrichers;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicEntityImpl;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.location.Location;
 import brooklyn.util.task.DynamicTasks;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 
 public class WaratekJavaAppImpl extends BasicEntityImpl implements WaratekJavaApp {
@@ -50,6 +53,34 @@ public class WaratekJavaAppImpl extends BasicEntityImpl implements WaratekJavaAp
                 .configure(DynamicCluster.MEMBER_SPEC, jvmSpec)
                 .displayName("Java Virtual Machines"));
         if (Entities.isManaged(this)) Entities.manage(virtualMachines);
+
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(UsesJavaMXBeans.USED_HEAP_MEMORY)
+                .computingSum()
+                .fromMembers()
+                .publishing(TOTAL_HEAP_MEMORY)
+                .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(JVC_COUNT)
+                .computingSum()
+                .fromMembers()
+                .publishing(JVC_COUNT)
+                .build());
+
+        addEnricher(Enrichers.builder()
+                .propagating(TOTAL_HEAP_MEMORY, JVC_COUNT)
+                .from(virtualMachines)
+                .build());
+        addEnricher(Enrichers.builder()
+                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, JVM_COUNT))
+                .from(virtualMachines)
+                .build());
+
+//      virtualMachines.addPolicy(AutoScalerPolicy.builder().
+//              metric(HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW).
+//              metricRange(1000, 10000).
+//              sizeRange(1, 4).
+//              build());
     }
 
     @Override

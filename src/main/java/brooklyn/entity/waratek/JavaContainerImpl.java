@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.enricher.RollingTimeWindowMeanEnricher;
+import brooklyn.enricher.TimeWeightedDeltaEnricher;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.java.UsesJmx;
@@ -65,6 +67,8 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
             throw Exceptions.propagate(e);
         }
         jmxMxBeanFeed = connectMXBeanSensors(Duration.FIVE_SECONDS);
+        addEnricher(TimeWeightedDeltaEnricher.getPerSecondDeltaEnricher(this, UsesJavaMXBeans.USED_HEAP_MEMORY, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST));
+        addEnricher(new RollingTimeWindowMeanEnricher<Double>(this, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, Duration.ONE_MINUTE));
         connectServiceUpIsRunning();
     }
 

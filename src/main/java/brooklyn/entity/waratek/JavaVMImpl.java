@@ -23,12 +23,16 @@ import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.enricher.Enrichers;
+import brooklyn.enricher.RollingTimeWindowMeanEnricher;
+import brooklyn.enricher.TimeWeightedDeltaEnricher;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
+import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.StartableMethods;
@@ -37,6 +41,9 @@ import brooklyn.location.Location;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.util.task.DynamicTasks;
+import brooklyn.util.time.Duration;
+
+import com.google.common.collect.ImmutableMap;
 
 public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
 
@@ -61,6 +68,11 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Java Containers"));
         if (Entities.isManaged(this)) Entities.manage(containers);
+
+        addEnricher(Enrichers.builder()
+                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekJavaApp.JVC_COUNT))
+                .from(containers)
+                .build());
     }
 
     @Override
@@ -74,7 +86,8 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    protected Map<String,Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
+    @Override
+    protected Map<String, Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
         Map flags = super.obtainProvisioningFlags(location);
         Long heapSize = getConfig(HEAP_SIZE, 512 * (1024L * 1024L));
         int megabytes = (int) (heapSize / (1024L * 1024L));
@@ -104,6 +117,8 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     protected void connectSensors() {
         super.connectSensors();
         jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
+        addEnricher(TimeWeightedDeltaEnricher.getPerSecondDeltaEnricher(this, UsesJavaMXBeans.USED_HEAP_MEMORY, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST));
+        addEnricher(new RollingTimeWindowMeanEnricher<Double>(this, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, Duration.ONE_MINUTE));
         connectServiceUpIsRunning();
     }
 
