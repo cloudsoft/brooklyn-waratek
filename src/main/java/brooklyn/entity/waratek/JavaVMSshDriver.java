@@ -191,7 +191,9 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         String debug = entity.getConfig(JavaVM.DEBUG) ? " -x" : "";
         newScript(CUSTOMIZING)
                 .failOnNonZeroResultCode()
-                .body.append(BashCommands.sudo(installScript + debug + " -s -p " + getRunDir() + " -u " + getApplicationUser()))
+                .body.append(
+                        "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
+                        BashCommands.sudo(installScript + debug + " -s -p " + getRunDir() + " -u " + getApplicationUser()))
                 .execute();
 
         installed.set(true);
