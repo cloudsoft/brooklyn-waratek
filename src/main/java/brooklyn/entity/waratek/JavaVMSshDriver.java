@@ -144,13 +144,13 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     protected Map<String, Integer> getPortMap() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.<String, Integer>builder()
-                .put("jmxPort", entity.getAttribute(UsesJmx.JMX_PORT))
-                .put("rmiPort", entity.getAttribute(UsesJmx.RMI_REGISTRY_PORT));
-        if (entity.getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
-            builder.put("sshPort", entity.getAttribute(JavaVM.SSH_PORT));
+                .put("jmxPort", getEntity().getAttribute(UsesJmx.JMX_PORT))
+                .put("rmiPort", getEntity().getAttribute(UsesJmx.RMI_REGISTRY_PORT));
+        if (getEntity().getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
+            builder.put("sshPort", getEntity().getAttribute(JavaVM.SSH_PORT));
         }
-        if (entity.getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
-            builder.put("httpPort", entity.getAttribute(JavaVM.HTTP_PORT));
+        if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
+            builder.put("httpPort", getEntity().getAttribute(JavaVM.HTTP_PORT));
         }
         return builder.build();
     }

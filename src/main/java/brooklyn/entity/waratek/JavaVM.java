@@ -73,14 +73,14 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
     ConfigKey<Boolean> SSH_ADMIN_ENABLE = ConfigKeys.newBooleanConfigKey("waratek.admin.ssh.enable", "Enable JVM administration using SSH", false);
 
     @SetFromFlag("sshPort")
-    AttributeSensor<Integer> SSH_PORT = new PortAttributeSensorAndConfigKey(
+    PortAttributeSensorAndConfigKey SSH_PORT = new PortAttributeSensorAndConfigKey(
             "waratek.admin.ssh.port", "Port to use for JVM administration over SSH", PortRanges.fromString("2222+"));
 
     @SetFromFlag("httpAdmin")
     ConfigKey<Boolean> HTTP_ADMIN_ENABLE = ConfigKeys.newBooleanConfigKey("waratek.admin.http.enable", "Enable JVM administration using HTTP", false);
 
     @SetFromFlag("httpPort")
-    AttributeSensor<Integer> HTTP_PORT = new PortAttributeSensorAndConfigKey(
+    PortAttributeSensorAndConfigKey HTTP_PORT = new PortAttributeSensorAndConfigKey(
             "waratek.admin.http.port", "Port to use for JVM administration over HTTP", PortRanges.fromString("7777+"));
 
     @SetFromFlag("initialSize")
