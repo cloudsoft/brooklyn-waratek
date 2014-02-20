@@ -27,6 +27,7 @@ import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.drivers.downloads.DownloadResolver;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.location.basic.PortRanges;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
@@ -106,10 +107,15 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     protected Map<String, ?> getJmxJavaSystemProperties() {
-        return MutableMap.<String, Object>builder()
+        MutableMap.Builder<String, Object> builder = MutableMap.<String, Object>builder()
                 .putAll(super.getJmxJavaSystemProperties())
-                .put("com.sun.management.jmxremote.registry.ssl", "false")
-                .build();
+                .put("com.sun.management.jmxremote.registry.ssl", "false");
+        if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
+            // jolokia wants a locally accessible JMX port set here, we don't need to allow external access
+            builder.put("com.sun.management.jmxremote.port", getMachine().obtainPort(PortRanges.ANY_HIGH_PORT));
+            // TODO add the rest of the required JAAS properties
+        }
+        return builder.build();
     }
 
     @Override

@@ -18,6 +18,7 @@ package brooklyn.entity.waratek;
 import java.util.Collection;
 import java.util.List;
 
+import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicEntity;
@@ -33,6 +34,7 @@ import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekJavaAppImpl.class)
+@Catalog(name="WaratekJavaApp", description="Waratek Java Application.", iconUrl="classpath://waratek-logo.png")
 public interface WaratekJavaApp extends BasicEntity, Startable, HasShortName {
 
     @SetFromFlag("args")

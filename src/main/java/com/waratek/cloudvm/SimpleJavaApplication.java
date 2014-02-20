@@ -41,8 +41,8 @@ import com.google.common.collect.Maps;
  * Brooklyn managed Waratek SimpleJavaApplication.
  */
 @Catalog(name="SimpleJavaApplication",
-    description="Deploys the Waratek Java SimpleJavaApplication.",
-    iconUrl="classpath://com/waratek/waratek-logo.png")
+    description="Deploys Simple Waratek Java Application.",
+    iconUrl="classpath://waratek-logo.png")
 public class SimpleJavaApplication extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
