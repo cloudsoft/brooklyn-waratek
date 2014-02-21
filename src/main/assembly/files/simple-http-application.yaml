@@ -1,0 +1,29 @@
+id: simple-http-application
+name: Simple HTTP Appplication
+location: waratek-eu-west-1
+services:
+ - serviceType: brooklyn.entity.waratek.WaratekJavaApp
+   id: waratek-http-application
+   name: Waratek HTTP Application
+   brooklyn.config:
+     waratek.jvm.initialSize: 2
+     jvmSpec:
+       $brooklyn:entitySpec:
+         type: brooklyn.entity.waratek.JavaVM
+         brooklyn.config:
+           waratek.runAs: true
+           waratek.debug: false
+           waratek.jvm.heapSize: 1000000000
+           waratek.jvc.initialSize: 2
+           waratek.jvc.maxSize: 4
+           waratek.admin.ssh.enable: true
+           waratek.admin.ssh.port: 1022
+           jvcSpec:
+             $brooklyn:entitySpec:
+               type: brooklyn.entity.waratek.JavaContainer
+               brooklyn.config:
+                 vanillaJavaApp.mainClass: com.example.memoryWebServer
+                 vanillaJavaApp.classpath: brooklyn-waratek-examples.jar
+ - serviceType: brooklyn.entity.proxy.nginx.NginxController
+   id: nginx-http-proxy
+   name: Nginx HTTP Proxy

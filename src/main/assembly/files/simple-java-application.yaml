@@ -1,0 +1,27 @@
+id: simple-java-application
+name: Simple Java Appplication
+location: waratek
+services:
+ - serviceType: brooklyn.entity.waratek.WaratekJavaApp
+   id: waratek-helloworld-application
+   name: Waratek HelloWorld Application
+   brooklyn.config:
+     waratek.jvm.initialSize: 1
+     jvmSpec:
+       $brooklyn:entitySpec:
+         type: brooklyn.entity.waratek.JavaVM
+         brooklyn.config:
+           waratek.runAs: true
+           waratek.debug: false
+           waratek.jvm.heapSize: 1000000000
+           waratek.jvc.initialSize: 2
+           waratek.jvc.maxSize: 4
+           waratek.admin.ssh.enable: true
+           waratek.admin.ssh.port: 1022
+           jvcSpec:
+             $brooklyn:entitySpec:
+               type: brooklyn.entity.waratek.JavaContainer
+               brooklyn.config:
+                 vanillaJavaApp.args: 65535
+                 vanillaJavaApp.mainClass: com.example.HelloWorld
+                 vanillaJavaApp.classpath: brooklyn-waratek-examples.jar

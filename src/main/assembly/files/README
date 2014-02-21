@@ -1,9 +1,33 @@
 Brooklyn Waratek
 ================
 
-Entities to allow Brooklyn to deploy and manage the Waratek CloudVM for multi-tenant virualized Java.
+Entities and sample code to allow Brooklyn to deploy and manage the Waratek
+CloudVM for multi-tenant virualized Java.
 
-    % ./start.sh launch --location named:waratek-location
+    % ./start.sh launch --location named:waratek
+
+This will launch the `SimpleJavaApplication` class, which is a Brooklyn
+application that launches a `WaratekJavaApp` configured to use the
+provided `brooklyn-waratek-examples.jar` library. It starts a single
+JVM wuth a single JVC by default, running the `com.example.HelloWorld`
+example application class, which uses 64KiB of heap memory every second.
+
+The *Sensors* tab on the Brokklyn console for the application shows the
+total number of deployed JVMs and JVCs as well as their combined heap
+usage. If Brooklyn is configured with credentials for AWS or another
+location with multiple VMs available, the JVM and JVC clusters can be
+resized to start further copies of the configured Java application.
+
+To build a more complex application it is suggested that the CAMP YAML
+format is used to define the blueprint for Brooklyn. There are two
+sample files provided that can be started from the command-line as
+follows:
+
+    % ./start.sh application --camp simple-http-application.yaml
+    % ./start.sh application --camp simple-java-application.yaml
+
+Further documentation on the CAMP YAML extensions supported by Brooklyn
+is available [online](http://brooklyncentral.github.io/).
 
 ----
 Copyright 2014 by Cloudsoft Corporation Limited

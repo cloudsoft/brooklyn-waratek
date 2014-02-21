@@ -7,7 +7,7 @@ for multi-tenant virtualized Java.
     % mvn clean install assembly:single
     % tar zxvf brooklyn-waratek-0.1.0-SNAPSHOT-dist.tar.gz
     % cd brooklyn-waratek
-    % ./start.sh launch --location named:waratek-location
+    % ./start.sh launch --location named:waratek
 
 ----
 Copyright 2014 by Cloudsoft Corporation Limited
