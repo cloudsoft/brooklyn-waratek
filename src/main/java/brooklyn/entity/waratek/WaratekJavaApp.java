@@ -15,7 +15,6 @@
  */
 package brooklyn.entity.waratek;
 
-import java.util.Collection;
 import java.util.List;
 
 import brooklyn.catalog.Catalog;
@@ -23,10 +22,12 @@ import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicEntity;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
+import brooklyn.entity.trait.Resizable;
 import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
@@ -35,7 +36,7 @@ import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekJavaAppImpl.class)
 @Catalog(name="WaratekJavaApp", description="Waratek Java Application.", iconUrl="classpath://waratek-logo.png")
-public interface WaratekJavaApp extends BasicEntity, Startable, HasShortName {
+public interface WaratekJavaApp extends BasicEntity, Startable, Resizable, HasShortName {
 
     @SetFromFlag("args")
     ConfigKey<List> ARGS = JavaContainer.ARGS;
@@ -60,6 +61,8 @@ public interface WaratekJavaApp extends BasicEntity, Startable, HasShortName {
     AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_LAST = Sensors.newDoubleSensor("waratek.heapMemoryDelta.last", "Change in heap memory usage per second");
     AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW = Sensors.newDoubleSensor("waratek.heapMemoryDelta.windowed", "Average change in heap memory usage over 30s");
 
-    Collection<Entity> getJvmList();
+    List<Entity> getJvmList();
+
+    Cluster getJvmCluster();
 
 }

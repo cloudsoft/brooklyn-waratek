@@ -19,6 +19,9 @@ import java.lang.management.MemoryUsage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +36,7 @@ import brooklyn.event.feed.jmx.JmxAttributePollConfig;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
 
 import com.google.common.base.Function;
@@ -153,7 +157,11 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
 
                 .pollAttribute(new JmxAttributePollConfig<Double>(UsesJavaMXBeans.SYSTEM_LOAD_AVERAGE)
                         .objectName(waratekMXBeanName("OperatingSystem"))
-                        .attributeName("SystemLoadAverage"))
+                        .attributeName("SystemLoadAverage")
+                        .onSuccess((Function) new Function<Double, Double>() {
+                            @Override public Double apply(Double input) {
+                                return (input < 0d) ? null : input;
+                            }}))
                 .pollAttribute(new JmxAttributePollConfig<Integer>(UsesJavaMXBeans.AVAILABLE_PROCESSORS)
                         .objectName(waratekMXBeanName("OperatingSystem"))
                         .period(60, TimeUnit.SECONDS)
@@ -164,10 +172,62 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
     }
 
     @Override
+    public void postStart() {
+        Long heapSize = getConfig(MAX_HEAP_SIZE);
+        allocateHeap(heapSize);
+    }
+
+    @Override
     public void disconnectSensors() {
         disconnectServiceUpIsRunning();
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
         if (jmxHelper != null) jmxHelper.disconnect();
+    }
+
+    @Override
+    public void pause() {
+        String jvc = getAttribute(JavaContainer.JVC_NAME);
+        log.info("Pausing {}", jvc);
+
+        try {
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(waratekMXBeanName("VirtualContainer")));
+            jmxHelper.operation(object.getObjectName(), "suspendContainer");
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
+    }
+
+    @Override
+    public void resume() {
+        String jvc = getAttribute(JavaContainer.JVC_NAME);
+        log.info("Resume {}", jvc);
+
+        try {
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(waratekMXBeanName("VirtualContainer")));
+            jmxHelper.operation(object.getObjectName(), "resumeContainer");
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
+    }
+
+    @Override
+    public Long allocateHeap(Long size) {
+        String jvc = getAttribute(JavaContainer.JVC_NAME);
+        log.info("Allocate {} to {}", Strings.makeSizeString(size), jvc);
+
+        try {
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(waratekMXBeanName("Memory")));
+            Long oldSize = (Long) jmxHelper.getAttribute(object.getObjectName(), "MaximumHeapMemorySize");
+            jmxHelper.setAttribute(object.getObjectName(), "MaximumHeapMemorySize", size);
+            Long newSize = (Long) jmxHelper.getAttribute(object.getObjectName(), "MaximumHeapMemorySize");
+            if (log.isDebugEnabled()) {
+                log.debug("Changed max heap from {} to {}", Strings.makeSizeString(oldSize), Strings.makeSizeString(newSize));
+            }
+            setAttribute(MAX_HEAP_SIZE, newSize);
+            return oldSize;
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
     }
 
     @Override

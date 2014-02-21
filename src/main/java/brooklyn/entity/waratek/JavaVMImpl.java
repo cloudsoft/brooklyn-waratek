@@ -16,6 +16,7 @@
 package brooklyn.entity.waratek;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,9 +44,10 @@ import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.time.Duration;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
+public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
 
     private static final Logger log = LoggerFactory.getLogger(JavaVMImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
@@ -105,7 +107,10 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     public String getJvmName() { return getAttribute(JVM_NAME); }
 
     @Override
-    public Collection<Entity> getJvcList() { return containers.getMembers(); }
+    public List<Entity> getJvcList() { return ImmutableList.copyOf(containers.getMembers()); }
+
+    @Override
+    public Cluster getJvcCluster() { return containers; }
 
     /** The path to the root directory of the running CloudVM */
     @Override
@@ -139,6 +144,21 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM, UsesJmx {
     public void doStop() {
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
         super.doStop();
+    }
+
+    @Override
+    public Integer resize(Integer desiredSize) {
+        Integer maxSize = getConfig(JVC_CLUSTER_MAX_SIZE);
+        if (desiredSize > maxSize) {
+            return getJvcCluster().resize(maxSize);
+        } else {
+            return getJvcCluster().resize(desiredSize);
+        }
+    }
+
+    @Override
+    public Integer getCurrentSize() {
+        return getJvcCluster().getCurrentSize();
     }
 
     @Override

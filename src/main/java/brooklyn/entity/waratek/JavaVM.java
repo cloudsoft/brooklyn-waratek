@@ -15,18 +15,21 @@
  */
 package brooklyn.entity.waratek;
 
-import java.util.Collection;
+import java.util.List;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
+import brooklyn.entity.trait.Resizable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
@@ -35,7 +38,7 @@ import brooklyn.location.basic.PortRanges;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(JavaVMImpl.class)
-public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
+public interface JavaVM extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName {
 
     String DEFAULT_JVM_NAME_FORMAT = "jvm-brooklyn-%1$s";
     String ALTERNATIVE_JVM_NAME_FORMAT = "jvm-%2$d";
@@ -64,7 +67,7 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
     ConfigKey<Boolean> USE_WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", true);
 
     @SetFromFlag("heapSize")
-    ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey("waratek.jvm.heap.size", "Size of heap memory to allocate (in bytes)");
+    ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey("waratek.jvm.heapSize", "Size of heap memory to allocate (in bytes)");
 
     @SetFromFlag("jmxAgentMode")
     ConfigKey<JmxAgentModes> JMX_AGENT_MODE = ConfigKeys.newConfigKeyWithDefault(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT);
@@ -100,7 +103,9 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, HasShortName {
 
     AttributeSensor<String> ROOT_DIRECTORY = Sensors.newStringSensor("waratek.jvm.rootDirectory", "The JVM installation root directory");
 
-    Collection<Entity> getJvcList();
+    List<Entity> getJvcList();
+
+    Cluster getJvcCluster();
 
     String getJvmName();
 

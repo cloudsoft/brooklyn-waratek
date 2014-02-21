@@ -16,6 +16,7 @@
 package brooklyn.entity.waratek;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,10 @@ public class WaratekJavaAppImpl extends BasicEntityImpl implements WaratekJavaAp
     }
 
     @Override
-    public Collection<Entity> getJvmList() { return virtualMachines.getMembers(); }
+    public List<Entity> getJvmList() { return ImmutableList.copyOf(virtualMachines.getMembers()); }
+
+    @Override
+    public Cluster getJvmCluster() { return virtualMachines; }
 
     @Override
     public void start(Collection<? extends Location> locations) {
@@ -102,6 +106,16 @@ public class WaratekJavaAppImpl extends BasicEntityImpl implements WaratekJavaAp
     public void restart() {
         stop();
         start(ImmutableList.of(location));
+    }
+
+    @Override
+    public Integer resize(Integer desiredSize) {
+        return getJvmCluster().resize(desiredSize);
+    }
+
+    @Override
+    public Integer getCurrentSize() {
+        return getJvmCluster().getCurrentSize();
     }
 
     @Override

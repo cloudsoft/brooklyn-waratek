@@ -99,7 +99,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, cmd, getRootDirectory());
         } catch (Exception e) {
-            Exceptions.propagate(e);
+            throw Exceptions.propagate(e);
         }
     }
 
@@ -112,7 +112,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             jmxHelper.operation(object.getObjectName(), "startContainer", jvc);
         } catch (Exception e) {
-            Exceptions.propagate(e);
+            throw Exceptions.propagate(e);
         }
     }
 
@@ -142,14 +142,14 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
             }
             jmxHelper.operation(object.getObjectName(), "undefineContainer", jvc);
         } catch (Exception e) {
-            Exceptions.propagate(e);
+            throw Exceptions.propagate(e);
         }
         if (jmxHelper != null) jmxHelper.disconnect();
     }
 
     @Override
     public String getHeapSize() {
-        Long heapSize = getEntity().getConfig(JavaContainer.HEAP_SIZE, 512 * (1024L * 1024L));
+        Long heapSize = getEntity().getConfig(JavaContainer.MAX_HEAP_SIZE, 512 * (1024L * 1024L));
         int megabytes = (int) (heapSize / (1024L * 1024L));
         return megabytes + "m";
     }
