@@ -1,10 +1,10 @@
 id: simple-http-application
 name: Simple HTTP Appplication
-location: waratek-eu-west-1
 services:
  - serviceType: brooklyn.entity.waratek.WaratekJavaApp
    id: waratek-http-application
    name: Waratek HTTP Application
+   location: waratek-eu-west-1
    brooklyn.config:
      waratek.jvm.initialSize: 2
      jvmSpec:
