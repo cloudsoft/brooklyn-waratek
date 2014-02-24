@@ -20,15 +20,12 @@ import java.util.List;
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
-import brooklyn.entity.basic.BasicEntity;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
-import brooklyn.entity.trait.Resizable;
-import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
@@ -36,7 +33,7 @@ import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekJavaAppImpl.class)
 @Catalog(name="WaratekJavaApp", description="Waratek Java Application.", iconUrl="classpath://waratek-logo.png")
-public interface WaratekJavaApp extends BasicEntity, Startable, Resizable, HasShortName {
+public interface WaratekJavaApp extends DynamicCluster, HasShortName {
 
     @SetFromFlag("args")
     ConfigKey<List> ARGS = JavaContainer.ARGS;

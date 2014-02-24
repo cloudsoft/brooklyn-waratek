@@ -34,13 +34,16 @@ import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJavaMXBeans;
-import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
+import brooklyn.policy.PolicySpec;
+import brooklyn.policy.ha.ServiceFailureDetector;
+import brooklyn.policy.ha.ServiceReplacer;
+import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.time.Duration;
 
@@ -64,11 +67,20 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
         EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
                 .configure(JavaContainer.JVM, this);
+        if (getConfig(HA_POLICY_ENABLE)) {
+            jvcSpec.policy(PolicySpec.create(ServiceFailureDetector.class));
+            jvcSpec.policy(PolicySpec.create(ServiceRestarter.class)
+                        .configure(ServiceRestarter.FAILURE_SENSOR_TO_MONITOR, ServiceFailureDetector.ENTITY_FAILED));
+        }
 
         containers = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Java Containers"));
+        if (getConfig(HA_POLICY_ENABLE)) {
+            containers.addPolicy(PolicySpec.create(ServiceReplacer.class)
+                    .configure(ServiceReplacer.FAILURE_SENSOR_TO_MONITOR, ServiceRestarter.ENTITY_RESTART_FAILED));
+        }
         if (Entities.isManaged(this)) Entities.manage(containers);
 
         addEnricher(Enrichers.builder()
