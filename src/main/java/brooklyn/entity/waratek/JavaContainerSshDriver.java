@@ -141,11 +141,13 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
         log.info("Stopping {}", jvc);
 
         try {
-            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            if (isRunning()) {
-                jmxHelper.operation(object.getObjectName(), "shutdownContainer", jvc);
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
+            if (object != null) {
+                if (isRunning()) {
+                    jmxHelper.operation(object.getObjectName(), "shutdownContainer");
+                }
+                jmxHelper.operation(object.getObjectName(), "undefineContainer");
             }
-            jmxHelper.operation(object.getObjectName(), "undefineContainer", jvc);
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
