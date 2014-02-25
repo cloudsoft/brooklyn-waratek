@@ -63,15 +63,28 @@ public class WaratekJavaAppImpl extends DynamicClusterImpl implements WaratekJav
 
         virtualMachines = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
+                .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
                 .configure(DynamicCluster.MEMBER_SPEC, jvmSpec)
                 .displayName("Java Virtual Machines"));
         if (Entities.isManaged(this)) Entities.manage(virtualMachines);
 
         virtualMachines.addEnricher(Enrichers.builder()
-                .aggregating(UsesJavaMXBeans.USED_HEAP_MEMORY)
+                .aggregating(TOTAL_HEAP_MEMORY)
                 .computingSum()
                 .fromMembers()
                 .publishing(TOTAL_HEAP_MEMORY)
+                .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .computingSum()
+                .fromMembers()
+                .publishing(HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(AVERAGE_CPU_USAGE)
+                .computingAverage()
+                .fromMembers()
+                .publishing(AVERAGE_CPU_USAGE)
                 .build());
         virtualMachines.addEnricher(Enrichers.builder()
                 .aggregating(JVC_COUNT)
@@ -81,7 +94,7 @@ public class WaratekJavaAppImpl extends DynamicClusterImpl implements WaratekJav
                 .build());
 
         addEnricher(Enrichers.builder()
-                .propagating(TOTAL_HEAP_MEMORY, JVC_COUNT)
+                .propagating(TOTAL_HEAP_MEMORY, JVC_COUNT, AVERAGE_CPU_USAGE, HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .from(virtualMachines)
                 .build());
         addEnricher(Enrichers.builder()

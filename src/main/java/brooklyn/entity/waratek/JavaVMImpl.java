@@ -86,11 +86,6 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
         }
         if (Entities.isManaged(this)) Entities.manage(containers);
 
-        addEnricher(Enrichers.builder()
-                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekJavaApp.JVC_COUNT))
-                .from(containers)
-                .build());
-
         containers.addEnricher(Enrichers.builder()
                 .aggregating(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .computingSum()
@@ -98,10 +93,25 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
                 .publishing(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .build());
         containers.addEnricher(Enrichers.builder()
+                .aggregating(UsesJavaMXBeans.USED_HEAP_MEMORY)
+                .computingSum()
+                .fromMembers()
+                .publishing(WaratekJavaApp.TOTAL_HEAP_MEMORY)
+                .build());
+        containers.addEnricher(Enrichers.builder()
                 .aggregating(JavaContainer.CPU_USAGE)
                 .computingAverage()
                 .fromMembers()
                 .publishing(WaratekJavaApp.AVERAGE_CPU_USAGE)
+                .build());
+
+        addEnricher(Enrichers.builder()
+                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekJavaApp.JVC_COUNT))
+                .from(containers)
+                .build());
+        addEnricher(Enrichers.builder()
+                .propagating(WaratekJavaApp.TOTAL_HEAP_MEMORY, WaratekJavaApp.AVERAGE_CPU_USAGE, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .from(containers)
                 .build());
     }
 
@@ -150,8 +160,6 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
     protected void connectSensors() {
         super.connectSensors();
         jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
-        addEnricher(TimeWeightedDeltaEnricher.getPerSecondDeltaEnricher(this, UsesJavaMXBeans.USED_HEAP_MEMORY, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST));
-        addEnricher(new RollingTimeWindowMeanEnricher<Double>(this, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_LAST, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, Duration.ONE_MINUTE));
         connectServiceUpIsRunning();
     }
 

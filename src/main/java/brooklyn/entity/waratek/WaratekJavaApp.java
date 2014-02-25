@@ -57,6 +57,7 @@ public interface WaratekJavaApp extends DynamicCluster, HasShortName {
     AttributeSensor<Long> TOTAL_HEAP_MEMORY = Sensors.newLongSensor("waratek.heapMemory.total", "Total aggregated heap memory usage");
     AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_LAST = Sensors.newDoubleSensor("waratek.heapMemoryDelta.last", "Change in heap memory usage per second");
     AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW = Sensors.newDoubleSensor("waratek.heapMemoryDelta.windowed", "Average change in heap memory usage over 30s");
+    AttributeSensor<Double> AVERAGE_CPU_USAGE = Sensors.newDoubleSensor("waratek.cpuUsage.average", "Average CPU usage across the cluster");
 
     List<Entity> getJvmList();
 
