@@ -53,7 +53,9 @@ public class JavaContainerImpl extends VanillaJavaAppImpl implements JavaContain
     public void init() {
         log.info("Starting JVC id {}", getId());
 
-        setAttribute(JVC_NAME, String.format(getConfig(JavaContainer.JVC_NAME_FORMAT), getId(), counter.incrementAndGet()));
+        String jvcName = String.format(getConfig(JavaContainer.JVC_NAME_FORMAT), getId(), counter.incrementAndGet());
+        setDisplayName(jvcName);
+        setAttribute(JVC_NAME, jvcName);
     }
 
     @Override

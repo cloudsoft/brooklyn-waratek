@@ -62,7 +62,9 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
     public void init() {
         log.info("Starting JVM id {}", getId());
 
-        setAttribute(JVM_NAME, String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet()));
+        String jvmName = String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet());
+        setDisplayName(jvmName);
+        setAttribute(JVM_NAME, jvmName);
 
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
         EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
@@ -75,6 +77,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
 
         containers = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
+                .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Java Containers"));
         if (getConfig(HA_POLICY_ENABLE)) {
@@ -86,6 +89,19 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
         addEnricher(Enrichers.builder()
                 .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekJavaApp.JVC_COUNT))
                 .from(containers)
+                .build());
+
+        containers.addEnricher(Enrichers.builder()
+                .aggregating(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .computingSum()
+                .fromMembers()
+                .publishing(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .build());
+        containers.addEnricher(Enrichers.builder()
+                .aggregating(JavaContainer.CPU_USAGE)
+                .computingAverage()
+                .fromMembers()
+                .publishing(WaratekJavaApp.AVERAGE_CPU_USAGE)
                 .build());
     }
 
