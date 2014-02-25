@@ -1,0 +1,19 @@
+<form action="">
+
+<input type="radio" class="account-change" name="account" value="managed" checked> <b>Managed:</b>
+	This service will be run as a managed service.<br/><br/>
+
+<input type="radio" class="account-change" name="account" value="user"> <b>Your Account:</b>
+	This service will run in your environment, on VM's in your cloud account.
+	<div id="account-user-details" class="hide">
+	<br/>
+	Please supply your credentials (required) and optionally one or more public keys
+	which will be authorized for access to the individual nodes.
+	(Note that any SLA's are voided if you destroy your own nodes!)
+	  <table style="margin-left: 48px;">
+		<tr><td>Identity</td><td>&nbsp;</td><td><input type="text"/></td></tr>
+		<tr><td>Credential</td><td>&nbsp;</td><td><input type="password"/></td></tr>
+	  </table>
+	</div>
+
+</form>

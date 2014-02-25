@@ -97,6 +97,7 @@ public class Main {
         }
 
         launcher.start();
+        launcher.getServerDetails().getWebServer().deploy("/dashboard", "brooklyn-waratek-dashboard.war");
 
         if (applicationClass != null) {
             Entities.dumpInfo(launcher.getApplications());

@@ -1,0 +1,11 @@
+#chart_container {
+    position: relative;
+}
+
+#chart_container.inline #chart {
+    display: inline-block;
+}
+#chart_container.inline #y_axis {
+    display: inline-block;
+    text-align: right;
+}

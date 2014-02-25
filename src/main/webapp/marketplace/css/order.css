@@ -1,0 +1,27 @@
+
+.order-tabs-parent {
+	margin-top: 18px;
+}
+.order-tabs {
+	border-bottom: 1px solid #ccc;
+	padding-left: 24px;
+	padding-right: 24px;
+}
+.order-tabs .tab {
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+.order-tabs .tab:hover {
+	border-bottom: 1px solid #008;
+	cursor: hand; cursor: pointer;
+}
+
+.order-tabs .tab.active {
+	border-bottom: 2px solid #008;
+}
+
+.marketplace-box #title {
+	font-weight: bold;
+	margin-bottom: 6px;
+}

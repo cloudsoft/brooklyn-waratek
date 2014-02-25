@@ -1,0 +1,51 @@
+<div class="app-loz" style="min-height: 150px;" id="<%= typeof(app_id) !== 'undefined' ? app_id : 'custom' %>">
+<% if (typeof(custom) !== 'undefined') { %>
+  <div class="loz-title"><span><b><%= custom.header %></b><br/><%= custom.message %></span></div>
+<% } else { %>
+	<div class="loz-title"><span><%= name %></span></div>
+	<div class="loz-icon" style="display: table;"><div class="loz-icon-cell">
+      <% if (icon) { %> 
+        <img src="<%= icon %>" class="loz-icon"/>
+      <% } %>
+    </div></div>
+    
+    <div class="loz-boxes">
+
+    <% if (typeof(status) !== 'undefined') { %>
+      <% if (status=='running') { %>
+          <div class="loz-box-info green">
+            <span class="icon-ok icon-white">&nbsp;</span>
+          </div>
+      <% } else if (status=='stopped') { %>
+          <div class="loz-box-info green">
+            <span class="icon-off icon-white">&nbsp;</span>
+          </div>
+      <% } else if (status=='on-fire') { %>
+          <div class="loz-box-info red">
+            <span class="icon-fire icon-white">&nbsp;</span>
+          </div>
+      <% } else { /* stopping/starting/unreported */ %>
+          <div class="loz-box-info green">
+            <span class="icon-refresh icon-white">&nbsp;</span>
+          </div>
+      <% } %>
+    <% } %>
+    
+    <% if (typeof(servers) !== 'undefined' && servers) { %>
+        <div class="loz-box-info">
+            <span><b><%= servers.length %></b></span>
+            <span class="icon-hdd icon-white">&nbsp;</span>
+        </div>
+    <% } %>
+    
+    <% if (typeof(sensors) !== 'undefined' && sensors["webapp.reqs.perSec.windowed"]) { %>
+        <div class="loz-box-info">
+            <span><b><%= Math.round(sensors["webapp.reqs.perSec.windowed"]) %></b></span>
+            <table class="small-multiline"><tr><td>reqs /</td></tr><tr><td>sec</td></tr></table>
+        </div>
+    <% } %>
+            
+    </div>
+    
+<% } %>
+</div>

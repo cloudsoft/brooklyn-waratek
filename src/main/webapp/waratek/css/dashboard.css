@@ -1,0 +1,152 @@
+
+
+/*
+
+dark blue:  #082C54
+med blue: #1777B2
+light blue:  #6FC5F0
+
+red:  #EB372B
+
+*/
+
+a { color: #082C54; }
+a:hover { color: #1777B2; text-decoration: none; }
+
+.header-bar { background-color: #082C54 }
+.headed-box .box-body .box-info { background-color: #c8d8e0;  }
+
+ 
+.app-loz {
+	margin: 12px;
+	border:2px solid #b0b0b0;
+	border-radius:25px;
+	width: 150px;
+	height: 150px;
+	color: #011940;
+	/* #7E8BA1 - but for transparency have to use rgba which requies decimal not hex */
+	background: rgb(223, 226, 231); /* fall-back for browsers that don't support rgba */
+    background: rgba(126, 139, 161, .1);
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+}
+
+.app-loz:hover {
+	border:3px solid #013940;
+	margin: 11px;
+	cursor: pointer; cursor: hand;
+}
+.app-loz.selected {
+    border:3px solid #017980;
+    margin: 11px;
+    cursor: pointer; cursor: hand;
+}
+
+#applications-box .app-main {
+    display: block;
+    max-height: 200px;
+    overflow-y: scroll;
+    width: auto;
+}
+#applications-box .app-info {
+    width: 180px;
+}
+
+.app-loz .loz-title {
+	margin-left: 12px;
+	margin-right: 12px;
+	margin-top: 12px;
+	text-align: center;
+	position: relative;
+	z-index: 20;
+	height: 18px;
+    max-height: 18px;
+    font-weight: 200;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+.app-loz div.loz-icon {
+    position: absolute;
+    top: 0;
+    height: 150px !important;
+    width: 150px !important;
+    z-index: 10;
+    overflow-y: visible;
+}
+.app-loz div.loz-icon-cell {
+    display: table-cell; vertical-align: middle;
+}
+.app-loz img.loz-icon {
+	max-height: 100px !important;
+    max-width: 120px !important;
+}
+
+.infra-loz {
+	margin: 12px;
+	border:2px solid #b0b0b0;
+	border-radius:25px;
+	width: 300px;
+	height: 150px;
+	color: #011940;
+	/* #7E8BA1 - but for transparency have to use rgba which requies decimal not hex */
+	background: rgb(223, 226, 231); /* fall-back for browsers that don't support rgba */
+    background: rgba(126, 139, 161, .1);
+    display: inline-block;
+}
+
+.loz-boxes {
+    margin: 0px -25px;
+    width: 200px;
+    position: relative;
+    top: 105px; 
+    text-align: center;
+}
+
+.loz-box-info {
+    margin: 1px;
+    display: inline-block; 
+    border: 2px solid gray; 
+    background-color: #082C54; 
+    color: #ffffff; 
+    padding: 1px 3px; 
+    vertical-align: middle;
+}
+.loz-box-info.green {
+    background-color: #373; 
+}
+.loz-box-info.red {
+    background-color: #EB372B; 
+}
+
+.loz-box-info span {
+    vertical-align: middle; font-size: 120%;
+}
+
+.small-multiline {
+    font-size: 60%;
+    display: inline-block;
+    line-height: 7px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+#infrastructure-box .for_label {
+    text-align: center;
+    max-height: 36px;
+    overflow-y: scroll;
+}
+#infrastructure-box.headed-box .box-body > td {
+    padding: 16px 12px 2px 12px;
+}
+
+div#group_y_axis {
+    display: table-cell; margin: 0px 5px; vertical-align: top; padding-right: 12px;
+}
+
+
+[class^="icon-"], [class*=" icon-"] {
+    width: 15px;
+    height: 15px;
+}
