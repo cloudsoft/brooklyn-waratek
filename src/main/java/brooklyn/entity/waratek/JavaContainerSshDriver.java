@@ -23,6 +23,7 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
     private static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
     private static final String VIRTUAL_CONTAINER_MX_BEAN = "com.waratek:type=%s,name=VirtualContainer";
     private static final String STATUS_RUNNING = "Running";
+    private static final String STATUS_SHUT_OFF = "Shut Off";
 
     private volatile JmxHelper jmxHelper;
 
@@ -123,8 +124,12 @@ public class JavaContainerSshDriver extends VanillaJavaAppSshDriver implements J
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
-            String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
-            return STATUS_RUNNING.equals(status);
+            if (object != null) {
+                String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
+                return !STATUS_SHUT_OFF.equals(status); // Not Shut Off
+            } else {
+                return false;
+            }
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
