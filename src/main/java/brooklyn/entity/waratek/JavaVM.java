@@ -22,7 +22,6 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.java.UsesJmx;
@@ -105,7 +104,7 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resiz
 
     List<Entity> getJvcList();
 
-    Cluster getJvcCluster();
+    DynamicCluster getJvcCluster();
 
     String getJvmName();
 

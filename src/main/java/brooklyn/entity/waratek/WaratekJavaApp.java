@@ -21,7 +21,6 @@ import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
-import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
@@ -61,6 +60,6 @@ public interface WaratekJavaApp extends DynamicCluster, HasShortName {
 
     List<Entity> getJvmList();
 
-    Cluster getJvmCluster();
+    DynamicCluster getJvmCluster();
 
 }

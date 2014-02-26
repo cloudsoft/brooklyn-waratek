@@ -25,8 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.enricher.Enrichers;
-import brooklyn.enricher.RollingTimeWindowMeanEnricher;
-import brooklyn.enricher.TimeWeightedDeltaEnricher;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.SoftwareProcessImpl;
@@ -45,7 +43,6 @@ import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.task.DynamicTasks;
-import brooklyn.util.time.Duration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -148,7 +145,7 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
     public List<Entity> getJvcList() { return ImmutableList.copyOf(containers.getMembers()); }
 
     @Override
-    public Cluster getJvcCluster() { return containers; }
+    public DynamicCluster getJvcCluster() { return containers; }
 
     /** The path to the root directory of the running CloudVM */
     @Override

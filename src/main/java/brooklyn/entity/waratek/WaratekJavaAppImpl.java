@@ -16,8 +16,8 @@
 package brooklyn.entity.waratek;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,35 +25,24 @@ import org.slf4j.LoggerFactory;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.Effector;
 import brooklyn.entity.Entity;
-import brooklyn.entity.basic.BrooklynTasks;
 import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.effector.Effectors;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.group.DynamicClusterImpl;
-import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.Resizable;
-import brooklyn.entity.trait.StartableMethods;
-import brooklyn.location.Location;
 import brooklyn.management.Task;
-import brooklyn.management.TaskAdaptable;
 import brooklyn.management.internal.EffectorUtils;
-import brooklyn.util.collections.MutableMap;
 import brooklyn.util.task.DynamicTasks;
-import brooklyn.util.task.ParallelTask;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 public class WaratekJavaAppImpl extends DynamicClusterImpl implements WaratekJavaApp {
 
     private static final Logger log = LoggerFactory.getLogger(WaratekJavaAppImpl.class);
 
-    private Location location;
     private DynamicCluster virtualMachines;
 
     @Override
@@ -119,24 +108,11 @@ public class WaratekJavaAppImpl extends DynamicClusterImpl implements WaratekJav
     }
 
     @Override
-    public Cluster getJvmCluster() { return virtualMachines; }
+    public DynamicCluster getJvmCluster() { return virtualMachines; }
 
     @Override
-    public void start(Collection<? extends Location> locations) {
-        log.info("Starting application in {}", locations);
-        location = Iterables.getOnlyElement(locations);
-        DynamicTasks.queue(StartableMethods.startingChildren(this, location));
-    }
-
-    @Override
-    public void stop() {
-        DynamicTasks.queue(StartableMethods.stoppingChildren(this));
-    }
-
-    @Override
-    public void restart() {
-        stop();
-        start(ImmutableList.of(location));
+    protected EntitySpec<?> getMemberSpec() {
+        return getConfig(MEMBER_SPEC);
     }
 
     private Task<?> invoke(Entity entity, Effector<?> effector, Object...args) {
@@ -144,52 +120,34 @@ public class WaratekJavaAppImpl extends DynamicClusterImpl implements WaratekJav
     }
 
     @Override
-    public synchronized Integer resize(Integer desiredSize) {
-        List<TaskAdaptable<?>> tasks = Lists.newArrayList();
-        int delta = desiredSize - getCurrentSize();
+    protected Collection<Entity> grow(int delta) {
+        for (Entity entity : getJvmList()) {
+            int maxJvcs = entity.getConfig(JavaVM.JVC_CLUSTER_MAX_SIZE);
+            int jvcCount = entity.getAttribute(JVC_COUNT);
+            if (jvcCount < maxJvcs) {
+                int jvcDelta = Math.min(delta, maxJvcs - jvcCount);
+                DynamicTasks.queue(invoke(entity, Resizable.RESIZE, jvcCount + jvcDelta));
+                delta -= jvcDelta;
+            }
+        }
         if (delta > 0) {
-            for (Entity entity : getJvmList()) {
-                int maxJvcs = entity.getConfig(JavaVM.JVC_CLUSTER_MAX_SIZE);
-                int jvcCount = entity.getAttribute(JVC_COUNT);
-                if (jvcCount < maxJvcs) {
-                    int jvcDelta = Math.min(delta, maxJvcs - jvcCount);
-                    tasks.add(invoke(entity, Resizable.RESIZE, jvcCount + jvcDelta));
-                    delta -= jvcDelta;
-                }
-            }
-            if (delta > 0) {
-                int jvmClusterSize = getJvmCluster().getCurrentSize();
-                tasks.add(invoke(getJvmCluster(), Resizable.RESIZE, jvmClusterSize + 1));
-            }
-        } else if (delta < 0) {
-            for (Entity entity : getJvmList()) {
-                int jvcCount = entity.getAttribute(JVC_COUNT);
-                if (jvcCount > 0) {
-                    int jvcDelta = -Math.min(Math.abs(delta), jvcCount);
-                    tasks.add(invoke(entity, Resizable.RESIZE, jvcCount - jvcDelta));
-                    delta += jvcDelta;
-                }
-            }
-            if (delta < 0) {
-                int jvmClusterSize = getJvmCluster().getCurrentSize();
-                if (jvmClusterSize > 0) {
-                    tasks.add(invoke(getJvmCluster(), Resizable.RESIZE, jvmClusterSize - 1));
-                }
+            int jvmClusterSize = getJvmCluster().getCurrentSize();
+            DynamicTasks.queue(invoke(getJvmCluster(), Resizable.RESIZE, jvmClusterSize + 1));
+            DynamicTasks.queue(invoke(this, Resizable.RESIZE, getCurrentSize() + delta));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    protected void shrink(int delta) {
+        for (Entity entity : getJvmList()) {
+            int jvcCount = entity.getAttribute(JVC_COUNT);
+            if (jvcCount > 0) {
+                int jvcDelta = -Math.min(Math.abs(delta), jvcCount);
+                DynamicTasks.queue(invoke(entity, Resizable.RESIZE, jvcCount - jvcDelta));
+                delta -= jvcDelta;
             }
         }
-        if (tasks.size() > 0) {
-            ParallelTask<?> invoke = new ParallelTask(
-                    MutableMap.of(
-                            "displayName", "Resize",
-                            "description", "Invoking resize across cluster",
-                            "tag", BrooklynTasks.tagForCallerEntity(this)),
-                    tasks);
-            DynamicTasks.queue(invoke);
-            if (delta != 0) {
-                DynamicTasks.queue(invoke(this, Resizable.RESIZE, desiredSize));
-            }
-        }
-        return getCurrentSize();
     }
 
     @Override
