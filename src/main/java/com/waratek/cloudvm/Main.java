@@ -15,6 +15,8 @@
  */
 package com.waratek.cloudvm;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,8 +30,10 @@ import brooklyn.launcher.BrooklynLauncher;
 import brooklyn.util.CommandLineUtil;
 import brooklyn.util.exceptions.Exceptions;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 
 public class Main {
 
@@ -57,22 +61,36 @@ public class Main {
         String port = CommandLineUtil.getCommandLineOption(args, "--port", "8081+");
         String location = CommandLineUtil.getCommandLineOption(args, "--location");
         String applicationClassName = CommandLineUtil.getCommandLineOption(args, "--class");
+        String blueprintFileName = CommandLineUtil.getCommandLineOption(args, "--yaml");
 
         if (!args.isEmpty()) {
             warnAndExit("Unknown options: " + Joiner.on(" ").join(args));
         }
 
-        // load the right application class, if needed
+        // load the right application class or YAML, if needed
         Class<? extends StartableApplication> applicationClass = null;
+        String blueprint = null;
         if ("application".equals(command)) {
-            if (applicationClassName == null) {
-                warnAndExit("Missing option: `--class <Class>` must be supplied for command `application`");
-            } else {
+            if (applicationClassName == null && blueprintFileName == null) {
+                warnAndExit("Missing option: `--class <Class>` or `--yaml <Blueprint>` must be supplied for command `application`");
+            } else if (applicationClassName != null && blueprintFileName != null) {
+                warnAndExit("Invalid option: `--class <Class>` and `--yaml <Blueprint>` cannot be supplied together for command `application`");
+            }
+            if (blueprintFileName != null) {
+                if (!Files.getFileExtension(blueprintFileName).equals("yaml")) {
+                    warnAndExit("Invalid option: `" + blueprintFileName + "` must be a YAML blueprint");
+                }
+                blueprint = loadBlueprint(blueprintFileName);
+            }
+            if (applicationClassName != null) {
                 applicationClass = loadAppClass(applicationClassName);
             }
         } else {
             if (applicationClassName != null) {
                 warnAndExit("Invalid option: `--class <Class>` is only valid for command `application`");
+            }
+            if (blueprintFileName != null) {
+                warnAndExit("Invalid option: `--yaml <Blueprint>` is only valid for command `application`");
             }
 
             if ("launch".equals(command)) {
@@ -88,19 +106,30 @@ public class Main {
         launcher.webconsolePort(port);
 
         if (applicationClass != null) {
-            launcher.application(EntitySpec.create(StartableApplication.class, applicationClass).displayName("CloudVM Java Application"));
-            launcher.location(location != null ? location : DEFAULT_LOCATION);
+            launcher.application(EntitySpec.create(StartableApplication.class, applicationClass)
+                            .displayName("CloudVM Java Application"))
+                    .location(location != null ? location : DEFAULT_LOCATION);
         } else {
             if (location != null) {
-                warnAndExit("Invalid option: `--location <Location>` is only valid when starting an app");
+                warnAndExit("Invalid option: `--location <Location>` is only valid when starting an appplication");
+            }
+            if (blueprint != null) {
+                launcher.application(blueprint);
             }
         }
 
         launcher.start();
 
-        if (applicationClass != null) {
+        if (applicationClass != null || blueprint != null) {
             Entities.dumpInfo(launcher.getApplications());
-            log.info("Brooklyn start of "+command+" "+applicationClass.getSimpleName()+" completed; " +
+            String applicationName = null;
+            if (blueprint != null) {
+                applicationName = blueprintFileName;
+            }
+            if (applicationClass != null) {
+                applicationName = applicationClass.getSimpleName();
+            }
+            log.info("Brooklyn start of "+command+" "+applicationName+" completed; " +
             		"console at "+launcher.getServerDetails().getWebServerUrl());
         }
     }
@@ -115,9 +144,20 @@ public class Main {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    protected static String loadBlueprint(String blueprintFileName) {
+        try {
+            File blueprintFile = new File(blueprintFileName);
+            return Files.toString(blueprintFile, Charsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Could not load '" + blueprintFileName + " (rethrowing): " + e);
+            throw Exceptions.propagate(e);
+        }
+    }
+
     protected static void showHelp() {
         System.out.println();
-        System.out.println("Usage: ./start.sh <command> [ --port port ] [ --location location ] [ --class class ]");
+        System.out.println("Usage: ./start.sh <command> [--port port] [--location location] [--class class | --yaml blueprint]");
         System.out.println();
         System.out.println("where <command> is any of:");
         System.out.println("        server       start the Brooklyn server (no applications)");

@@ -34,7 +34,7 @@ import brooklyn.util.flags.SetFromFlag;
 public interface JavaContainer extends VanillaJavaApp, Startable, UsesJavaMXBeans, HasShortName {
 
     String DEFAULT_JVC_NAME_FORMAT = "jvc-brooklyn-%1$s";
-    String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-brooklyn-%2$d";
+    String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-%2$d";
 
     @SetFromFlag("maxHeapSize")
     BasicAttributeSensorAndConfigKey<Long> MAX_HEAP_SIZE = new BasicAttributeSensorAndConfigKey(Long.class,

@@ -1,29 +1,56 @@
+# Copyright 2014 by Cloudsoft Corporation Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 id: simple-http-application
 name: Simple HTTP Appplication
+origin: https://github.com/cloudsoft/brooklyn-waratek/
+locations:
+ - waratek-eu-west-1
 services:
  - serviceType: brooklyn.entity.waratek.WaratekJavaApp
    id: waratek-http-application
    name: Waratek HTTP Application
-   location: waratek-eu-west-1
    brooklyn.config:
      waratek.jvm.initialSize: 2
-     jvmSpec:
+     waratek.jvm.spec:
        $brooklyn:entitySpec:
          type: brooklyn.entity.waratek.JavaVM
          brooklyn.config:
            waratek.runAs: true
            waratek.debug: false
-           waratek.jvm.heapSize: 1000000000
+           waratek.policy.ha.enable: true
+           waratek.jvm.heapSize: 4000000000
            waratek.jvc.initialSize: 2
            waratek.jvc.maxSize: 4
            waratek.admin.ssh.enable: true
            waratek.admin.ssh.port: 1022
-           jvcSpec:
+           waratek.jvc.spec:
              $brooklyn:entitySpec:
                type: brooklyn.entity.waratek.JavaContainer
                brooklyn.config:
-                 vanillaJavaApp.mainClass: com.example.memoryWebServer
+                 waratek.jvc.maxHeapSize: 2000000000
+                 waratek.jvc.nameFormat: "http-%2$d"
+                 vanillaJavaApp.mainClass: com.example.MemoryWebServer
                  vanillaJavaApp.classpath: brooklyn-waratek-examples.jar
+   brooklyn.policies:
+    - policyType: brooklyn.policy.autoscaling.AutoScalerPolicy
+      brooklyn.config:
+        metric: $brooklyn:sensor("brooklyn.entity.waratek.WaratekJavaApp", "waratek.cpuUsage.average")
+        metricLowerBound: 0.1
+        metricUpperBound: 0.5
+        minPoolSize: 1
+        maxPoolSize: 20
  - serviceType: brooklyn.entity.proxy.nginx.NginxController
    id: nginx-http-proxy
    name: Nginx HTTP Proxy
