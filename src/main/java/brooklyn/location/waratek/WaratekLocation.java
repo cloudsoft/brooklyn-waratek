@@ -15,37 +15,142 @@
  */
 package brooklyn.location.waratek;
 
+import java.io.Closeable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import brooklyn.config.ConfigKey;
+import brooklyn.entity.Entity;
+import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
+import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.location.cloud.AvailabilityZoneExtension;
+import brooklyn.util.collections.MutableMap;
+import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.stream.Streams;
 
-public class WaratekLocation extends AbstractLocation implements MachineProvisioningLocation<WaratekVirtualMachineLocation> {
+import com.google.common.base.Objects;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
-    @Override
-    public WaratekVirtualMachineLocation obtain(Map<?, ?> flags) throws NoMachinesAvailableException {
-        // TODO Auto-generated method stub
-        return null;
+public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<WaratekMachineLocation> {
+
+    private Object lock;
+
+    @SetFromFlag("provisioner")
+    protected MachineProvisioningLocation<SshMachineLocation> provisioner;
+
+    @SetFromFlag("infrastructure")
+    protected WaratekInfrastructure infrastructure;
+
+    protected final AtomicInteger obtainCounter = new AtomicInteger();
+
+    public WaratekLocation() {
+        this(Maps.newLinkedHashMap());
+    }
+
+    public WaratekLocation(Map properties) {
+        super(properties);
+
+        if (isLegacyConstruction()) {
+            init();
+        }
     }
 
     @Override
-    public MachineProvisioningLocation<WaratekVirtualMachineLocation> newSubLocation(Map<?, ?> newFlags) {
-        // TODO Auto-generated method stub
-        return null;
+    public void init() {
+        super.init();
+        addExtension(AvailabilityZoneExtension.class, new WaratekContainerExtension(getManagementContext(), this));
     }
 
     @Override
-    public void release(WaratekVirtualMachineLocation machine) {
-        // TODO Auto-generated method stub
-        
+    public String toString() {
+        Object identity = getId();
+        String configDescription = getLocalConfigBag().getDescription();
+        if (configDescription!=null && configDescription.startsWith(getClass().getSimpleName()))
+            return configDescription;
+        return getClass().getSimpleName()+"["+getDisplayName()+":"+(identity != null ? identity : null)+
+                (configDescription!=null ? "/"+configDescription : "") + "]";
     }
 
     @Override
-    public Map<String, Object> getProvisioningFlags(Collection<String> tags) {
-        // TODO Auto-generated method stub
-        return null;
+    public String toVerboseString() {
+        return Objects.toStringHelper(this).omitNullValues()
+                .add("id", getId())
+                .add("name", getDisplayName())
+                .add("provisioner", provisioner)
+                .add("infrastructure", infrastructure)
+                .toString();
+    }
+
+    @Override
+    public void configure(Map properties) {
+        if (lock == null) {
+            lock = new Object();
+        }
+        super.configure(properties);
+    }
+
+    @Override
+    public void close() {
+        if (provisioner instanceof Closeable) {
+            Streams.closeQuietly((Closeable)provisioner);
+        }
+    }
+
+    public WaratekMachineLocation obtain() throws NoMachinesAvailableException {
+        return obtain(Maps.<String,Object>newLinkedHashMap());
+    }
+
+    @Override
+    public WaratekMachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
+        // 1. look through existing infrastructure for non-empty JVMs
+        //    trying to satisfy the affinty rules etc.
+        //    if not, get a new machine and deploy a JVM there
+
+        SshMachineLocation machine = provisioner.obtain(flags);
+        Map<?,?> machineFlags = MutableMap.builder()
+                .putAll(flags)
+                .put("machine", machine)
+                .build();
+                
+        return new WaratekMachineLocation(machineFlags);
+    }
+
+    @Override
+    public void release(WaratekMachineLocation machine) {
+        if (provisioner != null) {
+            provisioner.release(machine);
+        } else {
+            throw new IllegalStateException("Request to release machine "+machine+", but this machine is not currently allocated");
+        }
+    }
+
+    @Override
+    public Map<String,Object> getProvisioningFlags(Collection<String> tags) {
+        return Maps.<String,Object>newLinkedHashMap();
+    }
+
+    public List<Entity> getJvcList() {
+        return infrastructure.getJvcList();
+    }
+
+    public List<Entity> getJvmList() {
+        return infrastructure.getJvmList();
+    }
+
+    public WaratekInfrastructure getWaratekInfrastructure() {
+        return infrastructure;
+    }
+
+    @Override
+    public MachineProvisioningLocation<WaratekMachineLocation> newSubLocation(Map<?, ?> newFlags) {
+        throw new UnsupportedOperationException();
     }
 
 }

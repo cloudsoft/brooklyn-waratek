@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package brooklyn.entity.waratek;
+package brooklyn.entity.waratek.cloudvm;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,8 +36,11 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
+import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
+import brooklyn.location.waratek.WaratekLocation;
+import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.policy.PolicySpec;
 import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
@@ -47,9 +50,9 @@ import brooklyn.util.task.DynamicTasks;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
+public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaVirtualMachine {
 
-    private static final Logger log = LoggerFactory.getLogger(JavaVMImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(JavaVirtualMachineImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     private JmxFeed jmxMxBeanFeed;
@@ -59,13 +62,13 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
     public void init() {
         log.info("Starting JVM id {}", getId());
 
-        String jvmName = String.format(getConfig(JavaVM.JVM_NAME_FORMAT), getId(), counter.incrementAndGet());
+        String jvmName = String.format(getConfig(JavaVirtualMachine.JVM_NAME_FORMAT), getId(), counter.incrementAndGet());
         setDisplayName(jvmName);
         setAttribute(JVM_NAME, jvmName);
 
         int initialSize = getConfig(JVC_CLUSTER_SIZE);
         EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
-                .configure(JavaContainer.JVM, this);
+                .configure(JavaVirtualContainer.JVM, this);
         if (getConfig(HA_POLICY_ENABLE)) {
             jvcSpec.policy(PolicySpec.create(ServiceFailureDetector.class));
             jvcSpec.policy(PolicySpec.create(ServiceRestarter.class)
@@ -84,42 +87,42 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
         if (Entities.isManaged(this)) Entities.manage(containers);
 
         containers.addEnricher(Enrichers.builder()
-                .aggregating(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .aggregating(WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .computingSum()
                 .fromMembers()
-                .publishing(WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .publishing(WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .build());
         containers.addEnricher(Enrichers.builder()
                 .aggregating(UsesJavaMXBeans.USED_HEAP_MEMORY)
                 .computingSum()
                 .fromMembers()
-                .publishing(WaratekJavaApp.TOTAL_HEAP_MEMORY)
+                .publishing(WaratekAttributes.TOTAL_HEAP_MEMORY)
                 .build());
         containers.addEnricher(Enrichers.builder()
-                .aggregating(JavaContainer.CPU_USAGE)
+                .aggregating(WaratekAttributes.CPU_USAGE)
                 .computingAverage()
                 .fromMembers()
-                .publishing(WaratekJavaApp.AVERAGE_CPU_USAGE)
+                .publishing(WaratekAttributes.AVERAGE_CPU_USAGE)
                 .build());
 
         addEnricher(Enrichers.builder()
-                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekJavaApp.JVC_COUNT))
+                .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, WaratekAttributes.JVC_COUNT))
                 .from(containers)
                 .build());
         addEnricher(Enrichers.builder()
-                .propagating(WaratekJavaApp.TOTAL_HEAP_MEMORY, WaratekJavaApp.AVERAGE_CPU_USAGE, WaratekJavaApp.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .propagating(WaratekAttributes.TOTAL_HEAP_MEMORY, WaratekAttributes.AVERAGE_CPU_USAGE, WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
                 .from(containers)
                 .build());
     }
 
     @Override
     public Class<?> getDriverInterface() {
-        return JavaVMDriver.class;
+        return JavaVirtualMachineDriver.class;
     }
 
     @Override
-    public JavaVMDriver getDriver() {
-        return (JavaVMDriver) super.getDriver();
+    public JavaVirtualMachineDriver getDriver() {
+        return (JavaVirtualMachineDriver) super.getDriver();
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -167,14 +170,33 @@ public class JavaVMImpl extends SoftwareProcessImpl implements JavaVM {
         super.disconnectSensors();
     }
 
+    /**
+     * Create a new {@link WaratekMachineLocation} wrapping these locations.
+     */
+    @Override
+    public void preStart() {
+    }
+
+
     @Override
     public void doStart(Collection<? extends Location> locations) {
-        super.doStart(locations);
+        WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
+        WaratekLocation waratek = infrastructure.getAttribute(WaratekInfrastructure.WARATEK_LOCATION);
+        LocationSpec<WaratekMachineLocation> spec = LocationSpec.create(WaratekMachineLocation.class)
+                .parent(waratek)
+                .configure("jvm", this)
+                .displayName(getJvmName())
+                .id(waratek.getId() + ":" + getJvmName());
+        WaratekMachineLocation jvm = getManagementContext().getLocationManager().createLocation(spec);
+        setAttribute(WARATEK_MACHINE_LOCATION, jvm);
+
         DynamicTasks.queue(StartableMethods.startingChildren(this));
+        super.doStart(locations);
     }
 
     @Override
     public void doStop() {
+        // remove location
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
         super.doStop();
     }

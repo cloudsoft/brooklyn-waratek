@@ -15,12 +15,21 @@
  */
 package brooklyn.entity.waratek;
 
-import brooklyn.entity.java.VanillaJavaAppDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface JavaContainerDriver extends VanillaJavaAppDriver {
+import brooklyn.entity.group.DynamicClusterImpl;
 
-    String getHeapSize();
+public class WaratekApplicationClusterImpl extends DynamicClusterImpl implements WaratekApplicationCluster {
 
-    String getRootDirectory();
+    private static final Logger log = LoggerFactory.getLogger(WaratekApplicationClusterImpl.class);
+
+    @Override
+    public void init() {
+        log.info("Starting a Waratek cluster of Java applications");
+    }
+
+    @Override
+    public String getShortName() { return "WaratekCluster"; }
 
 }

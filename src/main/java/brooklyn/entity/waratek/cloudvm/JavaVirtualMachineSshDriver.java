@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package brooklyn.entity.waratek;
+package brooklyn.entity.waratek.cloudvm;
 
 import static java.lang.String.format;
 
@@ -44,14 +44,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements JavaVMDriver {
+public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver implements JavaVirtualMachineDriver {
 
     private AtomicBoolean installed = new AtomicBoolean(false);
 
-    public JavaVMSshDriver(EntityLocal entity, SshMachineLocation machine) {
+    public JavaVirtualMachineSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
 
-        entity.setAttribute(JavaVM.ROOT_DIRECTORY, getRootDirectory());
+        entity.setAttribute(JavaVirtualMachine.ROOT_DIRECTORY, getRootDirectory());
     }
 
     /** The path to the root directory of the running CloudVM */
@@ -74,17 +74,17 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
     }
 
     protected String getPidFile() {
-        return Os.mergePaths(getLibDirectory(), "javad", getEntity().getAttribute(JavaVM.JVM_NAME), "jvm.pid");
+        return Os.mergePaths(getLibDirectory(), "javad", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME), "jvm.pid");
     }
 
     @Override
     public String getApplicationUser() {
-        return getEntity().getConfig(JavaVM.USE_WARATEK_USER) ? "waratek" : getMachine().getUser();
+        return getEntity().getConfig(JavaVirtualMachine.USE_WARATEK_USER) ? "waratek" : getMachine().getUser();
     }
 
     @Override
     public String getHeapSize() {
-        Long size = getEntity().getConfig(JavaVM.HEAP_SIZE);
+        Long size = getEntity().getConfig(JavaVirtualMachine.HEAP_SIZE);
         int megabytes = (int) (size / (1024L * 1024L));
         log.info(String.format("Heap set to %d bytes (%s) - using '-X%sm' JVM argument", size, Strings.makeSizeString(size), megabytes));
         return megabytes + "m";
@@ -110,7 +110,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         MutableMap.Builder<String, Object> builder = MutableMap.<String, Object>builder()
                 .putAll(super.getJmxJavaSystemProperties())
                 .put("com.sun.management.jmxremote.registry.ssl", "false");
-        if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
+        if (getEntity().getConfig(JavaVirtualMachine.HTTP_ADMIN_ENABLE)) {
             // jolokia wants a locally accessible JMX port set here, we don't need to allow external access
             builder.put("com.sun.management.jmxremote.port", getMachine().obtainPort(PortRanges.ANY_HIGH_PORT));
             // TODO add the rest of the required JAAS properties
@@ -123,18 +123,18 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         Map<String,String> props = super.getCustomJavaSystemProperties();
         if (installed.get()) {
             // Java options needed for launch only
-            props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVM.JVM_NAME));
+            props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
             props.put("com.waratek.rootdir", getRootDirectory());
-            if (getEntity().getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
+            if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {
                 props.put("com.waratek.ssh.server", "on");
-                props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVM.SSH_PORT).toString());
+                props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT).toString());
                 props.put("com.waratek.jirsh.shell", "ascii"); // TODO check if requried?
                 /* -Dcom.waratek.ssh.ip=n.n.n.n */
             } else {
                 props.put("com.waratek.ssh.server", "off");
             }
-            if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
-                props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVM.HTTP_PORT).toString());
+            if (getEntity().getConfig(JavaVirtualMachine.HTTP_ADMIN_ENABLE)) {
+                props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVirtualMachine.HTTP_PORT).toString());
             }
             String javaagent = Iterables.find(super.getJmxJavaConfigOptions(), Predicates.containsPattern("javaagent"));
             props.put("com.waratek.javaagent", javaagent);
@@ -154,11 +154,11 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.<String, Integer>builder()
                 .put("jmxPort", getEntity().getAttribute(UsesJmx.JMX_PORT))
                 .put("rmiPort", getEntity().getAttribute(UsesJmx.RMI_REGISTRY_PORT));
-        if (getEntity().getConfig(JavaVM.SSH_ADMIN_ENABLE)) {
-            builder.put("sshPort", getEntity().getAttribute(JavaVM.SSH_PORT));
+        if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {
+            builder.put("sshPort", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT));
         }
-        if (getEntity().getConfig(JavaVM.HTTP_ADMIN_ENABLE)) {
-            builder.put("httpPort", getEntity().getAttribute(JavaVM.HTTP_PORT));
+        if (getEntity().getConfig(JavaVirtualMachine.HTTP_ADMIN_ENABLE)) {
+            builder.put("httpPort", getEntity().getAttribute(JavaVirtualMachine.HTTP_PORT));
         }
         return builder.build();
     }
@@ -169,7 +169,8 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void install() {
-        log.info("Installing {}", getEntity().getAttribute(JavaVM.JVM_NAME));
+        log.info("Installing {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
+        log.info("INSTALL_DIR {}", getEntity().getAttribute(JavaVirtualMachine.INSTALL_DIR));
 
         DownloadResolver resolver = Entities.newDownloader(this);
         List<String> urls = resolver.getTargets();
@@ -192,11 +193,11 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void customize() {
-        log.info("Customizing {}", getEntity().getAttribute(JavaVM.JVM_NAME));
+        log.info("Customizing {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
         Networking.checkPortsValid(getPortMap());
         String installScript = Os.mergePaths(getExpandedInstallDir(), "tools", "autoinstall.sh");
-        String debug = entity.getConfig(JavaVM.DEBUG) ? " -x" : "";
+        String debug = entity.getConfig(JavaVirtualMachine.DEBUG) ? " -x" : "";
         newScript(CUSTOMIZING)
                 .failOnNonZeroResultCode()
                 .body.append(
@@ -209,7 +210,7 @@ public class JavaVMSshDriver extends JavaSoftwareProcessSshDriver implements Jav
 
     @Override
     public void launch() {
-        log.info("Launching {}", getEntity().getAttribute(JavaVM.JVM_NAME));
+        log.info("Launching {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
         String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
                 Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());

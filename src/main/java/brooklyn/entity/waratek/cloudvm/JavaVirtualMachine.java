@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package brooklyn.entity.waratek;
+package brooklyn.entity.waratek.cloudvm;
 
 import java.util.List;
 
@@ -34,23 +34,22 @@ import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.location.basic.PortRanges;
+import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.util.flags.SetFromFlag;
 
-@ImplementedBy(JavaVMImpl.class)
-public interface JavaVM extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName {
+@ImplementedBy(JavaVirtualMachineImpl.class)
+public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName {
 
     String DEFAULT_JVM_NAME_FORMAT = "jvm-brooklyn-%1$s";
     String ALTERNATIVE_JVM_NAME_FORMAT = "jvm-%2$d";
 
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION,
-            // "2.5.4.GA.2-86");
             "2.5.5.BK.2-1");
 
     @SetFromFlag("downloadUrl")
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>( SoftwareProcess.DOWNLOAD_URL,
-            // "http://download.waratek.com/tgz/waratek_release_${version}_package.tar.gz?src=brooklyn");
-            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz");
+            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz?src=brooklyn");
 
     @SetFromFlag("debug")
     ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey("waratek.debug", "Enable debug options", false);
@@ -94,7 +93,13 @@ public interface JavaVM extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resiz
     @SetFromFlag("jvcSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVC_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(
             EntitySpec.class, "waratek.jvc.spec", "Specification to use when creating child JVCs",
-            EntitySpec.create(JavaContainer.class));
+            EntitySpec.create(JavaVirtualContainer.class));
+
+    @SetFromFlag("infrastructure")
+    ConfigKey<WaratekInfrastructure> WARATEK_INFRASTRUCTURE = ConfigKeys.newConfigKey(WaratekInfrastructure.class, "waratek.infrastructure", "The parent Waratek infrastructure");
+
+    AttributeSensor<WaratekMachineLocation> WARATEK_MACHINE_LOCATION = Sensors.newSensor(WaratekMachineLocation.class,
+            "waratek.location.jvm", "The Waratek machine location associated with this JVM");
 
     ConfigKey<String> JVM_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvm.nameFormat", "Format for generating JVM names", DEFAULT_JVM_NAME_FORMAT);
 

@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package brooklyn.entity.waratek;
+package brooklyn.entity.waratek.cloudvm;
 
 import java.util.List;
 
 import brooklyn.catalog.Catalog;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
+import brooklyn.entity.basic.BasicStartable;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
-import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
+import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.util.flags.SetFromFlag;
 
-@ImplementedBy(WaratekJavaAppImpl.class)
-@Catalog(name="WaratekJavaApp", description="Waratek Java Application.", iconUrl="classpath://waratek-logo.png")
-public interface WaratekJavaApp extends DynamicCluster, HasShortName {
+@ImplementedBy(WaratekInfrastructureImpl.class)
+@Catalog(name="WaratekInfrastructure", description="Waratek CloudVM Infrastructure.", iconUrl="classpath://waratek-logo.png")
+public interface WaratekInfrastructure extends BasicStartable {
 
-    @SetFromFlag("args")
-    ConfigKey<List> ARGS = JavaContainer.ARGS;
+    @SetFromFlag("locationName")
+    ConfigKey<String> LOCATION_NAME = ConfigKeys.newStringConfigKey(
+            "waratek.location.name", "Name for new Waratek location");
 
-    @SetFromFlag("main")
-    ConfigKey<String> MAIN_CLASS = JavaContainer.MAIN_CLASS;
-
-    @SetFromFlag("classpath")
-    ConfigKey<List> CLASSPATH = JavaContainer.CLASSPATH;
+    @SetFromFlag("locationPrefix")
+    ConfigKey<String> LOCATION_PREFIX = ConfigKeys.newStringConfigKey(
+            "waratek.location.prefix", "Prefix for new Waratek location (will have entity id appended)",
+            WaratekLocation.PREFIX);
 
     @SetFromFlag("initialSize")
     ConfigKey<Integer> JVM_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);
@@ -49,17 +50,19 @@ public interface WaratekJavaApp extends DynamicCluster, HasShortName {
     @SetFromFlag("jvmSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVM_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(
             EntitySpec.class, "waratek.jvm.spec", "Specification to use when creating child JVMs",
-            EntitySpec.create(JavaVM.class));
+            EntitySpec.create(JavaVirtualMachine.class));
 
-    AttributeSensor<Integer> JVM_COUNT = Sensors.newIntegerSensor("waratek.jvmCount", "Number of JVMs");
-    AttributeSensor<Integer> JVC_COUNT = Sensors.newIntegerSensor("waratek.jvcCount", "Number of JVCs");
-    AttributeSensor<Long> TOTAL_HEAP_MEMORY = Sensors.newLongSensor("waratek.heapMemory.total", "Total aggregated heap memory usage");
-    AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_LAST = Sensors.newDoubleSensor("waratek.heapMemoryDelta.last", "Change in heap memory usage per second");
-    AttributeSensor<Double> HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW = Sensors.newDoubleSensor("waratek.heapMemoryDelta.windowed", "Average change in heap memory usage over 30s");
-    AttributeSensor<Double> AVERAGE_CPU_USAGE = Sensors.newDoubleSensor("waratek.cpuUsage.average", "Average CPU usage across the cluster");
+    AttributeSensor<WaratekLocation> WARATEK_LOCATION = Sensors.newSensor(WaratekLocation.class,
+            "waratek.location", "The Waratek location associated with this infrastructure");
+
+    AttributeSensor<Integer> JVM_COUNT = WaratekAttributes.JVM_COUNT;
+    AttributeSensor<Integer> JVC_COUNT = WaratekAttributes.JVC_COUNT;
 
     List<Entity> getJvmList();
 
-    DynamicCluster getJvmCluster();
+    DynamicCluster getVirtualMachineCluster();
 
+    List<Entity> getJvcList();
+
+    WaratekFabric getContainerFabric();
 }

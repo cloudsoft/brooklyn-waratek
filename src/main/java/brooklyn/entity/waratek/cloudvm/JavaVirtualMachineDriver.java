@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package brooklyn.entity.waratek;
+package brooklyn.entity.waratek.cloudvm;
 
 import brooklyn.entity.java.JavaSoftwareProcessDriver;
 
-public interface JavaVMDriver extends JavaSoftwareProcessDriver {
+public interface JavaVirtualMachineDriver extends JavaSoftwareProcessDriver {
 
     String getApplicationUser();
 

@@ -25,15 +25,15 @@ import brooklyn.catalog.CatalogConfig;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.entity.waratek.JavaContainer;
-import brooklyn.entity.waratek.JavaVM;
-import brooklyn.entity.waratek.WaratekJavaApp;
+import brooklyn.entity.waratek.WaratekApplicationCluster;
+import brooklyn.entity.waratek.WaratekJavaApplication;
 import brooklyn.util.flags.SetFromFlag;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -47,69 +47,38 @@ public class SimpleJavaApplication extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
 
-    @SetFromFlag("runAs")
-    @CatalogConfig(label="Separate User", priority=0)
-    public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVM.USE_WARATEK_USER;
-
-    @SetFromFlag("debug")
-    @CatalogConfig(label="Enable Debug", priority=0)
-    public static final ConfigKey<Boolean> DEBUG = JavaVM.DEBUG;
-
-    @SetFromFlag("highAvailabilty")
-    @CatalogConfig(label="Enable HA Policies", priority=0)
-    public static final ConfigKey<Boolean> HA_POLICY_ENABLE = JavaVM.HA_POLICY_ENABLE;
-
-    @SetFromFlag("heapSize")
-    @CatalogConfig(label="Heap Size", priority=1.1)
-    public static final ConfigKey<Long> HEAP_SIZE = ConfigKeys.newConfigKeyWithDefault(JavaVM.HEAP_SIZE, 1000000000L);
-
     @SetFromFlag("args")
-    @CatalogConfig(label="Java Args", priority=1.2)
-    public static final ConfigKey<List> ARGS = ConfigKeys.newConfigKeyWithDefault(JavaContainer.ARGS,
+    @CatalogConfig(label="Java Args", priority=0)
+    public static final ConfigKey<List> ARGS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.ARGS,
             ImmutableList.of(Integer.toString(1024 * 64))); // 64KiB
 
     @SetFromFlag(value="main")
-    @CatalogConfig(label="Java Main Class", priority=1.2)
-    public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newConfigKeyWithDefault(JavaContainer.MAIN_CLASS, "com.example.HelloWorld");
+    @CatalogConfig(label="Java Main Class", priority=0)
+    public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.MAIN_CLASS, "com.example.HelloWorld");
 
     @SetFromFlag("classpath")
-    @CatalogConfig(label="Java Classpath", priority=1.2)
-    public static final ConfigKey<List> CLASSPATH = ConfigKeys.newConfigKeyWithDefault(JavaContainer.CLASSPATH, ImmutableList.of("brooklyn-waratek-examples.jar"));
+    @CatalogConfig(label="Java Classpath", priority=0)
+    public static final ConfigKey<List> CLASSPATH = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.CLASSPATH, ImmutableList.of("brooklyn-waratek-examples.jar"));
 
-    @SetFromFlag("jvmClusterSize")
-    @CatalogConfig(label="JVM Cluster Size", priority=2.1)
-    public static final ConfigKey<Integer> JVM_CLUSTER_SIZE = WaratekJavaApp.JVM_CLUSTER_SIZE;
-
-    @SetFromFlag("jvcClusterSize")
-    @CatalogConfig(label="JVC Cluster Size", priority=2.2)
-    public static final ConfigKey<Integer> JVC_CLUSTER_SIZE = JavaVM.JVC_CLUSTER_SIZE;
+    @SetFromFlag("initialSize")
+    @CatalogConfig(label="Cluster Size", priority=1)
+    public static final ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 6);
 
     @Override
     public void init() {
         String mainClass = Iterables.getLast(Splitter.on(".").split(getConfig(MAIN_CLASS)));
 
-        EntitySpec jvcSpec = EntitySpec.create(JavaContainer.class)
-                .configure(JavaContainer.ARGS, getConfig(ARGS))
-                .configure(JavaContainer.MAIN_CLASS, getConfig(MAIN_CLASS))
-                .configure(JavaContainer.CLASSPATH, getConfig(CLASSPATH))
-                .configure(JavaContainer.JVM_DEFINES, Maps.<String, Object>newHashMap())
-                .configure(JavaContainer.JVM_XARGS, Lists.<String>newArrayList());
+        EntitySpec application = EntitySpec.create(WaratekJavaApplication.class)
+                .configure(WaratekJavaApplication.ARGS, getConfig(ARGS))
+                .configure(WaratekJavaApplication.MAIN_CLASS, getConfig(MAIN_CLASS))
+                .configure(WaratekJavaApplication.CLASSPATH, getConfig(CLASSPATH))
+                .configure(WaratekJavaApplication.JVM_DEFINES, Maps.<String, Object>newHashMap())
+                .configure(WaratekJavaApplication.JVM_XARGS, Lists.<String>newArrayList());
 
-        EntitySpec jvmSpec = EntitySpec.create(JavaVM.class)
-                .configure(JavaVM.USE_WARATEK_USER, getConfig(USE_WARATEK_USER))
-                .configure(JavaVM.DEBUG, getConfig(DEBUG))
-                .configure(JavaVM.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
-                .configure(JavaVM.JVC_CLUSTER_SIZE, getConfig(JVC_CLUSTER_SIZE))
-                .configure(JavaVM.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
-                .configure(JavaVM.HEAP_SIZE, getConfig(HEAP_SIZE))
-                .configure(JavaVM.SSH_ADMIN_ENABLE, Boolean.TRUE)
-                .configure(JavaVM.HTTP_ADMIN_ENABLE, Boolean.TRUE)
-                .configure(JavaVM.JVC_SPEC, jvcSpec);
-
-        addChild(EntitySpec.create(WaratekJavaApp.class)
-                .configure(WaratekJavaApp.JVM_CLUSTER_SIZE, getConfig(JVM_CLUSTER_SIZE))
-                .configure(WaratekJavaApp.JVM_SPEC, jvmSpec)
-                .displayName("Waratek "+mainClass+" Application"));
+        addChild(EntitySpec.create(WaratekApplicationCluster.class)
+                .configure(DynamicCluster.INITIAL_SIZE, getConfig(INITIAL_SIZE))
+                .configure(DynamicCluster.MEMBER_SPEC, application)
+                .displayName("Waratek " + mainClass + " Application"));
     }
 
 }
