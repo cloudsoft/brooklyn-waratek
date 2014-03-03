@@ -161,7 +161,7 @@ public class Main {
         System.out.println();
         System.out.println("where <command> is any of:");
         System.out.println("        server       start the Brooklyn server (no applications)");
-        System.out.println("        application  start the applicaton specified by the --class option");
+        System.out.println("        application  start the applicaton specified by the --class or --yaml option");
         System.out.println("        help         display this help list");
         System.out.println("        launch       start the SimpleJavaApplication appplication");
         System.out.println();
