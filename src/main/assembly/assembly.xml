@@ -34,7 +34,7 @@
             <outputDirectory></outputDirectory>
             <fileMode>0755</fileMode>
             <includes>
-                <include>*</include>
+                <include>*.sh</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -42,7 +42,7 @@
             <outputDirectory></outputDirectory>
             <fileMode>0644</fileMode>
             <includes>
-                <include>*</include>
+                <include>**</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -58,7 +58,7 @@
             <outputDirectory>conf/</outputDirectory>
             <fileMode>0644</fileMode>
             <includes>
-                <include>*</include>
+                <include>**</include>
             </includes>
         </fileSet>
     </fileSets>
