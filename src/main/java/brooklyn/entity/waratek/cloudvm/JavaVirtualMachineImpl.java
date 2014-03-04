@@ -79,11 +79,12 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                 .configure(Cluster.INITIAL_SIZE, initialSize)
                 .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
-                .displayName("Java Containers"));
+                .displayName("Guest Java Virtual Machines"));
         if (getConfig(HA_POLICY_ENABLE)) {
             containers.addPolicy(PolicySpec.create(ServiceReplacer.class)
                     .configure(ServiceReplacer.FAILURE_SENSOR_TO_MONITOR, ServiceRestarter.ENTITY_RESTART_FAILED));
         }
+
         if (Entities.isManaged(this)) Entities.manage(containers);
 
         containers.addEnricher(Enrichers.builder()

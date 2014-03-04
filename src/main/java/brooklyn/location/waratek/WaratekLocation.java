@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
-import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
@@ -36,7 +34,6 @@ import brooklyn.util.stream.Streams;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 
 public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<WaratekMachineLocation> {
 

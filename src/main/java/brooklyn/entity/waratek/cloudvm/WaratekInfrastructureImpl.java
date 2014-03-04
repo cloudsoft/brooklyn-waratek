@@ -24,25 +24,30 @@ import org.slf4j.LoggerFactory;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicStartableImpl;
+import brooklyn.entity.basic.DynamicGroup;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.location.Location;
+import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
+import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.management.LocationManager;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
 public class WaratekInfrastructureImpl extends BasicStartableImpl implements WaratekInfrastructure {
 
     private static final Logger log = LoggerFactory.getLogger(WaratekInfrastructureImpl.class);
 
     private DynamicCluster virtualMachines;
-    private WaratekFabric fabric;
+    private DynamicGroup fabric;
 
     @Override
     public void init() {
@@ -50,15 +55,20 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         EntitySpec jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
                 .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this);
 
-        fabric = addChild(EntitySpec.create(WaratekFabric.class));
-        if (Entities.isManaged(this)) Entities.manage(fabric);
-
         virtualMachines = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
                 .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
                 .configure(DynamicCluster.MEMBER_SPEC, jvmSpec)
                 .displayName("Java Virtual Machines"));
-        if (Entities.isManaged(this)) Entities.manage(virtualMachines);
+
+        fabric = addChild(EntitySpec.create(DynamicGroup.class)
+                .configure(DynamicGroup.ENTITY_FILTER, Predicates.instanceOf(JavaVirtualContainer.class))
+                .displayName("Java Virtual Containers"));
+
+        if (Entities.isManaged(this)) {
+            Entities.manage(virtualMachines);
+            Entities.manage(fabric);
+        }
 
         virtualMachines.addEnricher(Enrichers.builder()
                 .aggregating(WaratekAttributes.TOTAL_HEAP_MEMORY)
@@ -117,28 +127,31 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     }
 
     @Override
-    public WaratekFabric getContainerFabric() { return fabric; }
+    public DynamicGroup getContainerFabric() { return fabric; }
 
     /**
      * Create a new {@link WaratekLocation} wrapping these locations.
      */
     @Override
     public void start(Collection<? extends Location> locations) {
-        Location location = Iterables.getOnlyElement(locations);
-        log.info("Creating new waratekLocation for {}", location);
-        String name = getConfig(LOCATION_NAME);
-        if (name == null) {
+        Location provisioner = Iterables.getOnlyElement(locations);
+        log.info("Creating new WaratekLocation wrapping {}", provisioner);
+        String locationName = getConfig(LOCATION_NAME);
+        if (locationName == null) {
             String prefix = getConfig(LOCATION_PREFIX);
-            name = prefix + getId();
+            locationName = prefix + getId();
         }
-        LocationSpec<WaratekLocation> spec = LocationSpec.create(WaratekLocation.class)
-                .configure("provider", location)
+        LocationSpec<WaratekLocation> waratekSpec = LocationSpec.create(WaratekLocation.class)
+                .configure("provisioner", provisioner)
                 .configure("infrastructure", this)
-                .displayName("Waratek(" + name + ")")
-                .id(name);
-        WaratekLocation waratek = getManagementContext().getLocationManager().createLocation(spec);
-        log.info("New location {} created", waratek);
-        setAttribute(WARATEK_LOCATION, waratek);
+                .displayName("Waratek(" + locationName + ")")
+                .id(locationName);
+        WaratekLocation waratekLocation = getManagementContext().getLocationManager().createLocation(waratekSpec);
+        String locationSpec = String.format("waratek:%s:(name=\"%s\")", getId(), locationName);
+        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
+        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        log.info("New location {} created", waratekLocation);
+        setAttribute(WARATEK_LOCATION, waratekLocation);
         super.start(locations);
     }
 

@@ -20,15 +20,12 @@ import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.basic.DynamicGroupImpl;
 
-import com.google.common.base.Predicates;
-
 public class WaratekFabricImpl extends DynamicGroupImpl implements WaratekFabric {
 
     private static final Logger log = LoggerFactory.getLogger(WaratekFabricImpl.class);
 
     public void init() {
         log.info("Created Waratek JVC Fabric");
-        setEntityFilter(Predicates.instanceOf(JavaVirtualContainer.class));
     }
 
     @Override

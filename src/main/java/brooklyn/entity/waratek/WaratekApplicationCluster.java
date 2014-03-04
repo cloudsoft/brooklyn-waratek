@@ -23,8 +23,6 @@ import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.VanillaJavaApp;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
-import brooklyn.event.AttributeSensor;
-import brooklyn.event.basic.Sensors;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekApplicationClusterImpl.class)
@@ -39,9 +37,6 @@ public interface WaratekApplicationCluster extends DynamicCluster, HasShortName 
 
     @SetFromFlag("classpath")
     ConfigKey<List> CLASSPATH = VanillaJavaApp.CLASSPATH;
-
-    AttributeSensor<Integer> JVM_COUNT = Sensors.newIntegerSensor("waratek.jvmCount", "Number of JVMs");
-    AttributeSensor<Integer> JVC_COUNT = Sensors.newIntegerSensor("waratek.jvcCount", "Number of JVCs");
 
 
 }

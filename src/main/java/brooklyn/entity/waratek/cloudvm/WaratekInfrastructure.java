@@ -22,6 +22,7 @@ import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicStartable;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.basic.DynamicGroup;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
@@ -64,5 +65,5 @@ public interface WaratekInfrastructure extends BasicStartable {
 
     List<Entity> getJvcList();
 
-    WaratekFabric getContainerFabric();
+    DynamicGroup getContainerFabric();
 }
