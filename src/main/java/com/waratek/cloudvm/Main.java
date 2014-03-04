@@ -1,178 +1,76 @@
-/*
- * Copyright 2014 by Cloudsoft Corporation Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.waratek.cloudvm;
 
-import java.io.File;
-import java.io.IOException;
+import io.airlift.command.Command;
+import io.airlift.command.Option;
+
 import java.util.Arrays;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.StartableApplication;
-import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.launcher.BrooklynLauncher;
-import brooklyn.util.CommandLineUtil;
-import brooklyn.util.exceptions.Exceptions;
+import brooklyn.catalog.BrooklynCatalog;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import com.google.common.base.Objects.ToStringHelper;
 
-public class Main {
-
+/**
+ * This class provides a static main entry point for launching a custom Brooklyn-based app.
+ * <p>
+ * It inherits the standard Brooklyn CLI options from {@link Main},
+ * plus adds a few more shortcuts for favourite blueprints to the {@link LaunchCommand}.
+ */
+public class Main extends brooklyn.cli.Main {
+    
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-
+    
     public static final String DEFAULT_LOCATION = "waratek";
 
-    public static void main(String...argv) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Brooklyn launcher starting. Arguments: " + Arrays.toString(argv));
-        }
-
-        List<String> args = Lists.newArrayList(argv);
-
-        if (args.remove("--help") || args.remove("-h") || args.remove("help") || args.isEmpty()) {
-            if (!args.isEmpty()) {
-                log.warn("Invalid options used with 'help': "+Joiner.on(" ").join(args));
-            }
-            showHelp();
-            System.exit(0);
-        }
-
-        String command = args.remove(0);
-
-        String port = CommandLineUtil.getCommandLineOption(args, "--port", "8081+");
-        String location = CommandLineUtil.getCommandLineOption(args, "--location");
-        String applicationClassName = CommandLineUtil.getCommandLineOption(args, "--class");
-        String blueprintFileName = CommandLineUtil.getCommandLineOption(args, "--yaml");
-
-        if (!args.isEmpty()) {
-            warnAndExit("Unknown options: " + Joiner.on(" ").join(args));
-        }
-
-        // load the right application class or YAML, if needed
-        Class<? extends StartableApplication> applicationClass = null;
-        String blueprint = null;
-        if ("application".equals(command)) {
-            if (applicationClassName == null && blueprintFileName == null) {
-                warnAndExit("Missing option: `--class <Class>` or `--yaml <Blueprint>` must be supplied for command `application`");
-            } else if (applicationClassName != null && blueprintFileName != null) {
-                warnAndExit("Invalid option: `--class <Class>` and `--yaml <Blueprint>` cannot be supplied together for command `application`");
-            }
-            if (blueprintFileName != null) {
-                if (!Files.getFileExtension(blueprintFileName).equals("yaml")) {
-                    warnAndExit("Invalid option: `" + blueprintFileName + "` must be a YAML blueprint");
-                }
-                blueprint = loadBlueprint(blueprintFileName);
-            }
-            if (applicationClassName != null) {
-                applicationClass = loadAppClass(applicationClassName);
-            }
-        } else {
-            if (applicationClassName != null) {
-                warnAndExit("Invalid option: `--class <Class>` is only valid for command `application`");
-            }
-            if (blueprintFileName != null) {
-                warnAndExit("Invalid option: `--yaml <Blueprint>` is only valid for command `application`");
-            }
-
-            if ("launch".equals(command)) {
-                applicationClass = SimpleJavaApplication.class;
-            } else if ("server".equals(command)) {
-                // no-op
-            } else {
-                warnAndExit("Invalid command: `"+command+"` is not supported as a <command>");
-            }
-        }
-
-        BrooklynLauncher launcher = BrooklynLauncher.newInstance();
-        launcher.webconsolePort(port);
-
-        if (applicationClass != null) {
-            launcher.application(EntitySpec.create(StartableApplication.class, applicationClass)
-                            .displayName("CloudVM Java Application"))
-                    .location(location != null ? location : DEFAULT_LOCATION);
-        } else {
-            if (location != null) {
-                warnAndExit("Invalid option: `--location <Location>` is only valid when starting an appplication");
-            }
-            if (blueprint != null) {
-                launcher.application(blueprint);
-            }
-        }
-
-        launcher.start();
-
-        if (applicationClass != null || blueprint != null) {
-            Entities.dumpInfo(launcher.getApplications());
-            String applicationName = null;
-            if (blueprint != null) {
-                applicationName = blueprintFileName;
-            }
-            if (applicationClass != null) {
-                applicationName = applicationClass.getSimpleName();
-            }
-            log.info("Brooklyn start of "+command+" "+applicationName+" completed; " +
-            		"console at "+launcher.getServerDetails().getWebServerUrl());
-        }
+    public static void main(String... args) {
+        log.debug("CLI invoked with args "+Arrays.asList(args));
+        new Main().execCli(args);
     }
 
-    @SuppressWarnings("unchecked")
-    protected static Class<? extends StartableApplication> loadAppClass(String applicationClassName) {
-        try {
-            return (Class<? extends StartableApplication>) Class.forName(applicationClassName);
-        } catch (ClassNotFoundException e) {
-            log.error("Could not load '" + applicationClassName + " (rethrowing): " + e);
-            throw Exceptions.propagate(e);
+    @Override
+    protected String cliScriptName() {
+        return "start.sh";
+    }
+    
+    @Override
+    protected Class<? extends BrooklynCommand> cliLaunchCommand() {
+        return LaunchCommand.class;
+    }
+
+    @Command(name = "launch", description = "Starts a server, and optionally an application. "
+        + "Use --infrastructure or --application to launch the Waratek infrastructure or a simple application.")
+    public static class LaunchCommand extends brooklyn.cli.Main.LaunchCommand {
+
+        @Option(name = { "--infrastructure" }, description = "Launch a basic Waratek infrastructure")
+        public boolean infrastructure;
+
+        @Option(name = { "--application" }, description = "Launch a simple waratek application")
+        public boolean application;
+
+        @Override
+        public Void call() throws Exception {
+            // process our CLI arguments
+            if (infrastructure) setAppToLaunch(BasicInfrastructure.class.getCanonicalName());
+            if (application) setAppToLaunch(SimpleJavaApplication.class.getCanonicalName());
+            
+            // now process the standard launch arguments
+            return super.call();
+        }
+
+        @Override
+        protected void populateCatalog(BrooklynCatalog catalog) {
+            super.populateCatalog(catalog);
+            catalog.addItem(BasicInfrastructure.class);
+            catalog.addItem(SimpleJavaApplication.class);
+        }
+
+        @Override
+        public ToStringHelper string() {
+            return super.string()
+                    .add("infrastructure", infrastructure)
+                    .add("application", application);
         }
     }
-
-    @SuppressWarnings("unchecked")
-    protected static String loadBlueprint(String blueprintFileName) {
-        try {
-            File blueprintFile = new File(blueprintFileName);
-            return Files.toString(blueprintFile, Charsets.UTF_8);
-        } catch (IOException e) {
-            log.error("Could not load '" + blueprintFileName + " (rethrowing): " + e);
-            throw Exceptions.propagate(e);
-        }
-    }
-
-    protected static void showHelp() {
-        System.out.println();
-        System.out.println("Usage: ./start.sh <command> [--port port] [--location location] [--class class | --yaml blueprint]");
-        System.out.println();
-        System.out.println("where <command> is any of:");
-        System.out.println("        server       start the Brooklyn server (no applications)");
-        System.out.println("        application  start the applicaton specified by the --class or --yaml option");
-        System.out.println("        help         display this help list");
-        System.out.println("        launch       start the SimpleJavaApplication appplication");
-        System.out.println();
-    }
-
-    protected static void warnAndExit(String message) {
-        log.warn(message);
-        showHelp();
-        System.err.println("ERROR (exiting): "+message);
-        System.err.println();
-        System.exit(1);
-    }
-
 }

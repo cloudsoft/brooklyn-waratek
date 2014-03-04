@@ -50,17 +50,3 @@ services:
         metricUpperBound: 0.5
         minPoolSize: 1
         maxPoolSize: 20
- - serviceType: brooklyn.entity.waratek.WaratekApplicationCluster
-   id: waratek-app-cluster
-   name: Waratek Application Cluster
-   locations:
-    - waratek-demo-infrastructure
-   brooklyn.config:
-     initialSize: 6
-     memberSpec:
-       $brooklyn:entitySpec:
-         type: brooklyn.entity.waratek.WaratekJavaApplication
-         brooklyn.config:
-           vanillaJavaApp.args: "65535"
-           vanillaJavaApp.mainClass: com.example.HelloWorld
-           vanillaJavaApp.classpath: brooklyn-waratek-examples.jar       
