@@ -62,7 +62,7 @@ public class WaratekResolver implements LocationResolver {
 
     public static final String WARATEK = "waratek";
     public static final Pattern PATTERN = Pattern.compile("("+WARATEK+"|"+WARATEK.toUpperCase()+")" + ":([a-zA-Z0-9]+)" +
-            "(:([a-zA-Z0-9]+|\\*)(:([a-zA-Z0-9]+))?)?" + "(:\\((.*)\\))?$");
+            "(:([a-zA-Z0-9]+)(:([a-zA-Z0-9]+))?)?" + "(:\\((.*)\\))?$");
     public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
 
     private ManagementContext managementContext;
@@ -91,7 +91,7 @@ public class WaratekResolver implements LocationResolver {
             throw new IllegalArgumentException("Invalid location '"+spec+"'; must specify something like waratek:entityId or waratek:entityId:(name=abc)");
         }
 
-        String argsPart = matcher.group(7);
+        String argsPart = matcher.group(8);
         Map<String, String> argsMap = (argsPart != null) ? KeyValueParser.parseMap(argsPart) : Collections.<String,String>emptyMap();
         String namePart = argsMap.get("name");
 
@@ -122,11 +122,11 @@ public class WaratekResolver implements LocationResolver {
         } else {
             name.append("waratek-");
             name.append(infrastructureId);
-            if (jvmId != null && !jvmId.equals("*")) {
+            if (jvmId != null) {
                 name.append("-").append(jvmId);
-            }
-            if (jvcId != null) {
-                name.append("-").append(jvcId);
+                if (jvcId != null) {
+                    name.append("-").append(jvcId);
+                }
             }
         }
         final String locationName =  name.toString();
@@ -134,6 +134,8 @@ public class WaratekResolver implements LocationResolver {
         LOG.info("Location name will be: '" + locationName + "'");
 
         // Look up location by ID and return
+        Location check = managementContext.getLocationManager().getLocation(locationName);
+        LOG.info("Check location: {}", check);
         Optional<Location> found = Iterables.tryFind(managementContext.getLocationManager().getLocations(),
                 new Predicate<Location>() {
                     @Override

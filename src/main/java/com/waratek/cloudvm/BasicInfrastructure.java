@@ -38,6 +38,10 @@ public class BasicInfrastructure extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(BasicInfrastructure.class);
 
+    @SetFromFlag("locationName")
+    @CatalogConfig(label="Location Name", priority=0)
+    public static final ConfigKey<String> LOCATION_NAME = WaratekInfrastructure.LOCATION_NAME;
+
     @SetFromFlag("runAs")
     @CatalogConfig(label="Separate User", priority=0)
     public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVirtualMachine.USE_WARATEK_USER;
@@ -74,6 +78,7 @@ public class BasicInfrastructure extends AbstractApplication {
                 .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE);
 
         addChild(EntitySpec.create(WaratekInfrastructure.class)
+                .configure(WaratekInfrastructure.LOCATION_NAME, getConfig(LOCATION_NAME))
                 .configure(WaratekInfrastructure.JVM_CLUSTER_SIZE, getConfig(JVM_CLUSTER_SIZE))
                 .configure(WaratekInfrastructure.JVM_SPEC, jvmSpec)
                 .displayName("Waratek Infrastructure"));

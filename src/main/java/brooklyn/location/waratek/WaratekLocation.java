@@ -114,6 +114,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
     @Override
     public WaratekMachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
+        // Question - what do we do when a *NON* java based application asks for a location
+        // we _want_ to hand back a standard SshMachineLocation ...
+        
         // 1. look through existing infrastructure for non-empty JVMs
 
         JavaVirtualMachine jvm = null;

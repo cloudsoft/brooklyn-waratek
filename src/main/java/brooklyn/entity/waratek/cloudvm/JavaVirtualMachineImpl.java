@@ -40,15 +40,19 @@ import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
+import brooklyn.location.basic.Machines;
+import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
+import brooklyn.management.LocationManager;
 import brooklyn.policy.PolicySpec;
 import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.task.DynamicTasks;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -174,35 +178,44 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         super.disconnectSensors();
     }
 
-
     /**
-     * Create a new {@link WaratekMachineLocation} wrapping these locations.
+     * Create a new {@link WaratekMachineLocation} wrapping the machine we are starting in.
      */
     @Override
     public void doStart(Collection<? extends Location> locations) {
+        super.doStart(locations);
+
+        Optional<SshMachineLocation> machine = Machines.findUniqueSshMachineLocation(locations);
         WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
         WaratekLocation waratek = infrastructure.getAttribute(WaratekInfrastructure.WARATEK_LOCATION);
         String locationName = waratek.getId() + "-" + getId();
         LocationSpec<WaratekMachineLocation> spec = LocationSpec.create(WaratekMachineLocation.class)
                 .parent(waratek)
                 .configure("jvm", this)
+                .configure("machine", machine.get())
                 .displayName(getJvmName())
                 .id(locationName);
-        WaratekMachineLocation jvm = getManagementContext().getLocationManager().createLocation(spec);
+        WaratekMachineLocation location = getManagementContext().getLocationManager().createLocation(spec);
         String locationSpec = String.format("waratek:%s:%s", infrastructure.getId(), getJvmName());
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
-        log.info("New location {} created", jvm);
-        setAttribute(WARATEK_MACHINE_LOCATION, jvm);
+        log.info("New JVM location {} created", location);
+        setAttribute(WARATEK_MACHINE_LOCATION, location);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
-        super.doStart(locations);
     }
 
     @Override
     public void doStop() {
-        // remove location
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
+
+        LocationManager mgr = getManagementContext().getLocationManager();
+        WaratekMachineLocation location = getAttribute(WARATEK_MACHINE_LOCATION);
+        if (location != null && mgr.isManaged(location)) {
+            mgr.unmanage(location);
+            setAttribute(WARATEK_MACHINE_LOCATION,  null);
+        }
+
         super.doStop();
     }
 

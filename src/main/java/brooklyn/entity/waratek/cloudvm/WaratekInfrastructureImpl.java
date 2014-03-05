@@ -33,6 +33,7 @@ import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationDefinition;
+import brooklyn.location.basic.Locations;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.management.LocationManager;
 
@@ -152,6 +153,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         log.info("New location {} created", waratekLocation);
         setAttribute(WARATEK_LOCATION, waratekLocation);
+
         super.start(locations);
     }
 
@@ -160,6 +162,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
      */
     public void stop() {
         super.stop();
+
         LocationManager mgr = getManagementContext().getLocationManager();
         WaratekLocation waratek = getAttribute(WARATEK_LOCATION);
         if (waratek != null && mgr.isManaged(waratek)) {

@@ -15,6 +15,7 @@
  */
 package brooklyn.entity.waratek.cloudvm;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.ObjectInstance;
@@ -26,15 +27,19 @@ import org.slf4j.LoggerFactory;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
+import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
+import brooklyn.management.LocationManager;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
+import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
 
@@ -78,17 +83,19 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     }
 
     /**
-     * Create a new {@link WaratekContainerLocation} wrapping these locations.
+     * Create a new {@link WaratekContainerLocation} wrapping the JVM we are starting in.
      */
     @Override
-    public void preStart() {
+    public void doStart(Collection<? extends Location> locations) {
+        super.doStart(locations);
+
         JavaVirtualMachine jvm = getConfig(JVM);
         WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
         WaratekInfrastructure infrastructure = jvm.getConfig(JavaVirtualMachine.WARATEK_INFRASTRUCTURE);
         String locationName = machine.getId() + "-" + getId();
         LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
                 .parent(machine)
-                .configure("jvm", this)
+                .configure("jvc", this)
                 .displayName(getJvcName())
                 .id(locationName);
         WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
@@ -97,6 +104,22 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         log.info("New location {} created", jvc);
         setAttribute(WARATEK_CONTAINER_LOCATION, jvc);
+
+        DynamicTasks.queue(StartableMethods.startingChildren(this));
+    }
+
+    @Override
+    public void doStop() {
+        DynamicTasks.queue(StartableMethods.stoppingChildren(this));
+
+        LocationManager mgr = getManagementContext().getLocationManager();
+        WaratekContainerLocation location = getAttribute(WARATEK_CONTAINER_LOCATION);
+        if (location != null && mgr.isManaged(location)) {
+            mgr.unmanage(location);
+            setAttribute(WARATEK_CONTAINER_LOCATION,  null);
+        }
+
+        super.doStop();
     }
 
     @Override
