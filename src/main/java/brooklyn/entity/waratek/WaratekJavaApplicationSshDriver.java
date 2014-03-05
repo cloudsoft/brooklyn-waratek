@@ -49,5 +49,5 @@ public class WaratekJavaApplicationSshDriver extends VanillaJavaAppSshDriver imp
     public String getRootDirectory() {
         return getRunDir();
     }
-    
+
 }

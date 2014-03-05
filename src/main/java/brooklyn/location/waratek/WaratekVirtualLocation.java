@@ -39,13 +39,13 @@ public interface WaratekVirtualLocation extends Location, Closeable {
     ConfigKey<WaratekInfrastructure> INFRASTRUCTURE =
             ConfigKeys.newConfigKey(WaratekInfrastructure.class, "waratek.infrastructure", "The Waratek infrastructure entity");
 
-    ConfigKey<SshMachineLocation> MACHINE = 
+    ConfigKey<SshMachineLocation> MACHINE =
             ConfigKeys.newConfigKey(SshMachineLocation.class, "waratek.machine", "The underlying SSHable VM");
 
-    ConfigKey<JavaVirtualMachine> JVM = 
+    ConfigKey<JavaVirtualMachine> JVM =
             ConfigKeys.newConfigKey(JavaVirtualMachine.class, "waratek.jvm", "The underlying Waratek JVM entity");
 
-    ConfigKey<JavaVirtualContainer> JVC = 
+    ConfigKey<JavaVirtualContainer> JVC =
             ConfigKeys.newConfigKey(JavaVirtualContainer.class, "waratek.jvc", "The underlying Waratek JVC entity");
 
     String PREFIX = "waratek-";

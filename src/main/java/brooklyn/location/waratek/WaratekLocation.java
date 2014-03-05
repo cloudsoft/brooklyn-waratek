@@ -21,21 +21,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import brooklyn.entity.Entity;
+import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
+import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
-import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.stream.Streams;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
 public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<WaratekMachineLocation> {
+
+	private static final Logger LOG = LoggerFactory.getLogger(WaratekLocation.class);
 
     private Object lock;
 
@@ -107,22 +115,37 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @Override
     public WaratekMachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
         // 1. look through existing infrastructure for non-empty JVMs
-        //    trying to satisfy the affinty rules etc.
-        //    if not, get a new machine and deploy a JVM there
 
-        SshMachineLocation machine = provisioner.obtain(flags);
-        Map<?,?> machineFlags = MutableMap.builder()
-                .putAll(flags)
-                .put("machine", machine)
-                .build();
-                
-        return new WaratekMachineLocation(machineFlags);
+        JavaVirtualMachine jvm = null;
+        for (Entity entity : infrastructure.getJvmList()) {
+            Integer maxSize = entity.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
+            Integer currentSize = entity.getAttribute(WaratekAttributes.JVC_COUNT);
+            // also try to satisfy the affinty rules etc.
+            if (currentSize == null || currentSize < maxSize) {
+                jvm = (JavaVirtualMachine) entity;
+                break;
+            }
+        }
+        if (jvm == null) {
+            // if not, get a new machine and deploy a JVM there
+            SshMachineLocation machine = provisioner.obtain(flags);
+            // increase size of JVM cluster
+            // the new JVM entity will create a location
+            // we need to get that location here somehow
+            DynamicCluster cluster = infrastructure.getVirtualMachineCluster();
+            Optional<Entity> added = cluster.growByOne(machine, flags);
+            if (added.isPresent()) {
+                jvm = (JavaVirtualMachine) added.get();
+            }
+        }
+        WaratekMachineLocation location = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+        return location;
     }
 
     @Override
     public void release(WaratekMachineLocation machine) {
         if (provisioner != null) {
-            provisioner.release(machine);
+            provisioner.release(machine.getMachine());
         } else {
             throw new IllegalStateException("Request to release machine "+machine+", but this machine is not currently allocated");
         }

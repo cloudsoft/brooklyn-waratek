@@ -28,10 +28,17 @@ import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
+import brooklyn.location.LocationDefinition;
+import brooklyn.location.LocationSpec;
+import brooklyn.location.basic.BasicLocationDefinition;
+import brooklyn.location.waratek.WaratekContainerLocation;
+import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
+
+import com.google.common.collect.Maps;
 
 public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements JavaVirtualContainer {
 
@@ -68,6 +75,28 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         jmxMxBeanFeed = WaratekUtils.connectMXBeanSensors(jmxHelper, this, Duration.FIVE_SECONDS);
         WaratekUtils.connectEnrichers(this);
         connectServiceUpIsRunning();
+    }
+
+    /**
+     * Create a new {@link WaratekContainerLocation} wrapping these locations.
+     */
+    @Override
+    public void preStart() {
+        JavaVirtualMachine jvm = getConfig(JVM);
+        WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+        WaratekInfrastructure infrastructure = jvm.getConfig(JavaVirtualMachine.WARATEK_INFRASTRUCTURE);
+        String locationName = machine.getId() + "-" + getId();
+        LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
+                .parent(machine)
+                .configure("jvm", this)
+                .displayName(getJvcName())
+                .id(locationName);
+        WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
+        String locationSpec = String.format("waratek:%s:%s:%s", infrastructure.getId(), jvm.getJvmName(), getJvcName());
+        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
+        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        log.info("New location {} created", jvc);
+        setAttribute(WARATEK_CONTAINER_LOCATION, jvc);
     }
 
     @Override

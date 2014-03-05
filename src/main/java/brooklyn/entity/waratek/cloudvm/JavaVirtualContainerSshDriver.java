@@ -115,7 +115,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void customize() {
-        
+
     }
 
 }

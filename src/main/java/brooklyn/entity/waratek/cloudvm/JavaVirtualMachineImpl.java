@@ -36,8 +36,10 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
+import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
+import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
@@ -49,6 +51,7 @@ import brooklyn.util.task.DynamicTasks;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaVirtualMachine {
 
@@ -171,24 +174,25 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         super.disconnectSensors();
     }
 
+
     /**
      * Create a new {@link WaratekMachineLocation} wrapping these locations.
      */
     @Override
-    public void preStart() {
-    }
-
-
-    @Override
     public void doStart(Collection<? extends Location> locations) {
         WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
         WaratekLocation waratek = infrastructure.getAttribute(WaratekInfrastructure.WARATEK_LOCATION);
+        String locationName = waratek.getId() + "-" + getId();
         LocationSpec<WaratekMachineLocation> spec = LocationSpec.create(WaratekMachineLocation.class)
                 .parent(waratek)
                 .configure("jvm", this)
                 .displayName(getJvmName())
-                .id(waratek.getId() + ":" + getJvmName());
+                .id(locationName);
         WaratekMachineLocation jvm = getManagementContext().getLocationManager().createLocation(spec);
+        String locationSpec = String.format("waratek:%s:%s", infrastructure.getId(), getJvmName());
+        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
+        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        log.info("New location {} created", jvm);
         setAttribute(WARATEK_MACHINE_LOCATION, jvm);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));

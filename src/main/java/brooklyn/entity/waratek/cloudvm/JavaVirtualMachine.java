@@ -40,6 +40,8 @@ import brooklyn.util.flags.SetFromFlag;
 @ImplementedBy(JavaVirtualMachineImpl.class)
 public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName {
 
+    String JAVA_OPTS = "JAVA_OPTS";
+
     String DEFAULT_JVM_NAME_FORMAT = "jvm-brooklyn-%1$s";
     String ALTERNATIVE_JVM_NAME_FORMAT = "jvm-%2$d";
 

@@ -19,9 +19,9 @@ import com.google.common.base.Objects.ToStringHelper;
  * plus adds a few more shortcuts for favourite blueprints to the {@link LaunchCommand}.
  */
 public class Main extends brooklyn.cli.Main {
-    
+
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    
+
     public static final String DEFAULT_LOCATION = "waratek";
 
     public static void main(String... args) {
@@ -33,7 +33,7 @@ public class Main extends brooklyn.cli.Main {
     protected String cliScriptName() {
         return "start.sh";
     }
-    
+
     @Override
     protected Class<? extends BrooklynCommand> cliLaunchCommand() {
         return LaunchCommand.class;
@@ -54,7 +54,7 @@ public class Main extends brooklyn.cli.Main {
             // process our CLI arguments
             if (infrastructure) setAppToLaunch(BasicInfrastructure.class.getCanonicalName());
             if (application) setAppToLaunch(SimpleJavaApplication.class.getCanonicalName());
-            
+
             // now process the standard launch arguments
             return super.call();
         }

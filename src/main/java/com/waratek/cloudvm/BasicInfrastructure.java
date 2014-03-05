@@ -28,7 +28,7 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.util.flags.SetFromFlag;
 
-/** 
+/**
  * Brooklyn managed basic Waratek infrastructure.
  */
 @Catalog(name="BasicWaratekInfrastructure",

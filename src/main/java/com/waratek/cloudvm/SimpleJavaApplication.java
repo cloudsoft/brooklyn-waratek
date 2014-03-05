@@ -37,12 +37,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-/** 
+/**
  * Brooklyn managed Waratek SimpleJavaApplication.
  */
 @Catalog(name="SimpleJavaApplication",
     description="Deploys Simple Waratek Java Application.",
-    iconUrl="classpath://waratek-logo.png")
+    iconUrl="classpath://java-logo.png")
 public class SimpleJavaApplication extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);

@@ -15,27 +15,38 @@
  */
 package brooklyn.location.waratek;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import brooklyn.config.ConfigKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import brooklyn.entity.Entity;
-import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
+import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.OsDetails;
+import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekMachineLocation extends SshMachineLocation implements MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation {
+public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation {
+
+	private static final Logger LOG = LoggerFactory.getLogger(WaratekMachineLocation.class);
 
     @SetFromFlag("machine")
     private SshMachineLocation machine;
@@ -54,16 +65,36 @@ public class WaratekMachineLocation extends SshMachineLocation implements Machin
             init();
         }
     }
-    
+
     @Override
     public void init() {
         super.init();
         addExtension(AvailabilityZoneExtension.class, new WaratekContainerExtension(getManagementContext(), this));
     }
 
+    public WaratekContainerLocation obtain() throws NoMachinesAvailableException {
+        return obtain(Maps.<String,Object>newLinkedHashMap());
+    }
+
     @Override
-    public WaratekContainerLocation obtain(Map<?, ?> flags) throws NoMachinesAvailableException {
-        return new WaratekContainerLocation(flags);
+    public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
+        Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
+        Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
+
+        // also try to satisfy the affinty rules etc.
+        if (currentSize != null && currentSize >= maxSize) {
+            throw new NoMachinesAvailableException(String.format("Limit of %d containers reached at %s", maxSize, jvm.getJvmName()));
+        }
+
+        // increase size of JVC cluster
+        DynamicCluster cluster = jvm.getJvcCluster();
+        Optional<Entity> added = cluster.growByOne(machine, flags);
+        if (!added.isPresent()) {
+            throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
+        }
+        JavaVirtualContainer jvc = (JavaVirtualContainer) added.get();
+        WaratekContainerLocation location = jvc.getAttribute(JavaVirtualContainer.WARATEK_CONTAINER_LOCATION);
+        return location;
     }
 
     @Override
@@ -73,11 +104,12 @@ public class WaratekMachineLocation extends SshMachineLocation implements Machin
 
     @Override
     public void release(WaratekContainerLocation machine) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Map<String, Object> getProvisioningFlags(Collection<String> tags) {
-        return null;
+        return MutableMap.<String, Object>of();
     }
 
     @Override
@@ -111,6 +143,11 @@ public class WaratekMachineLocation extends SshMachineLocation implements Machin
 
     public JavaVirtualMachine getJavaVirtualMachine() {
         return jvm;
+    }
+
+    @Override
+    public void close() throws IOException {
+        machine.close();
     }
 
 }

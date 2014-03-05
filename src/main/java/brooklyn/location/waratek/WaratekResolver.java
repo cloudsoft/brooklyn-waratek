@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +41,7 @@ import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -56,12 +58,12 @@ import com.google.common.collect.Sets;
  */
 public class WaratekResolver implements LocationResolver {
 
-    private static final Logger log = LoggerFactory.getLogger(WaratekResolver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WaratekResolver.class);
 
     public static final String WARATEK = "waratek";
-
-    private static final Pattern PATTERN = Pattern.compile("("+WARATEK+"|"+WARATEK.toUpperCase()+"):([^:]*)(:([^:]*|\\*)(:([^:]*))?)?(:\\((.*)\\))?$");
-    private static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
+    public static final Pattern PATTERN = Pattern.compile("("+WARATEK+"|"+WARATEK.toUpperCase()+")" + ":([a-zA-Z0-9]+)" +
+            "(:([a-zA-Z0-9]+|\\*)(:([a-zA-Z0-9]+))?)?" + "(:\\((.*)\\))?$");
+    public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
 
     private ManagementContext managementContext;
 
@@ -81,7 +83,7 @@ public class WaratekResolver implements LocationResolver {
     }
 
     protected Location newLocationFromString(String spec, brooklyn.location.LocationRegistry registry, Map properties, Map locationFlags) {
-        log.info("Resolving location '" + spec + "' with flags " + Joiner.on(",").withKeyValueSeparator("=").join(locationFlags));
+        LOG.info("Resolving location '" + spec + "' with flags " + Joiner.on(",").withKeyValueSeparator("=").join(locationFlags));
         String namedLocation = (String) locationFlags.get(LocationInternal.NAMED_SPEC_NAME.getName());
 
         Matcher matcher = PATTERN.matcher(spec);
@@ -89,7 +91,7 @@ public class WaratekResolver implements LocationResolver {
             throw new IllegalArgumentException("Invalid location '"+spec+"'; must specify something like waratek:entityId or waratek:entityId:(name=abc)");
         }
 
-        String argsPart = matcher.group(8);
+        String argsPart = matcher.group(7);
         Map<String, String> argsMap = (argsPart != null) ? KeyValueParser.parseMap(argsPart) : Collections.<String,String>emptyMap();
         String namePart = argsMap.get("name");
 
@@ -112,46 +114,40 @@ public class WaratekResolver implements LocationResolver {
         }
         String jvmId = matcher.group(4);
         String jvcId = matcher.group(6);
-        /*
- >>> namedLocation = waratek-uD7A3VvO
- >>> namePart = null
- >>> infrastructureId = uD7A3VvO:(name="waratek-uD7A3VvO")
-         */
-        log.info(Strings.repeat(">", 50));
-        log.info(">>> namedLocation = {}", namedLocation);
-        log.info(">>> namePart = {}", namePart);
-        log.info(">>> infrastructureId = {}", infrastructureId);
-        log.info(Strings.repeat(">", 50));
 
+        // Build the location name from parts
+        StringBuilder name = new StringBuilder();
         if (namePart != null) {
-            flags.put("name", namePart);
+            name.append(namePart);
         } else {
-            flags.put("name", "waratek-" + infrastructureId);
-        }
-        String locationId = (String) flags.get("name");
-        log.info("Location name will be: '" + locationId + "'");
-        Location location = null;
-
-        // Lookup an infrastructure location
-        if (Strings.isBlank(jvmId) && Strings.isBlank(jvcId)) {
-            for (Location each : managementContext.getLocationManager().getLocations()) {
-                log.info("Location {}: {}, {}", new Object[] { each.getId(), each.getClass().getSimpleName(), each.getDisplayName() });
+            name.append("waratek-");
+            name.append(infrastructureId);
+            if (jvmId != null && !jvmId.equals("*")) {
+                name.append("-").append(jvmId);
             }
-            Optional<Location> found = Iterables.tryFind(managementContext.getLocationManager().getLocations(),
-                    Predicates.instanceOf(WaratekLocation.class));
-            if (found.isPresent()) {
-                location = found.get();
-            } else {
-                throw new IllegalArgumentException("Invalid location '"+spec+"'; cannot find location id '" + locationId + "'");
+            if (jvcId != null) {
+                name.append("-").append(jvcId);
             }
-//            location = managementContext.getLocationManager().getLocation(locationId);
-//            if (location == null) {
-//                throw new IllegalArgumentException("Invalid location '"+spec+"'; cannot find location id '" + locationId + "'");
-//            }
-            log.info("Obtained infrastructure location: " + location);
         }
+        final String locationName =  name.toString();
+        flags.put("name", locationName);
+        LOG.info("Location name will be: '" + locationName + "'");
 
-        return location;
+        // Look up location by ID and return
+        Optional<Location> found = Iterables.tryFind(managementContext.getLocationManager().getLocations(),
+                new Predicate<Location>() {
+                    @Override
+                    public boolean apply(Location input) {
+                        return input.getId().equals(locationName);
+                    }
+                });
+        if (found.isPresent()) {
+            Location location = found.get();
+            LOG.info("Obtained location: " + location);
+            return location;
+        } else {
+            throw new IllegalArgumentException("Invalid location '"+spec+"'; cannot find location '" + locationName + "'");
+        }
     }
 
     @Override

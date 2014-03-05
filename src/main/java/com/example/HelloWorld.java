@@ -29,7 +29,7 @@ public class HelloWorld {
      * <p>
      * Called with no arguments will print 'Hello, World!' on standard output
      * with an incrementing counter, every second. If an integer argument is given,
-     * then this number of bytes will be allocated and stored in a collection on 
+     * then this number of bytes will be allocated and stored in a collection on
      * the heap each iteration as well.
      */
     public static void main(String...argv) {
