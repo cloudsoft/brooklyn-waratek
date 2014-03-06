@@ -44,7 +44,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, "java", getRootDirectory());
+            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, "java brooklyn container", getRootDirectory());
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }

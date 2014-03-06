@@ -19,19 +19,24 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.Entity;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
+import brooklyn.location.basic.LocationConfigKeys;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.util.flags.SetFromFlag;
@@ -39,9 +44,11 @@ import brooklyn.util.stream.Streams;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
-public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<WaratekMachineLocation> {
+public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<MachineLocation> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WaratekLocation.class);
 
@@ -54,6 +61,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     protected WaratekInfrastructure infrastructure;
 
     protected final AtomicInteger obtainCounter = new AtomicInteger();
+    protected final ConcurrentMap<WaratekMachineLocation, SshMachineLocation> machines = Maps.newConcurrentMap();
 
     public WaratekLocation() {
         this(Maps.newLinkedHashMap());
@@ -104,21 +112,30 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @Override
     public void close() {
         if (provisioner instanceof Closeable) {
-            Streams.closeQuietly((Closeable)provisioner);
+            Streams.closeQuietly((Closeable) provisioner);
         }
     }
 
-    public WaratekMachineLocation obtain() throws NoMachinesAvailableException {
+    public MachineLocation obtain() throws NoMachinesAvailableException {
         return obtain(Maps.<String,Object>newLinkedHashMap());
     }
 
     @Override
-    public WaratekMachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
-        // Question - what do we do when a *NON* java based application asks for a location
-        // we _want_ to hand back a standard SshMachineLocation ...
-        
-        // 1. look through existing infrastructure for non-empty JVMs
+    public MachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
+        // Check for a non-Java calling context first
+        Object context = flags.get(LocationConfigKeys.CALLER_CONTEXT.getName());
+        if (context instanceof Entity) {
+            List<Class<?>> implementations = ClassUtils.getAllInterfaces(context.getClass());
+            boolean usesJava = Iterables.any(implementations, Predicates.<Class>equalTo(UsesJava.class));
+            if (!usesJava) {
+                // Return an SshMachineLocation from the provisioner
+                SshMachineLocation machine = provisioner.obtain(flags);
+                return machine;
+            }
+        }
+        // No context, non-entity context or context implementing UsesJava interface
 
+        // Look through existing infrastructure for non-empty JVMs
         JavaVirtualMachine jvm = null;
         for (Entity entity : infrastructure.getJvmList()) {
             Integer maxSize = entity.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
@@ -130,11 +147,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             }
         }
         if (jvm == null) {
-            // if not, get a new machine and deploy a JVM there
+            // Get a new machine and deploy a JVM there
             SshMachineLocation machine = provisioner.obtain(flags);
-            // increase size of JVM cluster
-            // the new JVM entity will create a location
-            // we need to get that location here somehow
+            // Increase size of JVM cluster
             DynamicCluster cluster = infrastructure.getVirtualMachineCluster();
             Optional<Entity> added = cluster.growByOne(machine, flags);
             if (added.isPresent()) {
@@ -142,15 +157,21 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             }
         }
         WaratekMachineLocation location = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
-        return location;
+        return location.obtain();
     }
 
     @Override
-    public void release(WaratekMachineLocation machine) {
+    public void release(MachineLocation machine) {
         if (provisioner != null) {
-            provisioner.release(machine.getMachine());
+            if (machines.containsKey(machine)) {
+                provisioner.release(machines.remove(machine));
+            } else if (machine instanceof SshMachineLocation) {
+                provisioner.release((SshMachineLocation) machine);
+            } else {
+                throw new IllegalArgumentException("Request to release machine "+machine+", but this machine is not currently allocated");
+            }
         } else {
-            throw new IllegalStateException("Request to release machine "+machine+", but this machine is not currently allocated");
+            throw new IllegalStateException("No provisioner available to release machine "+machine);
         }
     }
 
@@ -172,7 +193,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     }
 
     @Override
-    public MachineProvisioningLocation<WaratekMachineLocation> newSubLocation(Map<?, ?> newFlags) {
+    public MachineProvisioningLocation<MachineLocation> newSubLocation(Map<?, ?> newFlags) {
         throw new UnsupportedOperationException();
     }
 

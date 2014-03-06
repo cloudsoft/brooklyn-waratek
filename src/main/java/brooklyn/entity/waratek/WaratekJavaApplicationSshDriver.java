@@ -14,23 +14,25 @@ import com.google.common.base.Optional;
  */
 public class WaratekJavaApplicationSshDriver extends VanillaJavaAppSshDriver implements WaratekJavaApplicationDriver {
 
-    private JavaVirtualMachine jvm;
-    private JavaVirtualContainer jvc;
-
     public WaratekJavaApplicationSshDriver(WaratekJavaApplicationImpl entity, SshMachineLocation machine) {
         super(entity, machine);
-        jvc = ((WaratekContainerLocation) machine).getJavaVirtualContainer();
-        jvm = ((WaratekContainerLocation) machine).getJavaVirtualMachine();
+    }
+
+    private JavaVirtualMachine getJvm() {
+        return getJvc().getJavaVirtualMachine();
+    }
+
+    private JavaVirtualContainer getJvc() {
+        return ((WaratekContainerLocation) getMachine()).getJavaVirtualContainer();
     }
 
     @Override
     protected String getLogFileLocation() {
-        return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), jvc.getJvcName(), "console.log");
+        return Os.mergePaths(getJvm().getRootDirectory(), "var/log/javad", getJvm().getJvmName(), getJvc().getJvcName(), "console.log");
     }
 
     @Override
     protected Optional<String> getCurrentJavaVersion() {
-        // TODO call JMX to get Waratek JVM version details
         return Optional.of("1.6.0");
     }
 

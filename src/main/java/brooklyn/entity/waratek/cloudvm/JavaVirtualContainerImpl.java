@@ -31,9 +31,7 @@ import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
-import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
-import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.management.LocationManager;
@@ -42,8 +40,6 @@ import brooklyn.util.os.Os;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
-
-import com.google.common.collect.Maps;
 
 public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements JavaVirtualContainer {
 
@@ -91,18 +87,20 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
         JavaVirtualMachine jvm = getConfig(JVM);
         WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
-        WaratekInfrastructure infrastructure = jvm.getConfig(JavaVirtualMachine.WARATEK_INFRASTRUCTURE);
+//        WaratekInfrastructure infrastructure = jvm.getConfig(JavaVirtualMachine.WARATEK_INFRASTRUCTURE);
         String locationName = machine.getId() + "-" + getId();
         LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
                 .parent(machine)
                 .configure("jvc", this)
+                .configure("address", machine.getAddress()) 
+                .configure(machine.getAllConfig(true))
                 .displayName(getJvcName())
                 .id(locationName);
         WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
-        String locationSpec = String.format("waratek:%s:%s:%s", infrastructure.getId(), jvm.getJvmName(), getJvcName());
-        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
-        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
-        log.info("New location {} created", jvc);
+//        String locationSpec = String.format("waratek:%s:%s:%s", infrastructure.getId(), jvm.getJvmName(), getJvcName());
+//        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
+//        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        log.info("New JVC location {} created", jvc);
         setAttribute(WARATEK_CONTAINER_LOCATION, jvc);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
