@@ -80,6 +80,8 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
     /**
      * Create a new {@link WaratekContainerLocation} wrapping the JVM we are starting in.
+     * <p>
+     * Note that the JVC locations are not published to the registry.
      */
     @Override
     public void doStart(Collection<? extends Location> locations) {
@@ -87,19 +89,15 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
         JavaVirtualMachine jvm = getConfig(JVM);
         WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
-//        WaratekInfrastructure infrastructure = jvm.getConfig(JavaVirtualMachine.WARATEK_INFRASTRUCTURE);
         String locationName = machine.getId() + "-" + getId();
         LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
                 .parent(machine)
                 .configure("jvc", this)
                 .configure("address", machine.getAddress()) 
-                .configure(machine.getAllConfig(true))
+                .configure(machine.getMachine().getAllConfig(true))
                 .displayName(getJvcName())
                 .id(locationName);
         WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
-//        String locationSpec = String.format("waratek:%s:%s:%s", infrastructure.getId(), jvm.getJvmName(), getJvcName());
-//        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
-//        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         log.info("New JVC location {} created", jvc);
         setAttribute(WARATEK_CONTAINER_LOCATION, jvc);
 

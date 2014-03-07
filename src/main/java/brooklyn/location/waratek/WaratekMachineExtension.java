@@ -18,7 +18,7 @@ package brooklyn.location.waratek;
 import java.util.List;
 
 import brooklyn.entity.Entity;
-import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
+import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.location.Location;
 import brooklyn.location.cloud.AbstractAvailabilityZoneExtension;
 import brooklyn.management.ManagementContext;
@@ -27,11 +27,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
-public class WaratekContainerExtension extends AbstractAvailabilityZoneExtension {
+public class WaratekMachineExtension extends AbstractAvailabilityZoneExtension {
 
     private final WaratekVirtualLocation location;
 
-    public WaratekContainerExtension(ManagementContext managementContext, WaratekVirtualLocation location) {
+    public WaratekMachineExtension(ManagementContext managementContext, WaratekVirtualLocation location) {
         super(managementContext);
         this.location = Preconditions.checkNotNull(location, "location");
     }
@@ -39,17 +39,17 @@ public class WaratekContainerExtension extends AbstractAvailabilityZoneExtension
     @Override
     protected List<Location> doGetAllSubLocations() {
         List<Location> result = Lists.newArrayList();
-        for (Entity entity : location.getJvcList()) {
-            JavaVirtualContainer jvc = (JavaVirtualContainer) entity;
-            WaratekContainerLocation container = jvc.getAttribute(JavaVirtualContainer.WARATEK_CONTAINER_LOCATION);
-            result.add(container);
+        for (Entity entity : location.getJvmList()) {
+            JavaVirtualMachine jvm = (JavaVirtualMachine) entity;
+            WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+            result.add(machine);
         }
         return result;
     }
 
     @Override
     protected boolean isNameMatch(Location loc, Predicate<? super String> namePredicate) {
-        return namePredicate.apply(((WaratekContainerLocation) loc).getJavaVirtualMachine().getJvmName());
+        return namePredicate.apply(((WaratekMachineLocation) loc).getWaratekInfrastructure().getId());
     }
 
 }

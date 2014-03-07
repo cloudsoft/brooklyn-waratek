@@ -50,7 +50,6 @@ public interface WaratekVirtualLocation extends Location, Closeable {
 
     String PREFIX = "waratek-";
 
-
     List<Entity> getJvcList();
 
     List<Entity> getJvmList();

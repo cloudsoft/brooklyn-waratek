@@ -51,7 +51,6 @@ import com.google.common.collect.Sets;
  *     <li>waratek:infrastructureId:(name="waratek-infrastructure")
  *     <li>waratek:infrastructureId:jvmId
  *     <li>waratek:infrastructureId:jvmid:jvcId
- *     <li>waratek:infrastructureId:*:jvcid
  *   </ul>
  */
 public class WaratekResolver implements LocationResolver {
@@ -103,8 +102,6 @@ public class WaratekResolver implements LocationResolver {
 
         Map<String, Object> filteredProperties = new LocationPropertiesFromBrooklynProperties().getLocationProperties(WARATEK, namedLocation, properties);
         MutableMap<String, Object> flags = MutableMap.<String, Object>builder().putAll(filteredProperties).putAll(locationFlags).build();
-        // LocationConfigUtils.finalAndOriginalSpecs(spec, locationFlags, properties, namedLocation);
-        // If there are a lot of flags here, something is pronbably wrong...
 
         String infrastructureId = matcher.group(2);
         if (Strings.isBlank(infrastructureId)) {

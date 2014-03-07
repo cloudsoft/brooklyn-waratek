@@ -78,7 +78,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @Override
     public void init() {
         super.init();
-        addExtension(AvailabilityZoneExtension.class, new WaratekContainerExtension(getManagementContext(), this));
+        addExtension(AvailabilityZoneExtension.class, new WaratekMachineExtension(getManagementContext(), this));
     }
 
     @Override
