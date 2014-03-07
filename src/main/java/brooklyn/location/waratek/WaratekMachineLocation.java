@@ -41,6 +41,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -147,7 +148,16 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
     @Override
     public void close() throws IOException {
+        // FIXME check this is correct?
         machine.close();
+        jvm.stop();
+    }
+
+    @Override
+    public ToStringHelper string() {
+        return super.string()
+                .add("machine", machine)
+                .add("jvm", jvm);
     }
 
 }
