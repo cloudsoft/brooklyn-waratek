@@ -33,6 +33,10 @@ import brooklyn.util.flags.SetFromFlag;
 @ImplementedBy(JavaVirtualContainerImpl.class)
 public interface JavaVirtualContainer extends SoftwareProcess, UsesJavaMXBeans, HasShortName {
 
+    String STATUS_RUNNING = "Running";
+    String STATUS_SHUT_OFF = "Shut Off";
+    String STATUS_PAUSED = "Paused";
+
     String DEFAULT_JVC_NAME_FORMAT = "jvc-brooklyn-%1$s";
     String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-%2$d";
 

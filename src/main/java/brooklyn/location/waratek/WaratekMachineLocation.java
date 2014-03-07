@@ -46,7 +46,7 @@ import com.google.common.collect.Maps;
 
 public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation {
 
-	private static final Logger LOG = LoggerFactory.getLogger(WaratekMachineLocation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WaratekMachineLocation.class);
 
     @SetFromFlag("machine")
     private SshMachineLocation machine;

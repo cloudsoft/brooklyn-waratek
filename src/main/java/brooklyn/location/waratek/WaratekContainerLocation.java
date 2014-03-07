@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import brooklyn.entity.Entity;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
+import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
@@ -37,7 +39,10 @@ import com.google.common.collect.Maps;
 
 public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation {
 
-	private static final Logger LOG = LoggerFactory.getLogger(WaratekContainerLocation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WaratekContainerLocation.class);
+
+    @SetFromFlag("machine")
+    private SshMachineLocation machine;
 
     @SetFromFlag("jvc")
     private JavaVirtualContainer jvc;
@@ -95,12 +100,34 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         return updated;
     }
 
+    /* Delegate port operations to machine */
+
+    @Override
+    public boolean obtainSpecificPort(int portNumber) {
+        return machine.obtainSpecificPort(portNumber);
+    }
+
+    @Override
+    public int obtainPort(PortRange range) {
+        return machine.obtainPort(range);
+    }
+
+    @Override
+    public void releasePort(int portNumber) {
+        machine.releasePort(portNumber);
+    }
+
     @Override
     protected int execWithLogging(Map<String,?> props, String summaryForLogging, List<String> commands, Map env, final Closure<Integer> execCommand) {
         return super.execWithLogging(props, summaryForLogging, commands, injectWaratekOptions(env), execCommand);
     }
     @Override
     public int execScript(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
+        // Handle check-running by retrieving JVC status directly
+        if (summaryForLogging != null && summaryForLogging.startsWith("check-running")) {
+            String status = jvc.getAttribute(WaratekAttributes.STATUS);
+            return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
+        }
         return super.execScript(props, summaryForLogging, commands, injectWaratekOptions(env));
     }
     @Override

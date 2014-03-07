@@ -16,8 +16,6 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     public static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
     public static final String VIRTUAL_CONTAINER_MX_BEAN = "com.waratek:type=%s,name=VirtualContainer";
-    public static final String STATUS_RUNNING = "Running";
-    public static final String STATUS_SHUT_OFF = "Shut Off";
 
     private volatile JmxHelper jmxHelper;
 
@@ -90,7 +88,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
             if (object != null) {
                 String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
-                if (!STATUS_SHUT_OFF.equals(status)) {
+                if (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status)) {
                     jmxHelper.operation(object.getObjectName(), "shutdownContainer");
                 }
                 jmxHelper.operation(object.getObjectName(), "undefineContainer");

@@ -93,6 +93,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
                 .parent(machine)
                 .configure("jvc", this)
+                .configure("machine", machine.getMachine()) // The underlying SshMachineLocation
                 .configure("address", machine.getAddress()) 
                 .configure(machine.getMachine().getAllConfig(true))
                 .displayName(getJvcName())
