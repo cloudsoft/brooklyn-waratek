@@ -17,6 +17,7 @@ package brooklyn.location.waratek;
 
 import groovy.lang.Closure;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +33,9 @@ import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
-import brooklyn.util.os.Os;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -142,6 +143,19 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
     public int execCommands(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
         LOG.info("Intercepted execCommands: {}", summaryForLogging);
         return super.execCommands(props, summaryForLogging, commands, injectWaratekOptions(env));
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO close down resources used by this container only
+        jvc.stop();
+    }
+
+    @Override
+    public ToStringHelper string() {
+        return super.string()
+                .add("machine", machine)
+                .add("jvc", jvc);
     }
 
 }
