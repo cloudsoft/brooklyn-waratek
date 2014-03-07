@@ -21,21 +21,21 @@ services:
   members:
   - $brooklyn.import("postgresql-chef")
     id: og-db
-    location: waratek-local
+    location: waratek-eu-west-1
     chef:
       attributes:
         postgresql:
           sql: io/cloudsoft/opengamma/config/create-brooklyn-db.sql
   - type: brooklyn.entity.messaging.activemq.ActiveMQBroker
     id: og-amq
-    location: waratek-demo-infrastructure
+    location: waratek-eu-west-1-infrastructure
 - type: Fabric
   id: web-fabric
-  location: waratek-demo-infrastructure
+  location: waratek-eu-west-1-infrastructure
   spec:
     type: brooklyn.entity.webapp.ControlledDynamicWebAppCluster
     brooklyn.config:
-      dynamiccluster.memberspec:
+      memberspec:
         type: io.cloudsoft.opengamma.server.OpenGammaServer
         opengamma.services.message-bus.entity: og-amq
         opengamma.services.database.entity: og-db

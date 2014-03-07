@@ -78,6 +78,7 @@ public class SimpleJavaApplication extends AbstractApplication {
         addChild(EntitySpec.create(WaratekApplicationCluster.class)
                 .configure(DynamicCluster.INITIAL_SIZE, getConfig(INITIAL_SIZE))
                 .configure(DynamicCluster.MEMBER_SPEC, application)
+                .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
                 .displayName("Waratek " + mainClass + " Application"));
     }
 

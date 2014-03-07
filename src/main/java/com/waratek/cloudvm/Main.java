@@ -40,20 +40,24 @@ public class Main extends brooklyn.cli.Main {
     }
 
     @Command(name = "launch", description = "Starts a server, and optionally an application. "
-        + "Use --infrastructure or --application to launch the Waratek infrastructure or a simple application.")
+        + "Use --infrastructure, --application or --cluster to launch the Waratek infrastructure or an application.")
     public static class LaunchCommand extends brooklyn.cli.Main.LaunchCommand {
 
         @Option(name = { "--infrastructure" }, description = "Launch a basic Waratek infrastructure")
         public boolean infrastructure;
 
-        @Option(name = { "--application" }, description = "Launch a simple waratek application")
+        @Option(name = { "--application" }, description = "Launch a simple Java application")
         public boolean application;
+
+        @Option(name = { "--cluster" }, description = "Launch a simple Tomcat web application")
+        public boolean cluster;
 
         @Override
         public Void call() throws Exception {
             // process our CLI arguments
             if (infrastructure) setAppToLaunch(BasicInfrastructure.class.getCanonicalName());
             if (application) setAppToLaunch(SimpleJavaApplication.class.getCanonicalName());
+            if (cluster) setAppToLaunch(TomcatClusterApplication.class.getCanonicalName());
 
             // now process the standard launch arguments
             return super.call();
@@ -70,7 +74,8 @@ public class Main extends brooklyn.cli.Main {
         public ToStringHelper string() {
             return super.string()
                     .add("infrastructure", infrastructure)
-                    .add("application", application);
+                    .add("application", application)
+                    .add("cluster", cluster);
         }
     }
 }

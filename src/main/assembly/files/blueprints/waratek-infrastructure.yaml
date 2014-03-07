@@ -22,7 +22,7 @@ services:
    locations:
     - waratek-eu-west-1
    brooklyn.config:
-     waratek.location.name: waratek-demo-infrastructure
+     waratek.location.name: waratek-eu-west-1-infrastructure
      waratek.jvm.initialSize: 2
      waratek.jvm.spec:
        $brooklyn:entitySpec:

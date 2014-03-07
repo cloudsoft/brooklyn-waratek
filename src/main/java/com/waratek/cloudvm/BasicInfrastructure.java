@@ -40,7 +40,7 @@ public class BasicInfrastructure extends AbstractApplication {
 
     @SetFromFlag("locationName")
     @CatalogConfig(label="Location Name", priority=0)
-    public static final ConfigKey<String> LOCATION_NAME = WaratekInfrastructure.LOCATION_NAME;
+    public static final ConfigKey<String> LOCATION_NAME = ConfigKeys.newConfigKeyWithDefault(WaratekInfrastructure.LOCATION_NAME, "waratek-infrastructure");
 
     @SetFromFlag("runAs")
     @CatalogConfig(label="Separate User", priority=0)

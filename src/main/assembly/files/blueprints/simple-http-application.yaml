@@ -16,7 +16,7 @@ id: simple-http-application
 name: Simple HTTP Appplication
 origin: https://github.com/cloudsoft/brooklyn-waratek/
 locations:
- - waratek-demo-infrastructure
+ - waratek-infrastructure
 services:
  - serviceType: brooklyn.entity.waratek.WaratekApplicationCluster
    id: waratek-helloworld-application
@@ -24,16 +24,15 @@ services:
    brooklyn.config:
      waratek.jvc.maxHeapSize: 2000000000
      waratek.jvc.nameFormat: "http-%2$d"
+     enableAvailabilityZones: true
      initialSize: 6
      memberSpec:
        $brooklyn:entitySpec:
          type: brooklyn.entity.waratek.WaratekJavaApplication
          brooklyn.config:
-           vanillaJavaApp.args: "65535"
-           vanillaJavaApp.mainClass: com.example.HelloWorld
-           vanillaJavaApp.classpath: brooklyn-waratek-examples.jar
-           vanillaJavaApp.mainClass: com.example.MemoryWebServer
-           vanillaJavaApp.classpath: brooklyn-waratek-examples.jar
+           args: "65535"
+           mainClass: com.example.MemoryWebServer
+           classpath: brooklyn-waratek-examples.jar
    brooklyn.policies:
     - policyType: brooklyn.policy.autoscaling.AutoScalerPolicy
       brooklyn.config:

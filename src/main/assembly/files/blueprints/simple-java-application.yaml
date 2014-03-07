@@ -16,17 +16,18 @@ id: simple-java-application
 name: Simple Java Appplication
 origin: https://github.com/cloudsoft/brooklyn-waratek/
 locations:
- - waratek-demo-infrastructure
+ - waratek-infrastructure
 services:
  - serviceType: brooklyn.entity.waratek.WaratekApplicationCluster
    id: waratek-helloworld-application
    name: Waratek HelloWorld Application
    brooklyn.config:
+     enableAvailabilityZones: true
      initialSize: 6
      memberSpec:
        $brooklyn:entitySpec:
          type: brooklyn.entity.waratek.WaratekJavaApplication
          brooklyn.config:
-           vanillaJavaApp.args: "65535"
-           vanillaJavaApp.mainClass: com.example.HelloWorld
-           vanillaJavaApp.classpath: brooklyn-waratek-examples.jar
+           args: "65535"
+           mainClass: com.example.HelloWorld
+           classpath: brooklyn-waratek-examples.jar
