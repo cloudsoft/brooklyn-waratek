@@ -32,6 +32,7 @@ import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.os.Os;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -92,9 +93,13 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
             opts.add(env.get(JavaVirtualMachine.JAVA_OPTS).toString());
         }
 
+        String javaHome = getJavaVirtualMachine().getJavaHome();
+        // TODO fix PATH search if necessary?
+
         Map<String, Object> updated = MutableMap.<String, Object>builder()
                 .putAll(env)
                 .put(JavaVirtualMachine.JAVA_OPTS, Joiner.on(" ").join(opts))
+                .put("JAVA_HOME", javaHome)
                 .build();
         LOG.info("Updated JAVA_OPTS in environment to '{}'", updated.get(JavaVirtualMachine.JAVA_OPTS));
         return updated;
@@ -119,19 +124,23 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
 
     @Override
     protected int execWithLogging(Map<String,?> props, String summaryForLogging, List<String> commands, Map env, final Closure<Integer> execCommand) {
+        LOG.info("Intercepted execWithLogging: {}", summaryForLogging);
         return super.execWithLogging(props, summaryForLogging, commands, injectWaratekOptions(env), execCommand);
     }
     @Override
     public int execScript(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
         // Handle check-running by retrieving JVC status directly
+        LOG.info("Intercepted execScript: {}", summaryForLogging);
         if (summaryForLogging != null && summaryForLogging.startsWith("check-running")) {
             String status = jvc.getAttribute(WaratekAttributes.STATUS);
+            LOG.info("Status is: {}", status);
             return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
         }
         return super.execScript(props, summaryForLogging, commands, injectWaratekOptions(env));
     }
     @Override
     public int execCommands(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
+        LOG.info("Intercepted execCommands: {}", summaryForLogging);
         return super.execCommands(props, summaryForLogging, commands, injectWaratekOptions(env));
     }
 

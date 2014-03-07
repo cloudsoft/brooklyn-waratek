@@ -165,6 +165,11 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     }
 
     @Override
+    public String getJavaHome() {
+        return getAttribute(JAVA_HOME);
+    }
+
+    @Override
     protected void connectSensors() {
         super.connectSensors();
         jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);

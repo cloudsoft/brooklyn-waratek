@@ -23,6 +23,8 @@ public interface JavaVirtualMachineDriver extends JavaSoftwareProcessDriver {
 
     String getHeapSize();
 
+    String getJavaHome();
+
     String getRootDirectory();
 
 }

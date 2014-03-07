@@ -52,12 +52,17 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         super(entity, machine);
 
         entity.setAttribute(JavaVirtualMachine.ROOT_DIRECTORY, getRootDirectory());
+        entity.setAttribute(JavaVirtualMachine.JAVA_HOME, getJavaHome());
     }
 
     /** The path to the root directory of the running CloudVM */
     @Override
     public String getRootDirectory() {
         return getRunDir();
+    }
+    @Override
+    public String getJavaHome() {
+        return Os.mergePaths(getRunDir(), "usr/lib/jvm", String.format("java-1.6.0-waratek-%s.x86_64", getVersion()), "jre");
     }
 
     protected String getLibDirectory() {
@@ -94,8 +99,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     public Map<String, String> getShellEnvironment() {
         Map<String,String> env = super.getShellEnvironment();
         if (installed.get()) {
-            String javaHome = Os.mergePaths(getRunDir(), "usr/lib/jvm", String.format("java-1.6.0-waratek-%s.x86_64", getVersion()), "jre");
-            env.put("JAVA_HOME", javaHome);
+            env.put("JAVA_HOME", getJavaHome());
         }
         return env;
     }

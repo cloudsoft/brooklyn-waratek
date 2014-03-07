@@ -32,11 +32,13 @@ import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.Location;
 import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.LocationConfigKeys;
+import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.util.flags.SetFromFlag;
@@ -147,16 +149,18 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             }
         }
         if (jvm == null) {
-            // Get a new machine and deploy a JVM there
-            SshMachineLocation machine = provisioner.obtain(flags);
             // Increase size of JVM cluster
             DynamicCluster cluster = infrastructure.getVirtualMachineCluster();
-            Optional<Entity> added = cluster.growByOne(machine, flags);
+            Optional<Entity> added = cluster.growByOne(provisioner, flags);
             if (added.isPresent()) {
                 jvm = (JavaVirtualMachine) added.get();
             }
         }
         WaratekMachineLocation location = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+        Optional<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
+        if (deployed.isPresent()) {
+            machines.put(location, deployed.get());
+        }
         return location.obtain();
     }
 

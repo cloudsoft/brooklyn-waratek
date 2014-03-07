@@ -108,12 +108,15 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
 
     AttributeSensor<String> ROOT_DIRECTORY = Sensors.newStringSensor("waratek.jvm.rootDirectory", "The JVM installation root directory");
+    AttributeSensor<String> JAVA_HOME = Sensors.newStringSensor("waratek.jvm.javaHome", "The JVM JAVA_HOME directory");
 
     List<Entity> getJvcList();
 
     DynamicCluster getJvcCluster();
 
     String getJvmName();
+
+    String getJavaHome();
 
     String getRootDirectory();
 
