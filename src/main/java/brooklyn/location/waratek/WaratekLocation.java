@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.ClassUtils;
@@ -143,7 +144,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             }
 
             // Now wait until the JVM has started up
-            Entities.waitForServiceUp(jvm);
+            Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
+
+            // Obtain a new JVC location, save and return it
             WaratekMachineLocation location = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
             WaratekContainerLocation container = location.obtain();
             Optional<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
