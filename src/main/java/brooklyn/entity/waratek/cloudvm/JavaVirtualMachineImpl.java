@@ -190,7 +190,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     public void doStart(Collection<? extends Location> locations) {
         super.doStart(locations);
 
-        Optional<SshMachineLocation> machine = Machines.findUniqueSshMachineLocation(locations);
+        Optional<SshMachineLocation> machine = Machines.findUniqueSshMachineLocation(getLocations());
         WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
         WaratekLocation waratek = infrastructure.getAttribute(WaratekInfrastructure.WARATEK_LOCATION);
         String locationName = waratek.getId() + "-" + getId();
