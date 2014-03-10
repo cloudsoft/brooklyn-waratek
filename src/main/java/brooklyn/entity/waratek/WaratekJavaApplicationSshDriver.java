@@ -23,7 +23,7 @@ public class WaratekJavaApplicationSshDriver extends VanillaJavaAppSshDriver imp
     }
 
     private JavaVirtualContainer getJvc() {
-        return ((WaratekContainerLocation) getMachine()).getJavaVirtualContainer();
+        return ((WaratekContainerLocation) getMachine()).getOwner();
     }
 
     @Override

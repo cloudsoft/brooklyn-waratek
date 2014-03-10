@@ -41,7 +41,7 @@ public class WaratekContainerExtension extends AbstractAvailabilityZoneExtension
         List<Location> result = Lists.newArrayList();
         for (Entity entity : location.getJvcList()) {
             JavaVirtualContainer jvc = (JavaVirtualContainer) entity;
-            WaratekContainerLocation container = jvc.getAttribute(JavaVirtualContainer.WARATEK_CONTAINER_LOCATION);
+            WaratekContainerLocation container = jvc.getDynamicLocation();
             result.add(container);
         }
         return result;

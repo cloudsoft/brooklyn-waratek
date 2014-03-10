@@ -41,7 +41,7 @@ public class WaratekMachineExtension extends AbstractAvailabilityZoneExtension {
         List<Location> result = Lists.newArrayList();
         for (Entity entity : location.getJvmList()) {
             JavaVirtualMachine jvm = (JavaVirtualMachine) entity;
-            WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+            WaratekMachineLocation machine = jvm.getDynamicLocation();
             result.add(machine);
         }
         return result;

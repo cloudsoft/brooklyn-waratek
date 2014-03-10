@@ -46,8 +46,7 @@ public class WaratekJavaApplicationImpl extends VanillaJavaAppImpl implements Wa
 
     @Override
     protected void preStart() {
-        WaratekContainerLocation location = (WaratekContainerLocation) Iterables.find(getLocations(), Predicates.instanceOf(WaratekContainerLocation.class));
-        setAttribute(JavaVirtualContainer.JVC_NAME, location.getJavaVirtualContainer().getJvcName());
+        setAttribute(JavaVirtualContainer.JVC_NAME, getJavaVirtualContainer().getJvcName());
     }
 
     @Override
@@ -65,12 +64,11 @@ public class WaratekJavaApplicationImpl extends VanillaJavaAppImpl implements Wa
 
     public JavaVirtualContainer getJavaVirtualContainer() {
         WaratekContainerLocation location = (WaratekContainerLocation) Iterables.find(getLocations(), Predicates.instanceOf(WaratekContainerLocation.class));
-        return location.getJavaVirtualContainer();
+        return location.getOwner();
     }
 
     public JavaVirtualMachine getJavaVirtualMachine() {
-        WaratekContainerLocation location = (WaratekContainerLocation) Iterables.find(getLocations(), Predicates.instanceOf(WaratekContainerLocation.class));
-        return location.getJavaVirtualMachine();
+        return getJavaVirtualContainer().getJavaVirtualMachine();
     }
 
     @Override

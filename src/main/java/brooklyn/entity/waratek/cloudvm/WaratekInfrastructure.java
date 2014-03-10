@@ -29,12 +29,13 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
+import brooklyn.location.LocationOwner;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekInfrastructureImpl.class)
 @Catalog(name="WaratekInfrastructure", description="Waratek CloudVM Infrastructure.", iconUrl="classpath://waratek-logo.png")
-public interface WaratekInfrastructure extends BasicStartable {
+public interface WaratekInfrastructure extends BasicStartable, LocationOwner<WaratekLocation, WaratekInfrastructure> {
 
     @SetFromFlag("locationName")
     ConfigKey<String> LOCATION_NAME = ConfigKeys.newStringConfigKey(
@@ -52,9 +53,6 @@ public interface WaratekInfrastructure extends BasicStartable {
     BasicAttributeSensorAndConfigKey<EntitySpec> JVM_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(
             EntitySpec.class, "waratek.jvm.spec", "Specification to use when creating child JVMs",
             EntitySpec.create(JavaVirtualMachine.class));
-
-    AttributeSensor<WaratekLocation> WARATEK_LOCATION = Sensors.newSensor(WaratekLocation.class,
-            "waratek.location", "The Waratek location associated with this infrastructure");
 
     AttributeSensor<Integer> JVM_COUNT = WaratekAttributes.JVM_COUNT;
     AttributeSensor<Integer> JVC_COUNT = WaratekAttributes.JVC_COUNT;

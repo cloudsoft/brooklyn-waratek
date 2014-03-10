@@ -29,6 +29,7 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
@@ -39,14 +40,14 @@ import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation {
+public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation, DynamicLocation<JavaVirtualContainer, WaratekContainerLocation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekContainerLocation.class);
 
     @SetFromFlag("machine")
     private SshMachineLocation machine;
 
-    @SetFromFlag("jvc")
+    @SetFromFlag("location.owner")
     private JavaVirtualContainer jvc;
 
     public WaratekContainerLocation() {
@@ -76,7 +77,8 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         return ((WaratekVirtualLocation) getParent()).getWaratekInfrastructure();
     }
 
-    public JavaVirtualContainer getJavaVirtualContainer() {
+    @Override
+    public JavaVirtualContainer getOwner() {
         return jvc;
     }
 

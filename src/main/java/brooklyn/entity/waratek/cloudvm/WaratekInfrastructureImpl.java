@@ -32,8 +32,8 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
-import brooklyn.location.basic.Locations;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.management.LocationManager;
 
@@ -144,7 +144,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         }
         LocationSpec<WaratekLocation> waratekSpec = LocationSpec.create(WaratekLocation.class)
                 .configure("provisioner", provisioner)
-                .configure("infrastructure", this)
+                .configure(DynamicLocation.OWNER, this)
                 .displayName("Waratek(" + locationName + ")")
                 .id(locationName);
         WaratekLocation waratekLocation = getManagementContext().getLocationManager().createLocation(waratekSpec);
@@ -152,7 +152,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         log.info("New location {} created", waratekLocation);
-        setAttribute(WARATEK_LOCATION, waratekLocation);
+        setAttribute(DYNAMIC_LOCATION, waratekLocation);
 
         super.start(locations);
     }
@@ -164,11 +164,16 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         super.stop();
 
         LocationManager mgr = getManagementContext().getLocationManager();
-        WaratekLocation waratek = getAttribute(WARATEK_LOCATION);
+        WaratekLocation waratek = getDynamicLocation();
         if (waratek != null && mgr.isManaged(waratek)) {
             mgr.unmanage(waratek);
-            setAttribute(WARATEK_LOCATION,  null);
+            setAttribute(DYNAMIC_LOCATION,  null);
         }
+    }
+
+    @Override
+    public WaratekLocation getDynamicLocation() {
+        return (WaratekLocation) getAttribute(DYNAMIC_LOCATION);
     }
 
 }

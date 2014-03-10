@@ -39,6 +39,7 @@ import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
@@ -192,11 +193,11 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
 
         Optional<SshMachineLocation> machine = Machines.findUniqueSshMachineLocation(getLocations());
         WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
-        WaratekLocation waratek = infrastructure.getAttribute(WaratekInfrastructure.WARATEK_LOCATION);
+        WaratekLocation waratek = infrastructure.getDynamicLocation();
         String locationName = waratek.getId() + "-" + getId();
         LocationSpec<WaratekMachineLocation> spec = LocationSpec.create(WaratekMachineLocation.class)
                 .parent(waratek)
-                .configure("jvm", this)
+                .configure(DynamicLocation.OWNER, this)
                 .configure("machine", machine.get())
                 .displayName(getJvmName())
                 .id(locationName);
@@ -205,7 +206,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         log.info("New JVM location {} created", location);
-        setAttribute(WARATEK_MACHINE_LOCATION, location);
+        setAttribute(DYNAMIC_LOCATION, location);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
@@ -215,10 +216,10 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
 
         LocationManager mgr = getManagementContext().getLocationManager();
-        WaratekMachineLocation location = getAttribute(WARATEK_MACHINE_LOCATION);
+        WaratekMachineLocation location = getDynamicLocation();
         if (location != null && mgr.isManaged(location)) {
             mgr.unmanage(location);
-            setAttribute(WARATEK_MACHINE_LOCATION,  null);
+            setAttribute(DYNAMIC_LOCATION,  null);
         }
 
         super.doStop();
@@ -237,6 +238,11 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     @Override
     public Integer getCurrentSize() {
         return getJvcCluster().getCurrentSize();
+    }
+
+    @Override
+    public WaratekMachineLocation getDynamicLocation() {
+        return (WaratekMachineLocation) getAttribute(DYNAMIC_LOCATION);
     }
 
     @Override

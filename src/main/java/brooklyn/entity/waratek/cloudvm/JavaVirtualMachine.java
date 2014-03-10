@@ -33,12 +33,13 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
+import brooklyn.location.LocationOwner;
 import brooklyn.location.basic.PortRanges;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(JavaVirtualMachineImpl.class)
-public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName {
+public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName, LocationOwner<WaratekMachineLocation, JavaVirtualMachine> {
 
     String JAVA_OPTS = "JAVA_OPTS";
 
@@ -99,9 +100,6 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
 
     @SetFromFlag("infrastructure")
     ConfigKey<WaratekInfrastructure> WARATEK_INFRASTRUCTURE = ConfigKeys.newConfigKey(WaratekInfrastructure.class, "waratek.infrastructure", "The parent Waratek infrastructure");
-
-    AttributeSensor<WaratekMachineLocation> WARATEK_MACHINE_LOCATION = Sensors.newSensor(WaratekMachineLocation.class,
-            "waratek.location.jvm", "The Waratek machine location associated with this JVM");
 
     ConfigKey<String> JVM_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvm.nameFormat", "Format for generating JVM names", DEFAULT_JVM_NAME_FORMAT);
 

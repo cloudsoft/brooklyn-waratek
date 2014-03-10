@@ -27,11 +27,12 @@ import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
+import brooklyn.location.LocationOwner;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(JavaVirtualContainerImpl.class)
-public interface JavaVirtualContainer extends SoftwareProcess, UsesJavaMXBeans, HasShortName {
+public interface JavaVirtualContainer extends SoftwareProcess, UsesJavaMXBeans, HasShortName, LocationOwner<WaratekContainerLocation, JavaVirtualContainer> {
 
     String STATUS_RUNNING = "Running";
     String STATUS_SHUT_OFF = "Shut Off";
@@ -48,9 +49,6 @@ public interface JavaVirtualContainer extends SoftwareProcess, UsesJavaMXBeans, 
     ConfigKey<JavaVirtualMachine> JVM = ConfigKeys.newConfigKey(JavaVirtualMachine.class, "waratek.jvm", "The parent JVM");
 
     ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
-
-    AttributeSensor<WaratekContainerLocation> WARATEK_CONTAINER_LOCATION = Sensors.newSensor(WaratekContainerLocation.class,
-            "waratek.location.jvc", "The Waratek container location associated with this JVC");
 
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
 

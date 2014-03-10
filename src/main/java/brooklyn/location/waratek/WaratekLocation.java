@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
@@ -36,6 +35,7 @@ import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.LocationConfigKeys;
@@ -45,7 +45,6 @@ import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.stream.Streams;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -56,7 +55,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<MachineLocation> {
+public class WaratekLocation extends AbstractLocation implements WaratekVirtualLocation, MachineProvisioningLocation<MachineLocation>,
+        DynamicLocation<WaratekInfrastructure, WaratekLocation> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(WaratekLocation.class);
 
@@ -66,7 +66,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @SetFromFlag("provisioner")
     private MachineProvisioningLocation<SshMachineLocation> provisioner;
 
-    @SetFromFlag("infrastructure")
+    @SetFromFlag("location.owner")
     private WaratekInfrastructure infrastructure;
 
     /* Mappings for provisioned locations */
@@ -147,7 +147,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
 
             // Obtain a new JVC location, save and return it
-            WaratekMachineLocation location = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+            WaratekMachineLocation location = jvm.getDynamicLocation();
             WaratekContainerLocation container = location.obtain();
             Optional<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
@@ -245,6 +245,11 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
         return super.string()
                 .add("provisioner", provisioner)
                 .add("infrastructure", infrastructure);
+    }
+
+    @Override
+    public WaratekInfrastructure getOwner() {
+        return infrastructure;
     }
 
 }

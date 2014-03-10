@@ -34,6 +34,7 @@ import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.OsDetails;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
@@ -45,14 +46,15 @@ import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation {
+public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation,
+        DynamicLocation<JavaVirtualMachine, WaratekMachineLocation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekMachineLocation.class);
 
     @SetFromFlag("machine")
     private SshMachineLocation machine;
 
-    @SetFromFlag("jvm")
+    @SetFromFlag("location.owner")
     private JavaVirtualMachine jvm;
 
     public WaratekMachineLocation() {
@@ -94,7 +96,7 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
             throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
         }
         JavaVirtualContainer jvc = (JavaVirtualContainer) added.get();
-        WaratekContainerLocation location = jvc.getAttribute(JavaVirtualContainer.WARATEK_CONTAINER_LOCATION);
+        WaratekContainerLocation location = jvc.getDynamicLocation();
         return location;
     }
 
@@ -138,12 +140,13 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
         return ((WaratekVirtualLocation) getParent()).getWaratekInfrastructure();
     }
 
-    public SshMachineLocation getMachine() {
-        return machine;
+    @Override
+    public JavaVirtualMachine getOwner() {
+        return jvm;
     }
 
-    public JavaVirtualMachine getJavaVirtualMachine() {
-        return jvm;
+    public SshMachineLocation getMachine() {
+        return machine;
     }
 
     @Override

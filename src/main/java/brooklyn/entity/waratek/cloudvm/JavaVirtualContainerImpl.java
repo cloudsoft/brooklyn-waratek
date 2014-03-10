@@ -32,6 +32,7 @@ import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
 import brooklyn.location.LocationSpec;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.management.LocationManager;
@@ -88,19 +89,19 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         super.doStart(locations);
 
         JavaVirtualMachine jvm = getConfig(JVM);
-        WaratekMachineLocation machine = jvm.getAttribute(JavaVirtualMachine.WARATEK_MACHINE_LOCATION);
+        WaratekMachineLocation machine = jvm.getDynamicLocation();
         String locationName = machine.getId() + "-" + getId();
         LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
                 .parent(machine)
-                .configure("jvc", this)
+                .configure(DynamicLocation.OWNER, this)
                 .configure("machine", machine.getMachine()) // The underlying SshMachineLocation
-                .configure("address", machine.getAddress()) 
+                .configure("address", machine.getAddress()) // FIXME
                 .configure(machine.getMachine().getAllConfig(true))
                 .displayName(getJvcName())
                 .id(locationName);
         WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
         log.info("New JVC location {} created", jvc);
-        setAttribute(WARATEK_CONTAINER_LOCATION, jvc);
+        setAttribute(DYNAMIC_LOCATION, jvc);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
@@ -110,10 +111,10 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
 
         LocationManager mgr = getManagementContext().getLocationManager();
-        WaratekContainerLocation location = getAttribute(WARATEK_CONTAINER_LOCATION);
+        WaratekContainerLocation location = getDynamicLocation();
         if (location != null && mgr.isManaged(location)) {
             mgr.unmanage(location);
-            setAttribute(WARATEK_CONTAINER_LOCATION,  null);
+            setAttribute(DYNAMIC_LOCATION,  null);
         }
 
         super.doStop();
@@ -190,6 +191,11 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     @Override
     public Class getDriverInterface() {
         return JavaVirtualContainerDriver.class;
+    }
+
+    @Override
+    public WaratekContainerLocation getDynamicLocation() {
+        return (WaratekContainerLocation) getAttribute(DYNAMIC_LOCATION);
     }
 
 }
