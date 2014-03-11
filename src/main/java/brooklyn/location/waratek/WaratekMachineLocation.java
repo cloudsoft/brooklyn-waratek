@@ -83,6 +83,7 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
+        LOG.info("JVM {}: {} containers, max {}", new Object[] { jvm.getJvmName(), currentSize, maxSize });
 
         // also try to satisfy the affinty rules etc.
         if (currentSize != null && currentSize >= maxSize) {
@@ -107,7 +108,13 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
     @Override
     public void release(WaratekContainerLocation machine) {
-        throw new UnsupportedOperationException();
+        LOG.info("JVM {}: releasing {}", new Object[] { jvm.getJvmName(), machine });
+        DynamicCluster cluster = jvm.getJvcCluster();
+        if (cluster.removeMember(machine.getOwner())) {
+            LOG.info("JVM {}: member {} released", new Object[] { jvm.getJvmName(), machine });
+        } else {
+            LOG.warn("JVM {}: member {} not found for release", new Object[] { jvm.getJvmName(), machine });
+        }
     }
 
     @Override

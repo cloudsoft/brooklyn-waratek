@@ -83,8 +83,8 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     }
 
     @Override
-    public String getApplicationUser() {
-        return getEntity().getConfig(JavaVirtualMachine.USE_WARATEK_USER) ? "waratek" : getMachine().getUser();
+    public boolean useWaratekUser() {
+        return getEntity().getConfig(JavaVirtualMachine.USE_WARATEK_USER);
     }
 
     @Override
@@ -173,8 +173,8 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
 
     @Override
     public void install() {
-        log.info("Installing {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
-        log.info("INSTALL_DIR {}", getEntity().getAttribute(JavaVirtualMachine.INSTALL_DIR));
+        log.info("Installing {} to {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME),
+                getEntity().getAttribute(JavaVirtualMachine.INSTALL_DIR));
 
         DownloadResolver resolver = Entities.newDownloader(this);
         List<String> urls = resolver.getTargets();
@@ -197,16 +197,29 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
 
     @Override
     public void customize() {
-        log.info("Customizing {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
+        log.info("Setup JVM {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
         Networking.checkPortsValid(getPortMap());
+
         String installScript = Os.mergePaths(getExpandedInstallDir(), "tools", "autoinstall.sh");
-        String debug = entity.getConfig(JavaVirtualMachine.DEBUG) ? " -x" : "";
+        StringBuilder command = new StringBuilder(installScript);
+        if (entity.getConfig(JavaVirtualMachine.DEBUG)) {
+            command.append(" -x");
+        }
+        command.append(" -s");
+        command.append(" -p ").append(getRunDir());
+        if (!useWaratekUser()) {
+            command.append(" -u").append(getMachine().getUser());
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Running command: {}", command.toString());
+        }
+
         newScript(CUSTOMIZING)
                 .failOnNonZeroResultCode()
                 .body.append(
                         "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
-                        BashCommands.sudo(installScript + debug + " -s -p " + getRunDir() + " -u " + getApplicationUser()))
+                        BashCommands.sudo(command.toString()))
                 .execute();
 
         installed.set(true);
@@ -216,24 +229,34 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     public void launch() {
         log.info("Launching {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
-        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
+        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS_VAR -Xms%2$s -Xmx%2$s",
                 Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
         if (log.isDebugEnabled()) {
-            log.debug("JVM command: {}", javad);
+            log.debug("JVM command (as {}): {}", useWaratekUser() ? JavaVirtualMachine.WARATEK_USERNAME : "user", javad);
         }
         newScript(MutableMap.of("usePidFile", false), LAUNCHING)
-                .body.append(BashCommands.sudoAsUser(getApplicationUser(), javad))
+                .body.append(useWaratekUser() ? BashCommands.sudoAsUser(JavaVirtualMachine.WARATEK_USERNAME, javad) : javad)
                 .execute();
+    }
+
+    private Map<?, ?> getScriptFlags() {
+        MutableMap.Builder<Object, Object> builder = MutableMap.builder();
+        builder.put("usePidFile", getPidFile());
+        if (useWaratekUser()) {
+            builder.put("processOwner", JavaVirtualMachine.WARATEK_USERNAME);
+        }
+        Map<?, ?> flags = builder.build();
+        return flags;
     }
 
     @Override
     public boolean isRunning() {
-        return newScript(MutableMap.of("usePidFile", getPidFile(), "processOwner", getApplicationUser()), CHECK_RUNNING).execute() == 0;
+        return newScript(getScriptFlags(), CHECK_RUNNING).execute() == 0;
     }
 
     @Override
     public void stop() {
-        newScript(MutableMap.of("usePidFile", getPidFile(), "processOwner", getApplicationUser()), STOPPING).execute();
+        newScript(getScriptFlags(), STOPPING).execute();
     }
 
 }

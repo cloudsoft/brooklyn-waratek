@@ -41,7 +41,10 @@ import brooklyn.util.flags.SetFromFlag;
 @ImplementedBy(JavaVirtualMachineImpl.class)
 public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMXBeans, Resizable, HasShortName, LocationOwner<WaratekMachineLocation, JavaVirtualMachine> {
 
-    String JAVA_OPTS = "JAVA_OPTS";
+    String JAVA_OPTS_VAR = "JAVA_OPTS_VAR";
+    String JAVA_HOME_VAR = "JAVA_HOME";
+
+    String WARATEK_USERNAME = "waratek";
 
     String DEFAULT_JVM_NAME_FORMAT = "jvm-brooklyn-%1$s";
     String ALTERNATIVE_JVM_NAME_FORMAT = "jvm-%2$d";

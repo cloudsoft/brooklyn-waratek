@@ -92,19 +92,25 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         opts.add("--async");
         opts.add("--jvm=" + jvc.getJavaVirtualMachine().getJvmName());
         opts.add("--jvc=" + jvc.getJvcName());
-        if (env.containsKey(JavaVirtualMachine.JAVA_OPTS)) {
-            opts.add(env.get(JavaVirtualMachine.JAVA_OPTS).toString());
+        if (env.containsKey(JavaVirtualMachine.JAVA_OPTS_VAR)) {
+            opts.add(env.get(JavaVirtualMachine.JAVA_OPTS_VAR).toString());
         }
 
         String javaHome = getJavaVirtualMachine().getJavaHome();
-        // TODO fix PATH search if necessary?
 
-        Map<String, Object> updated = MutableMap.<String, Object>builder()
+        MutableMap<String, Object> updated = MutableMap.<String, Object>builder()
                 .putAll(env)
-                .put(JavaVirtualMachine.JAVA_OPTS, Joiner.on(" ").join(opts))
-                .put("JAVA_HOME", javaHome)
+                .put(JavaVirtualMachine.JAVA_OPTS_VAR, Joiner.on(" ").join(opts))
+                .put(JavaVirtualMachine.JAVA_HOME_VAR, javaHome)
                 .build();
-        LOG.info("Updated JAVA_OPTS in environment to '{}'", updated.get(JavaVirtualMachine.JAVA_OPTS));
+
+        // FIXME what if PATH is not set?
+        if (env.containsKey("PATH")) {
+            String path = env.get("PATH").toString();
+            updated.put("PATH", Os.mergePaths(javaHome, "bin") + ":" + path);
+        }
+
+        LOG.info("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
         return updated;
     }
 

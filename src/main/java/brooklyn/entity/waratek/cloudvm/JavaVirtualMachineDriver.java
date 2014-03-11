@@ -19,7 +19,7 @@ import brooklyn.entity.java.JavaSoftwareProcessDriver;
 
 public interface JavaVirtualMachineDriver extends JavaSoftwareProcessDriver {
 
-    String getApplicationUser();
+    boolean useWaratekUser();
 
     String getHeapSize();
 
