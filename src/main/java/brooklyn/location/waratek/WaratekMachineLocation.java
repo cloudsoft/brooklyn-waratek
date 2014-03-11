@@ -54,7 +54,7 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     @SetFromFlag("machine")
     private SshMachineLocation machine;
 
-    @SetFromFlag("location.owner")
+    @SetFromFlag("owner")
     private JavaVirtualMachine jvm;
 
     public WaratekMachineLocation() {

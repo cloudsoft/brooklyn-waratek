@@ -17,6 +17,7 @@ package brooklyn.entity.waratek.cloudvm;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,19 +30,21 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.waratek.WaratekLocation;
+import brooklyn.location.waratek.WaratekResolver;
 import brooklyn.management.LocationManager;
+import brooklyn.util.collections.MutableMap;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 public class WaratekInfrastructureImpl extends BasicStartableImpl implements WaratekInfrastructure {
 
@@ -49,6 +52,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     private DynamicCluster virtualMachines;
     private DynamicGroup fabric;
+    private WaratekLocation waratek;
 
     @Override
     public void init() {
@@ -130,29 +134,17 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     @Override
     public DynamicGroup getContainerFabric() { return fabric; }
 
-    /**
-     * Create a new {@link WaratekLocation} wrapping these locations.
-     */
     @Override
     public void start(Collection<? extends Location> locations) {
         Location provisioner = Iterables.getOnlyElement(locations);
         log.info("Creating new WaratekLocation wrapping {}", provisioner);
-        String locationName = getConfig(LOCATION_NAME);
-        if (locationName == null) {
-            String prefix = getConfig(LOCATION_PREFIX);
-            locationName = prefix + getId();
-        }
-        LocationSpec<WaratekLocation> waratekSpec = LocationSpec.create(WaratekLocation.class)
-                .configure("provisioner", provisioner)
-                .configure(DynamicLocation.OWNER, this)
-                .displayName("Waratek(" + locationName + ")")
-                .id(locationName);
-        WaratekLocation waratekLocation = getManagementContext().getLocationManager().createLocation(waratekSpec);
-        String locationSpec = String.format("waratek:%s:(name=\"%s\")", getId(), locationName);
-        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, Maps.<String, Object>newHashMap());
-        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
-        log.info("New location {} created", waratekLocation);
-        setAttribute(DYNAMIC_LOCATION, waratekLocation);
+
+        Map<String, ?> flags = MutableMap.<String, Object>builder()
+                .putAll(getConfig(LOCATION_FLAGS))
+                .put("provisioner", provisioner)
+                .build();
+        waratek = createLocation(flags);
+        log.info("New Waratek location {} created", waratek);
 
         super.start(locations);
     }
@@ -164,7 +156,6 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         super.stop();
 
         LocationManager mgr = getManagementContext().getLocationManager();
-        WaratekLocation waratek = getDynamicLocation();
         if (waratek != null && mgr.isManaged(waratek)) {
             mgr.unmanage(waratek);
             setAttribute(DYNAMIC_LOCATION,  null);
@@ -172,8 +163,40 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     }
 
     @Override
-    public WaratekLocation getDynamicLocation() {
-        return (WaratekLocation) getAttribute(DYNAMIC_LOCATION);
+    public WaratekLocation getDynamicLocation() { return waratek; }
+
+    /**
+     * Create a new {@link WaratekLocation} wrapping the provided provisioner.
+     */
+    @Override
+    public WaratekLocation createLocation(Map<String, ?> flags) {
+        String locationName = getConfig(LOCATION_NAME);
+        if (locationName == null) {
+            String prefix = getConfig(LOCATION_NAME_PREFIX);
+            String suffix = getConfig(LOCATION_NAME_SUFFIX);
+            locationName = Joiner.on("-").skipNulls().join(prefix, getId(), suffix);
+        }
+        LocationSpec<WaratekLocation> waratekSpec = LocationSpec.create(WaratekLocation.class)
+                .configure(flags)
+                .configure(DynamicLocation.OWNER, this)
+                .displayName("Waratek(" + locationName + ")")
+                .id(locationName);
+        WaratekLocation location = getManagementContext().getLocationManager().createLocation(waratekSpec);
+        setAttribute(DYNAMIC_LOCATION, location);
+        setAttribute(LOCATION_NAME, location.getId());
+
+        String locationSpec = String.format(WaratekResolver.WARATEK_INFRASTRUCTURE_SPEC, getId()) + String.format(":(name=\"%s\")", locationName);
+        setAttribute(LOCATION_SPEC, locationSpec);
+        LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
+        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+
+        return location;
+    }
+
+    @Override
+    public boolean isLocationAvailable() {
+        // TODO implementation
+        return waratek != null;
     }
 
 }

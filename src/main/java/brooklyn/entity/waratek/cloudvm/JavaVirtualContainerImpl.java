@@ -16,6 +16,7 @@
 package brooklyn.entity.waratek.cloudvm;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.ObjectInstance;
@@ -30,12 +31,14 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
+import brooklyn.location.DynamicLocation;
 import brooklyn.location.Location;
 import brooklyn.location.LocationSpec;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
+import brooklyn.location.waratek.WaratekResolver;
 import brooklyn.management.LocationManager;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
 import brooklyn.util.task.DynamicTasks;
@@ -47,6 +50,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     private static final Logger log = LoggerFactory.getLogger(JavaVirtualContainerImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
 
+    private WaratekContainerLocation container;
     private JmxHelper jmxHelper;
     private JmxFeed jmxMxBeanFeed;
 
@@ -79,29 +83,17 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         connectServiceUpIsRunning();
     }
 
-    /**
-     * Create a new {@link WaratekContainerLocation} wrapping the JVM we are starting in.
-     * <p>
-     * Note that the JVC locations are not published to the registry.
-     */
     @Override
     public void doStart(Collection<? extends Location> locations) {
         super.doStart(locations);
 
-        JavaVirtualMachine jvm = getConfig(JVM);
-        WaratekMachineLocation machine = jvm.getDynamicLocation();
-        String locationName = machine.getId() + "-" + getId();
-        LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
-                .parent(machine)
-                .configure(DynamicLocation.OWNER, this)
-                .configure("machine", machine.getMachine()) // The underlying SshMachineLocation
-                .configure("address", machine.getAddress()) // FIXME
-                .configure(machine.getMachine().getAllConfig(true))
-                .displayName(getJvcName())
-                .id(locationName);
-        WaratekContainerLocation jvc = getManagementContext().getLocationManager().createLocation(spec);
-        log.info("New JVC location {} created", jvc);
-        setAttribute(DYNAMIC_LOCATION, jvc);
+        Map<String, ?> flags = MutableMap.<String, Object>builder()
+                .putAll(getConfig(LOCATION_FLAGS))
+                // TODO extra configuration flags?
+                .build();
+        container = createLocation(flags);
+        log.info("New JVC location {} created", container);
+        setAttribute(DYNAMIC_LOCATION, container);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
@@ -180,9 +172,6 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     }
 
     @Override
-    public String getShortName() { return "JVC"; }
-
-    @Override
     public String getLogFileLocation() {
         JavaVirtualMachine jvm = getJavaVirtualMachine();
         return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), getAttribute(JVC_NAME), "console.log");
@@ -197,5 +186,43 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     public WaratekContainerLocation getDynamicLocation() {
         return (WaratekContainerLocation) getAttribute(DYNAMIC_LOCATION);
     }
+
+    /**
+     * Create a new {@link WaratekContainerLocation} wrapping the JVM we are starting in.
+     * <p>
+     * Note that the JVC locations are not published to the registry.
+     */
+    @Override
+    public WaratekContainerLocation createLocation(Map<String, ?> flags) {
+        JavaVirtualMachine jvm = getConfig(JVM);
+        WaratekMachineLocation machine = jvm.getDynamicLocation();
+        String locationName = machine.getId() + "-" + getId();
+        LocationSpec<WaratekContainerLocation> spec = LocationSpec.create(WaratekContainerLocation.class)
+                .parent(machine)
+                .configure(flags)
+                .configure(DynamicLocation.OWNER, this)
+                .configure("machine", machine.getMachine()) // The underlying SshMachineLocation
+                .configure("address", machine.getAddress()) // FIXME
+                .configure(machine.getMachine().getAllConfig(true))
+                .displayName(getJvcName())
+                .id(locationName);
+        WaratekContainerLocation location = getManagementContext().getLocationManager().createLocation(spec);
+        setAttribute(DYNAMIC_LOCATION, location);
+        setAttribute(LOCATION_NAME, location.getId());
+
+        String locationSpec = String.format(WaratekResolver.WARATEK_VIRTUAL_CONTAINER_SPEC, getId(), jvm.getJvmName(), getJvcName());
+        setAttribute(LOCATION_SPEC, locationSpec);
+
+        return location;
+    }
+
+    @Override
+    public boolean isLocationAvailable() {
+        // TODO implementation
+        return container != null;
+    }
+
+    @Override
+    public String getShortName() { return "JVC"; }
 
 }

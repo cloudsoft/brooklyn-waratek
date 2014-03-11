@@ -62,6 +62,10 @@ public class WaratekResolver implements LocationResolver {
             "(:([a-zA-Z0-9]+)(:([a-zA-Z0-9]+))?)?" + "(:\\((.*)\\))?$");
     public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
 
+    public static final String WARATEK_INFRASTRUCTURE_SPEC = "waratek:%s";
+    public static final String WARATEK_VIRTUAL_MACHINE_SPEC = "waratek:%s:%s";
+    public static final String WARATEK_VIRTUAL_CONTAINER_SPEC = "waratek:%s:%s:%s";
+
     private ManagementContext managementContext;
 
     @Override

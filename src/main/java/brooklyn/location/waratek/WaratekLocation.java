@@ -66,7 +66,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @SetFromFlag("provisioner")
     private MachineProvisioningLocation<SshMachineLocation> provisioner;
 
-    @SetFromFlag("location.owner")
+    @SetFromFlag("owner")
     private WaratekInfrastructure infrastructure;
 
     /* Mappings for provisioned locations */

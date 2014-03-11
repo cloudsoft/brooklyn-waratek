@@ -18,11 +18,13 @@ package brooklyn.location;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.util.flags.SetFromFlag;
 
 public interface DynamicLocation<E extends Entity & LocationOwner<L, E>, L extends Location & DynamicLocation<E, L>> {
 
+    @SetFromFlag("owner")
     ConfigKey<Entity> OWNER =
-            ConfigKeys.newConfigKey(Entity.class, "location.owner", "The entity owning this location");
+            ConfigKeys.newConfigKey(Entity.class, "owner", "The entity owning this location");
 
     E getOwner();
 

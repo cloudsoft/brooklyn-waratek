@@ -34,20 +34,22 @@ import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.os.Os;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation, DynamicLocation<JavaVirtualContainer, WaratekContainerLocation> {
+public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation,
+        DynamicLocation<JavaVirtualContainer, WaratekContainerLocation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekContainerLocation.class);
 
     @SetFromFlag("machine")
     private SshMachineLocation machine;
 
-    @SetFromFlag("location.owner")
+    @SetFromFlag("owner")
     private JavaVirtualContainer jvc;
 
     public WaratekContainerLocation() {

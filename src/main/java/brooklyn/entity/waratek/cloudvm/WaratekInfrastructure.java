@@ -28,7 +28,6 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
-import brooklyn.event.basic.Sensors;
 import brooklyn.location.LocationOwner;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.util.flags.SetFromFlag;
@@ -36,15 +35,6 @@ import brooklyn.util.flags.SetFromFlag;
 @ImplementedBy(WaratekInfrastructureImpl.class)
 @Catalog(name="WaratekInfrastructure", description="Waratek CloudVM Infrastructure.", iconUrl="classpath://waratek-logo.png")
 public interface WaratekInfrastructure extends BasicStartable, LocationOwner<WaratekLocation, WaratekInfrastructure> {
-
-    @SetFromFlag("locationName")
-    ConfigKey<String> LOCATION_NAME = ConfigKeys.newStringConfigKey(
-            "waratek.location.name", "Name for new Waratek location");
-
-    @SetFromFlag("locationPrefix")
-    ConfigKey<String> LOCATION_PREFIX = ConfigKeys.newStringConfigKey(
-            "waratek.location.prefix", "Prefix for new Waratek location (will have entity id appended)",
-            WaratekLocation.PREFIX);
 
     @SetFromFlag("initialSize")
     ConfigKey<Integer> JVM_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);
