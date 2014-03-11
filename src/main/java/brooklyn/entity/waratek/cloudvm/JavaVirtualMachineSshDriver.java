@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.lifecycle.ScriptHelper;
 import brooklyn.entity.drivers.downloads.DownloadResolver;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
@@ -36,6 +37,7 @@ import brooklyn.util.os.Os;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
+import brooklyn.util.text.Identifiers;
 import brooklyn.util.text.Strings;
 
 import com.google.common.base.Predicates;
@@ -202,24 +204,25 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         Networking.checkPortsValid(getPortMap());
 
         String installScript = Os.mergePaths(getExpandedInstallDir(), "tools", "autoinstall.sh");
-        StringBuilder command = new StringBuilder(installScript);
+        StringBuilder autoinstall = new StringBuilder(installScript);
         if (entity.getConfig(JavaVirtualMachine.DEBUG)) {
-            command.append(" -x");
+            autoinstall.append(" -x");
         }
-        command.append(" -s");
-        command.append(" -p ").append(getRunDir());
+        autoinstall.append(" -s");
+        autoinstall.append(" -p ").append(getRunDir());
         if (!useWaratekUser()) {
-            command.append(" -u").append(getMachine().getUser());
+            autoinstall.append(" -u").append(getMachine().getUser());
         }
         if (log.isDebugEnabled()) {
-            log.debug("Running command: {}", command.toString());
+            log.debug("Running command: {}", autoinstall.toString());
         }
 
         newScript(CUSTOMIZING)
                 .failOnNonZeroResultCode()
                 .body.append(
                         "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
-                        BashCommands.sudo(command.toString()))
+                        BashCommands.sudo(autoinstall.toString()))
+                .closeSshConnection()
                 .execute();
 
         installed.set(true);
@@ -229,23 +232,26 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     public void launch() {
         log.info("Launching {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
-        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS_VAR -Xms%2$s -Xmx%2$s",
+        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
                 Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
         if (log.isDebugEnabled()) {
-            log.debug("JVM command (as {}): {}", useWaratekUser() ? JavaVirtualMachine.WARATEK_USERNAME : "user", javad);
+            log.debug("JVM command (as {}): {}", useWaratekUser() ? JavaVirtualMachine.WARATEK_USERNAME : "brooklyn user", javad);
         }
-        newScript(MutableMap.of("usePidFile", false), LAUNCHING)
+        newScript(MutableMap.of(DEBUG, true, USE_PID_FILE, false), LAUNCHING)
                 .body.append(useWaratekUser() ? BashCommands.sudoAsUser(JavaVirtualMachine.WARATEK_USERNAME, javad) : javad)
                 .execute();
     }
 
-    private Map<?, ?> getScriptFlags() {
-        MutableMap.Builder<Object, Object> builder = MutableMap.builder();
-        builder.put("usePidFile", getPidFile());
-        if (useWaratekUser()) {
-            builder.put("processOwner", JavaVirtualMachine.WARATEK_USERNAME);
+    private Map<String, ?> getScriptFlags() {
+        MutableMap.Builder<String, Object> builder = MutableMap.builder();
+        builder.put(USE_PID_FILE, getPidFile());
+        if (getEntity().getConfig(JavaVirtualMachine.DEBUG)) {
+            builder.put(DEBUG, true);
         }
-        Map<?, ?> flags = builder.build();
+        if (useWaratekUser()) {
+            builder.put(PROCESS_OWNER, JavaVirtualMachine.WARATEK_USERNAME);
+        }
+        Map<String, ?> flags = builder.build();
         return flags;
     }
 
