@@ -15,21 +15,23 @@
  */
 package brooklyn.location.affinity;
 
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.SortedSet;
 
 import brooklyn.entity.Entity;
+import brooklyn.entity.trait.Configurable;
 import brooklyn.location.Location;
 
 import com.google.common.annotations.Beta;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
 @Beta
-public interface AffinityStrategy {
+public interface AffinityStrategy extends Comparator<Location>, Predicate<Location>, Configurable {
 
-    List<Location> locationsForAdditions(Multimap<Location, Entity> currentMembers, Collection<? extends Location> locs, int numToAdd);
+    SortedSet<Location> locationsForAdditions(Multimap<Location, Entity> currentMembers, List<Location> locs, int numToAdd);
 
     List<Entity> entitiesToRemove(Multimap<Location, Entity> currentMembers, int numToRemove);
 
-    Location deploy(Multimap<Location, Entity> currentMembers, Collection<? extends Location> locs, int numToAdd);
 }
