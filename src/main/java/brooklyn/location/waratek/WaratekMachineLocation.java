@@ -34,10 +34,10 @@ import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.OsDetails;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 

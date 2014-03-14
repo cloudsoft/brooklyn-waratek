@@ -39,10 +39,10 @@ import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
@@ -198,7 +198,6 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                 .build();
         machine = createLocation(flags);
         log.info("New JVM location {} created", machine);
-        setAttribute(DYNAMIC_LOCATION, machine);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
@@ -207,18 +206,24 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     public void doStop() {
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
 
+        deleteLocation();
+
+        super.doStop();
+    }
+
+    @Override
+    public void deleteLocation() {
         LocationManager mgr = getManagementContext().getLocationManager();
         WaratekMachineLocation location = getDynamicLocation();
         if (location != null && mgr.isManaged(location)) {
             mgr.unmanage(location);
             setAttribute(DYNAMIC_LOCATION,  null);
         }
-
-        super.doStop();
     }
 
     @Override
     public Integer resize(Integer desiredSize) {
+        // Integer maxSize = getDynamicLocation().getConfig(DynamicLocation.MAX_SUB_LOCATIONS);
         Integer maxSize = getConfig(JVC_CLUSTER_MAX_SIZE);
         if (desiredSize > maxSize) {
             return getJvcCluster().resize(maxSize);

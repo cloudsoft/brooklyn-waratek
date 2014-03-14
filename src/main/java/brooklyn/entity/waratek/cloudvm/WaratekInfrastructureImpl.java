@@ -30,11 +30,11 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationDefinition;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekResolver;
 import brooklyn.management.LocationManager;
@@ -155,15 +155,20 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     public void stop() {
         super.stop();
 
+        deleteLocation();
+    }
+
+    @Override
+    public WaratekLocation getDynamicLocation() { return waratek; }
+
+    @Override
+    public void deleteLocation() {
         LocationManager mgr = getManagementContext().getLocationManager();
         if (waratek != null && mgr.isManaged(waratek)) {
             mgr.unmanage(waratek);
             setAttribute(DYNAMIC_LOCATION,  null);
         }
     }
-
-    @Override
-    public WaratekLocation getDynamicLocation() { return waratek; }
 
     /**
      * Create a new {@link WaratekLocation} wrapping the provided provisioner.

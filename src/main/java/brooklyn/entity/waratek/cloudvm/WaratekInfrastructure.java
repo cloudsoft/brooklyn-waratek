@@ -28,7 +28,7 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
-import brooklyn.location.LocationOwner;
+import brooklyn.location.dynamic.LocationOwner;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.util.flags.SetFromFlag;
 

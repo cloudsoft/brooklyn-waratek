@@ -27,7 +27,7 @@ import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
-import brooklyn.location.LocationOwner;
+import brooklyn.location.dynamic.LocationOwner;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.util.flags.SetFromFlag;
 

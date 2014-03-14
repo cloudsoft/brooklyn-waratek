@@ -17,6 +17,7 @@ package brooklyn.location.waratek;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.Entity;
+import brooklyn.entity.Group;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.UsesJava;
@@ -35,13 +37,13 @@ import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.LocationConfigKeys;
 import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.stream.Streams;
 

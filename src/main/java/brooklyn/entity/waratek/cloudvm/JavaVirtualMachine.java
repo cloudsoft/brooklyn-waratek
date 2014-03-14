@@ -33,8 +33,8 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.PortAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
-import brooklyn.location.LocationOwner;
 import brooklyn.location.basic.PortRanges;
+import brooklyn.location.dynamic.LocationOwner;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.util.flags.SetFromFlag;
 

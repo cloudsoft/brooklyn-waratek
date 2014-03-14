@@ -31,9 +31,9 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
-import brooklyn.location.DynamicLocation;
 import brooklyn.location.Location;
 import brooklyn.location.LocationSpec;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.location.waratek.WaratekResolver;
@@ -89,11 +89,9 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
         Map<String, ?> flags = MutableMap.<String, Object>builder()
                 .putAll(getConfig(LOCATION_FLAGS))
-                // TODO extra configuration flags?
                 .build();
         container = createLocation(flags);
         log.info("New JVC location {} created", container);
-        setAttribute(DYNAMIC_LOCATION, container);
 
         DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
@@ -102,14 +100,19 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     public void doStop() {
         DynamicTasks.queue(StartableMethods.stoppingChildren(this));
 
+        deleteLocation();
+
+        super.doStop();
+    }
+
+    @Override
+    public void deleteLocation() {
         LocationManager mgr = getManagementContext().getLocationManager();
         WaratekContainerLocation location = getDynamicLocation();
         if (location != null && mgr.isManaged(location)) {
             mgr.unmanage(location);
             setAttribute(DYNAMIC_LOCATION,  null);
         }
-
-        super.doStop();
     }
 
     @Override
