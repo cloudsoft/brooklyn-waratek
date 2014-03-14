@@ -26,12 +26,18 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.entity.Entity;
+import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
+import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
+import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationRegistry;
-import brooklyn.location.LocationResolver;
+import brooklyn.location.LocationResolver.EnableableLocationResolver;
+import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationRegistry;
 import brooklyn.location.basic.LocationInternal;
 import brooklyn.location.basic.LocationPropertiesFromBrooklynProperties;
+import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.management.ManagementContext;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.text.KeyValueParser;
@@ -50,21 +56,20 @@ import com.google.common.collect.Sets;
  *     <li>waratek:infrastructureId
  *     <li>waratek:infrastructureId:(name="waratek-infrastructure")
  *     <li>waratek:infrastructureId:jvmId
- *     <li>waratek:infrastructureId:jvmid:jvcId
+ *     <li>waratek:infrastructureId:jvmId:(name="jvm-brooklyn-1234")
  *   </ul>
  */
-public class WaratekResolver implements LocationResolver {
+public class WaratekResolver implements EnableableLocationResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekResolver.class);
 
     public static final String WARATEK = "waratek";
     public static final Pattern PATTERN = Pattern.compile("("+WARATEK+"|"+WARATEK.toUpperCase()+")" + ":([a-zA-Z0-9]+)" +
-            "(:([a-zA-Z0-9]+)(:([a-zA-Z0-9]+))?)?" + "(:\\((.*)\\))?$");
+            "(:([a-zA-Z0-9]+))?" + "(:\\((.*)\\))?$");
     public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
 
     public static final String WARATEK_INFRASTRUCTURE_SPEC = "waratek:%s";
     public static final String WARATEK_VIRTUAL_MACHINE_SPEC = "waratek:%s:%s";
-    public static final String WARATEK_VIRTUAL_CONTAINER_SPEC = "waratek:%s:%s:%s";
 
     private ManagementContext managementContext;
 
@@ -92,7 +97,7 @@ public class WaratekResolver implements LocationResolver {
             throw new IllegalArgumentException("Invalid location '"+spec+"'; must specify something like waratek:entityId or waratek:entityId:(name=abc)");
         }
 
-        String argsPart = matcher.group(8);
+        String argsPart = matcher.group(6);
         Map<String, String> argsMap = (argsPart != null) ? KeyValueParser.parseMap(argsPart) : Collections.<String,String>emptyMap();
         String namePart = argsMap.get("name");
 
@@ -112,7 +117,6 @@ public class WaratekResolver implements LocationResolver {
             throw new IllegalArgumentException("Invalid location '"+spec+"'; infrastructure entity id must be non-empty");
         }
         String jvmId = matcher.group(4);
-        String jvcId = matcher.group(6);
 
         // Build the location name from parts
         StringBuilder name = new StringBuilder();
@@ -123,37 +127,41 @@ public class WaratekResolver implements LocationResolver {
             name.append(infrastructureId);
             if (jvmId != null) {
                 name.append("-").append(jvmId);
-                if (jvcId != null) {
-                    name.append("-").append(jvcId);
-                }
             }
         }
         final String locationName =  name.toString();
         flags.put("name", locationName);
         LOG.info("Location name will be: '" + locationName + "'");
 
-        // Look up location by ID and return
-        Location check = managementContext.getLocationManager().getLocation(locationName);
-        LOG.info("Check location: {}", check);
-        Optional<Location> found = Iterables.tryFind(managementContext.getLocationManager().getLocations(),
-                new Predicate<Location>() {
-                    @Override
-                    public boolean apply(Location input) {
-                        return input.getId().equals(locationName);
-                    }
-                });
-        if (found.isPresent()) {
-            Location location = found.get();
-            LOG.info("Obtained location: " + location);
-            return location;
+        WaratekInfrastructure infrastructure = (WaratekInfrastructure) managementContext.getEntityManager().getEntity(infrastructureId);
+
+        if (jvmId == null) {
+            LocationSpec<WaratekLocation> locationSpec = LocationSpec.create(WaratekLocation.class)
+                    .configure(flags)
+                    .configure(DynamicLocation.OWNER, infrastructure)
+                    .displayName(locationName);
+            return managementContext.getLocationManager().createLocation(locationSpec);
         } else {
-            throw new IllegalArgumentException("Invalid location '"+spec+"'; cannot find location '" + locationName + "'");
+            JavaVirtualMachine jvm = (JavaVirtualMachine) managementContext.getEntityManager().getEntity(infrastructureId);
+
+            LocationSpec<WaratekMachineLocation> locationSpec = LocationSpec.create(WaratekMachineLocation.class)
+                    .parent(infrastructure.getDynamicLocation())
+                    .configure(flags)
+                    .configure(DynamicLocation.OWNER, jvm)
+                    .displayName(locationName);
+            return managementContext.getLocationManager().createLocation(locationSpec);
         }
     }
 
     @Override
     public boolean accepts(String spec, LocationRegistry registry) {
         return BasicLocationRegistry.isResolverPrefixForSpec(this, spec, true);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+//        return Iterables.tryFind(managementContext.getEntityManager().getEntities(), Predicates.instanceOf(WaratekInfrastructure.class)).isPresent();
     }
 
 }

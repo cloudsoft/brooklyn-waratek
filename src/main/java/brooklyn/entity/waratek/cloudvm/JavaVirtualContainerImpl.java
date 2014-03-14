@@ -213,9 +213,6 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
 
-        String locationSpec = String.format(WaratekResolver.WARATEK_VIRTUAL_CONTAINER_SPEC, getId(), jvm.getJvmName(), getJvcName());
-        setAttribute(LOCATION_SPEC, locationSpec);
-
         return location;
     }
 

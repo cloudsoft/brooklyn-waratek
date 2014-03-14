@@ -181,21 +181,16 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
             String suffix = getConfig(LOCATION_NAME_SUFFIX);
             locationName = Joiner.on("-").skipNulls().join(prefix, getId(), suffix);
         }
-        LocationSpec<WaratekLocation> waratekSpec = LocationSpec.create(WaratekLocation.class)
-                .configure(flags)
-                .configure(DynamicLocation.OWNER, this)
-                .displayName("Waratek(" + locationName + ")")
-                .id(locationName);
-        WaratekLocation location = getManagementContext().getLocationManager().createLocation(waratekSpec);
-        setAttribute(DYNAMIC_LOCATION, location);
-        setAttribute(LOCATION_NAME, location.getId());
 
         String locationSpec = String.format(WaratekResolver.WARATEK_INFRASTRUCTURE_SPEC, getId()) + String.format(":(name=\"%s\")", locationName);
         setAttribute(LOCATION_SPEC, locationSpec);
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        Location location = getManagementContext().getLocationRegistry().resolve(definition);
+        setAttribute(DYNAMIC_LOCATION, location);
+        setAttribute(LOCATION_NAME, location.getId());
 
-        return location;
+        return (WaratekLocation) location;
     }
 
     @Override

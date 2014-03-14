@@ -250,22 +250,16 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         WaratekInfrastructure infrastructure = getConfig(WARATEK_INFRASTRUCTURE);
         WaratekLocation waratek = infrastructure.getDynamicLocation();
         String locationName = waratek.getId() + "-" + getId();
-        LocationSpec<WaratekMachineLocation> spec = LocationSpec.create(WaratekMachineLocation.class)
-                .parent(waratek)
-                .configure(flags)
-                .configure(DynamicLocation.OWNER, this)
-                .displayName(getJvmName())
-                .id(locationName);
-        WaratekMachineLocation location = getManagementContext().getLocationManager().createLocation(spec);
-        setAttribute(DYNAMIC_LOCATION, location);
-        setAttribute(LOCATION_NAME, location.getId());
 
-        String locationSpec = String.format(WaratekResolver.WARATEK_VIRTUAL_MACHINE_SPEC, getId(), getJvmName());
+        String locationSpec = String.format(WaratekResolver.WARATEK_VIRTUAL_MACHINE_SPEC, getId(), getJvmName()) + String.format(":(name=\"%s\")", locationName);
         setAttribute(LOCATION_SPEC, locationSpec);
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        Location location = getManagementContext().getLocationRegistry().resolve(definition);
+        setAttribute(DYNAMIC_LOCATION, location);
+        setAttribute(LOCATION_NAME, location.getId());
 
-        return location;
+        return (WaratekMachineLocation) location;
     }
 
     @Override
