@@ -33,7 +33,6 @@ import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.EntitySpec;
-import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
@@ -51,7 +50,6 @@ import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.collections.MutableMap;
-import brooklyn.util.task.DynamicTasks;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -74,7 +72,6 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         setDisplayName(jvmName);
         setAttribute(JVM_NAME, jvmName);
 
-        int initialSize = getConfig(JVC_CLUSTER_SIZE);
         EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
                 .configure(JavaVirtualContainer.JVM, this);
         if (getConfig(HA_POLICY_ENABLE)) {
@@ -84,7 +81,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         }
 
         containers = addChild(EntitySpec.create(DynamicCluster.class)
-                .configure(Cluster.INITIAL_SIZE, initialSize)
+                .configure(Cluster.INITIAL_SIZE, 0)
                 .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
                 .configure(DynamicCluster.MEMBER_SPEC, jvcSpec)
                 .displayName("Guest Java Virtual Machines"));
@@ -195,14 +192,10 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                 .build();
         machine = createLocation(flags);
         log.info("New JVM location {} created", machine);
-
-        DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
 
     @Override
     public void doStop() {
-        DynamicTasks.queue(StartableMethods.stoppingChildren(this));
-
         deleteLocation();
 
         super.doStop();

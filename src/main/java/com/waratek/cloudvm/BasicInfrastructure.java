@@ -63,17 +63,12 @@ public class BasicInfrastructure extends AbstractApplication {
     @CatalogConfig(label="JVM Cluster Size", priority=1.2)
     public static final ConfigKey<Integer> JVM_CLUSTER_SIZE = WaratekInfrastructure.JVM_CLUSTER_SIZE;
 
-    @SetFromFlag("jvcClusterSize")
-    @CatalogConfig(label="JVC Cluster Size", priority=1.3)
-    public static final ConfigKey<Integer> JVC_CLUSTER_SIZE = JavaVirtualMachine.JVC_CLUSTER_SIZE;
-
     @Override
     public void init() {
         EntitySpec jvmSpec = EntitySpec.create(JavaVirtualMachine.class)
                 .configure(JavaVirtualMachine.USE_WARATEK_USER, getConfig(USE_WARATEK_USER))
                 .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
                 .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
-                .configure(JavaVirtualMachine.JVC_CLUSTER_SIZE, getConfig(JVC_CLUSTER_SIZE))
                 .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
                 .configure(JavaVirtualMachine.HEAP_SIZE, getConfig(HEAP_SIZE))
                 .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE);

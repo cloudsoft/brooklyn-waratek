@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.java.UsesJmx;
-import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
@@ -36,12 +35,10 @@ import brooklyn.location.LocationSpec;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
-import brooklyn.location.waratek.WaratekResolver;
 import brooklyn.management.LocationManager;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
-import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
 
@@ -92,14 +89,10 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
                 .build();
         container = createLocation(flags);
         log.info("New JVC location {} created", container);
-
-        DynamicTasks.queue(StartableMethods.startingChildren(this));
     }
 
     @Override
     public void doStop() {
-        DynamicTasks.queue(StartableMethods.stoppingChildren(this));
-
         deleteLocation();
 
         super.doStop();

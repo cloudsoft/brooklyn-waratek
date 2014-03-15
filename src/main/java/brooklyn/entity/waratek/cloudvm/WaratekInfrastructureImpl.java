@@ -27,6 +27,8 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.DynamicGroup;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.SoftwareProcess;
+import brooklyn.entity.basic.SoftwareProcess.ChildStartableMode;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
@@ -56,17 +58,20 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     public void init() {
         int initialSize = getConfig(JVM_CLUSTER_SIZE);
         EntitySpec jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
-                .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this);
+                .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this)
+                .configure(SoftwareProcess.CHILDREN_STARTABLE_MODE, ChildStartableMode.BACKGROUND_LATE);
 
         virtualMachines = addChild(EntitySpec.create(DynamicCluster.class)
                 .configure(Cluster.INITIAL_SIZE, initialSize)
-                .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, false)
+                .configure(DynamicCluster.QUARANTINE_FAILED_ENTITIES, true)
                 .configure(DynamicCluster.MEMBER_SPEC, jvmSpec)
                 .displayName("Java Virtual Machines"));
 
         fabric = addChild(EntitySpec.create(DynamicGroup.class)
                 .configure(DynamicGroup.ENTITY_FILTER, Predicates.instanceOf(JavaVirtualContainer.class))
-                .displayName("Java Virtual Containers"));
+                .displayName("All Java Virtual Containers"));
+
+        // TODO DynamicMultiGroup
 
         if (Entities.isManaged(this)) {
             Entities.manage(virtualMachines);
