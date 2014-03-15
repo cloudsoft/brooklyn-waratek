@@ -103,18 +103,6 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
         super.configure(properties);
     }
 
-    @Override
-    public void onManagementStarted() {
-        super.onManagementStarted();
-        LOG.error("XXX WaratekLocation#onManagementStarted()");
-    }
-
-    @Override
-    public void onManagementStopped() {
-        super.onManagementStopped();
-        LOG.error("XXX WaratekLocation#onManagementStopped()");
-    }
-
     public MachineLocation obtain() throws NoMachinesAvailableException {
         return obtain(Maps.<String,Object>newLinkedHashMap());
     }
