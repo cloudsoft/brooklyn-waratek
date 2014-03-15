@@ -36,6 +36,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.internal.ssh.SshTool;
 import brooklyn.util.os.Os;
+import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects.ToStringHelper;
@@ -113,8 +114,8 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
             updated.put("PATH", Os.mergePaths(javaHome, "bin") + ":" + path);
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
         }
         return updated;
     }
@@ -126,8 +127,8 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         }
         Map<String, ?> updated = builder.build();
 
-        if (LOG.isDebugEnabled()) {
-            LOG.info("Updated props: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Updated props: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
         }
         return updated;
     }
@@ -154,17 +155,21 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
 
     @Override
     protected int execWithLogging(Map<String,?> props, String summaryForLogging, List<String> commands, Map env, final Closure<Integer> execCommand) {
-        LOG.info("Intercepted execWithLogging: {}", summaryForLogging);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Intercepted execWithLogging {}: {}", summaryForLogging, Strings.join(commands, ";"));
+        }
         return super.execWithLogging(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env), execCommand);
     }
 
     @Override
     public int execScript(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Intercepted execScript {}: {}", summaryForLogging, Strings.join(commands, ";"));
+        }
         // Handle check-running by retrieving JVC status directly
-        LOG.info("Intercepted execScript: {}", summaryForLogging);
         if (summaryForLogging != null && summaryForLogging.startsWith("check-running")) {
             String status = jvc.getAttribute(WaratekAttributes.STATUS);
-            LOG.info("Status is: {}", status);
+            LOG.trace("Calculating check-running status based on: {}", status);
             return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
         }
         return super.execScript(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
@@ -172,7 +177,9 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
 
     @Override
     public int execCommands(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
-        LOG.info("Intercepted execCommands: {}", summaryForLogging);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Intercepted execCommands {}: {}", summaryForLogging, Strings.join(commands, ";"));
+        }
         return super.execCommands(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
     }
 
