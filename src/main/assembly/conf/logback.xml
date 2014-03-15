@@ -18,4 +18,5 @@
     <property name="logging.basename" scope="context" value="brooklyn-waratek" />
     <logger name="com.waratek" level="DEBUG" />
     <include resource="logback-main.xml" />
+    <include resource="brooklyn/logback-logger-debug-jclouds.xml" />
 </configuration>
