@@ -34,6 +34,7 @@ import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.internal.ssh.SshTool;
 import brooklyn.util.os.Os;
 
 import com.google.common.base.Joiner;
@@ -88,7 +89,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         return jvc.getJavaVirtualMachine();
     }
 
-    public Map<String,?> injectWaratekOptions(Map<String,?> env) {
+    public Map<String,?> injectWaratekEnvironment(Map<String,?> env) {
         List<String> opts = Lists.newArrayList();
         opts.add("--prefix=" + jvc.getJavaVirtualMachine().getRootDirectory());
         opts.add("--async");
@@ -112,11 +113,29 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
             updated.put("PATH", Os.mergePaths(javaHome, "bin") + ":" + path);
         }
 
-        LOG.info("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
+        }
         return updated;
     }
 
-    /* Delegate port operations to machine */
+    public Map<String,?> injectWaratekProps(Map<String,?> props) {
+        MutableMap.Builder<String, Object> builder = MutableMap.<String, Object>builder().putAll(props);
+        if (getJavaVirtualMachine().getConfig(JavaVirtualMachine.USE_WARATEK_USER)) {
+            builder.put(SshTool.PROP_USER.getName(), JavaVirtualMachine.WARATEK_USERNAME);
+        }
+        Map<String, ?> updated = builder.build();
+
+        if (LOG.isDebugEnabled()) {
+            LOG.info("Updated props: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
+        }
+        return updated;
+    }
+
+    /*
+     * Delegate port operations to machine. Note that firewall configuration is fixed after initial provisioning.
+     * TODO update using iptables or similar when adding comntainers
+     */
 
     @Override
     public boolean obtainSpecificPort(int portNumber) {
@@ -136,8 +155,9 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
     @Override
     protected int execWithLogging(Map<String,?> props, String summaryForLogging, List<String> commands, Map env, final Closure<Integer> execCommand) {
         LOG.info("Intercepted execWithLogging: {}", summaryForLogging);
-        return super.execWithLogging(props, summaryForLogging, commands, injectWaratekOptions(env), execCommand);
+        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env), execCommand);
     }
+
     @Override
     public int execScript(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
         // Handle check-running by retrieving JVC status directly
@@ -147,12 +167,13 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
             LOG.info("Status is: {}", status);
             return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
         }
-        return super.execScript(props, summaryForLogging, commands, injectWaratekOptions(env));
+        return super.execScript(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
     }
+
     @Override
     public int execCommands(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
         LOG.info("Intercepted execCommands: {}", summaryForLogging);
-        return super.execCommands(props, summaryForLogging, commands, injectWaratekOptions(env));
+        return super.execCommands(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
     }
 
     @Override
