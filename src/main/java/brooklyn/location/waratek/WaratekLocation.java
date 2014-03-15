@@ -115,7 +115,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             if (context instanceof Entity) {
                 List<Class<?>> implementations = ClassUtils.getAllInterfaces(context.getClass());
                 boolean usesJava = Iterables.any(implementations, Predicates.<Class>equalTo(UsesJava.class));
-                LOG.info("Context {}: UsesJava {}", context.toString(), Boolean.toString(usesJava));
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Context {}: UsesJava {}", context.toString(), Boolean.toString(usesJava));
+                }
                 if (!usesJava) {
                     // Return an SshMachineLocation from the provisioner
                     SshMachineLocation machine = provisioner.obtain(flags);
@@ -155,7 +157,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             WaratekContainerLocation container = location.obtain();
             Optional<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
-                LOG.info("Storing container mapping: {}-{}", deployed.get(), container.getId());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Storing container mapping: {}-{}", deployed.get(), container.getId());
+                }
                 machines.put(deployed.get(), container.getId());
                 containers.put(container.getId(), deployed.get());
             }
@@ -170,19 +174,21 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                 if (machine instanceof WaratekContainerLocation) {
                     String id = machine.getId();
                     SshMachineLocation ssh = containers.remove(id);
-                    LOG.info("Request to release container mapping {}-{}", ssh, id);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Request to release container mapping {}-{}", ssh, id);
+                    }
                     if (ssh != null) {
                         machines.remove(ssh, id);
                         if (machines.get(ssh).isEmpty()) {
                             provisioner.release(ssh);
-                        } else {
-                            LOG.info("Released container {} but {} JVCs still active at this location", id, machines.get(ssh).size());
                         }
                     } else {
                         throw new IllegalArgumentException("Request to release "+machine+", but no SSH machine found");
                     }
                 } else if (machine instanceof SshMachineLocation) {
-                    LOG.info("Request to release SSH machine {}", machine);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Request to release SSH machine {}", machine);
+                    }
                     if (obtained.contains(machine)) {
                         provisioner.release((SshMachineLocation) machine);
                         obtained.remove(machine);

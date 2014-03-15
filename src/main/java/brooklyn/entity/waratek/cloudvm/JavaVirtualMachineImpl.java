@@ -37,12 +37,10 @@ import brooklyn.entity.trait.StartableMethods;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
-import brooklyn.location.LocationSpec;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.basic.BasicLocationDefinition;
 import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
@@ -58,7 +56,6 @@ import brooklyn.util.task.DynamicTasks;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaVirtualMachine {
 

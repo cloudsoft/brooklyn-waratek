@@ -26,11 +26,9 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.entity.Entity;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
-import brooklyn.location.LocationDefinition;
 import brooklyn.location.LocationRegistry;
 import brooklyn.location.LocationResolver.EnableableLocationResolver;
 import brooklyn.location.LocationSpec;
@@ -44,19 +42,16 @@ import brooklyn.util.text.KeyValueParser;
 import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**
  * Examples of valid specs:
  *   <ul>
  *     <li>waratek:infrastructureId
- *     <li>waratek:infrastructureId:(name="waratek-infrastructure")
+ *     <li>waratek:infrastructureId:(name=waratek-infrastructure)
  *     <li>waratek:infrastructureId:jvmId
- *     <li>waratek:infrastructureId:jvmId:(name="jvm-brooklyn-1234")
+ *     <li>waratek:infrastructureId:jvmId:(name=jvm-brooklyn-1234,user=waratek)
  *   </ul>
  */
 public class WaratekResolver implements EnableableLocationResolver {
@@ -89,7 +84,9 @@ public class WaratekResolver implements EnableableLocationResolver {
     }
 
     protected Location newLocationFromString(String spec, brooklyn.location.LocationRegistry registry, Map properties, Map locationFlags) {
-        LOG.info("Resolving location '" + spec + "' with flags " + Joiner.on(",").withKeyValueSeparator("=").join(locationFlags));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resolving location '" + spec + "' with flags " + Joiner.on(",").withKeyValueSeparator("=").join(locationFlags));
+        }
         String namedLocation = (String) locationFlags.get(LocationInternal.NAMED_SPEC_NAME.getName());
 
         Matcher matcher = PATTERN.matcher(spec);
@@ -131,8 +128,6 @@ public class WaratekResolver implements EnableableLocationResolver {
         }
         final String locationName =  name.toString();
         flags.put("name", locationName);
-        LOG.info("Location name will be: '" + locationName + "'");
-
         WaratekInfrastructure infrastructure = (WaratekInfrastructure) managementContext.getEntityManager().getEntity(infrastructureId);
 
         if (jvmId == null) {
@@ -142,7 +137,7 @@ public class WaratekResolver implements EnableableLocationResolver {
                     .displayName(locationName);
             return managementContext.getLocationManager().createLocation(locationSpec);
         } else {
-            JavaVirtualMachine jvm = (JavaVirtualMachine) managementContext.getEntityManager().getEntity(infrastructureId);
+            JavaVirtualMachine jvm = (JavaVirtualMachine) managementContext.getEntityManager().getEntity(jvmId);
 
             LocationSpec<WaratekMachineLocation> locationSpec = LocationSpec.create(WaratekMachineLocation.class)
                     .parent(infrastructure.getDynamicLocation())
