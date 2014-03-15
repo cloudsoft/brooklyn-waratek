@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.EntityLocal;
-import brooklyn.entity.basic.lifecycle.ScriptHelper;
 import brooklyn.entity.drivers.downloads.DownloadResolver;
 import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
@@ -37,9 +36,9 @@ import brooklyn.util.os.Os;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
-import brooklyn.util.text.Identifiers;
 import brooklyn.util.text.Strings;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -217,12 +216,35 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             log.debug("Running command: {}", autoinstall.toString());
         }
 
-        newScript(CUSTOMIZING)
+        // Setup alternatives to point at Waratek Java and JRE
+        List<String> updateAlternativesInstall = ImmutableList.<String>builder()
+                .add("update-alternatives")
+                .add("--install")
+                .add("/usr/bin/java")
+                .add("java")
+                .add(Os.mergePaths(getJavaHome(), "bin", "java"))
+                .add("65535")
+                .add("--slave")
+                .add("/usr/lib/jvm/jre")
+                .add("jre")
+                .add(getJavaHome())
+                .build();
+        List<String> updateAlternativesSet = ImmutableList.<String>builder()
+                .add("update-alternatives")
+                .add("--set")
+                .add("java")
+                .add(Os.mergePaths(getJavaHome(), "bin", "java"))
+                .build();
+
+        newScript(MutableMap.of(DEBUG, true), CUSTOMIZING)
                 .failOnNonZeroResultCode()
                 .body.append(
                         "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
-                        BashCommands.sudo(autoinstall.toString()))
-                .closeSshConnection()
+                        BashCommands.sudo(autoinstall.toString()),
+                        BashCommands.sudo(Joiner.on(" ").join(updateAlternativesInstall)),
+                        BashCommands.sudo(Joiner.on(" ").join(updateAlternativesSet))
+                    )
+                .closeSshConnection() // To allow group setup to propagate
                 .execute();
 
         installed.set(true);
