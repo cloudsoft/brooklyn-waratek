@@ -31,6 +31,9 @@ import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcess.ChildStartableMode;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.java.UsesJavaMXBeans;
+import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
@@ -59,6 +62,8 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         int initialSize = getConfig(JVM_CLUSTER_SIZE);
         EntitySpec jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
                 .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this)
+                .configure(UsesJmx.USE_JMX, Boolean.TRUE)
+                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
                 .configure(SoftwareProcess.CHILDREN_STARTABLE_MODE, ChildStartableMode.BACKGROUND_LATE);
 
         virtualMachines = addChild(EntitySpec.create(DynamicCluster.class)

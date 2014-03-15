@@ -21,7 +21,6 @@ import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.MethodEffector;
 import brooklyn.entity.basic.SoftwareProcess;
-import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.AttributeSensor;
@@ -32,7 +31,7 @@ import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(JavaVirtualContainerImpl.class)
-public interface JavaVirtualContainer extends SoftwareProcess, UsesJavaMXBeans, HasShortName, LocationOwner<WaratekContainerLocation, JavaVirtualContainer> {
+public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, LocationOwner<WaratekContainerLocation, JavaVirtualContainer> {
 
     String STATUS_RUNNING = "Running";
     String STATUS_SHUT_OFF = "Shut Off";

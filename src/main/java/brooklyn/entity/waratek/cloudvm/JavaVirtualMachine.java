@@ -73,9 +73,6 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     @SetFromFlag("heapSize")
     ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey("waratek.jvm.heapSize", "Size of heap memory to allocate (in bytes)");
 
-    @SetFromFlag("jmxAgentMode")
-    ConfigKey<JmxAgentModes> JMX_AGENT_MODE = ConfigKeys.newConfigKeyWithDefault(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT);
-
     @SetFromFlag("sshAdmin")
     ConfigKey<Boolean> SSH_ADMIN_ENABLE = ConfigKeys.newBooleanConfigKey("waratek.admin.ssh.enable", "Enable JVM administration using SSH", false);
 

@@ -169,7 +169,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         // Handle check-running by retrieving JVC status directly
         if (summaryForLogging != null && summaryForLogging.startsWith("check-running")) {
             String status = jvc.getAttribute(WaratekAttributes.STATUS);
-            LOG.trace("Calculating check-running status based on: {}", status);
+            LOG.debug("Calculating check-running status based on: {}", status);
             return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
         }
         return super.execScript(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
