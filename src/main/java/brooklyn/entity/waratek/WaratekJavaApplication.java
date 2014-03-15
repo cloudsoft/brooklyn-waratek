@@ -33,6 +33,6 @@ public interface WaratekJavaApplication extends VanillaJavaApp {
     ConfigKey<String> JVM = ConfigKeys.newStringConfigKey("waratek.jvm.name", "The parent JVM");
 
     @SetFromFlag("jvc")
-    ConfigKey<String> JVC = ConfigKeys.newStringConfigKey("waratek.jvm.name", "The parent JVM");
+    ConfigKey<String> JVC = ConfigKeys.newStringConfigKey("waratek.jvc.name", "The parent JVM");
 
 }
