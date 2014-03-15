@@ -157,13 +157,6 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     }
 
     @Override
-    public void close() throws IOException {
-        // FIXME check this is correct?
-        machine.close();
-        jvm.stop();
-    }
-
-    @Override
     public ToStringHelper string() {
         return super.string()
                 .add("machine", machine)

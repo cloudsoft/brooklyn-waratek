@@ -227,30 +227,6 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     }
 
     @Override
-    public void close() {
-        synchronized (mutex) {
-            if (machines.size() > 0) {
-                for (SshMachineLocation ssh : ImmutableSet.copyOf(machines.keySet())) {
-                    provisioner.release(ssh);
-                    Streams.closeQuietly(ssh);
-                }
-                machines.clear();
-                containers.clear();
-            }
-            if (obtained.size() > 0) {
-                for (SshMachineLocation ssh : ImmutableSet.copyOf(obtained)) {
-                    provisioner.release(ssh);
-                    Streams.closeQuietly(ssh);
-                }
-                obtained.clear();
-            }
-        }
-        if (provisioner instanceof Closeable) {
-            Streams.closeQuietly((Closeable) provisioner);
-        }
-    }
-
-    @Override
     public ToStringHelper string() {
         return super.string()
                 .add("provisioner", provisioner)

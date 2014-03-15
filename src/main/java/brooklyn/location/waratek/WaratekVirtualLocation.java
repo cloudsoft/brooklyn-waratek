@@ -15,7 +15,6 @@
  */
 package brooklyn.location.waratek;
 
-import java.io.Closeable;
 import java.util.List;
 
 import brooklyn.config.ConfigKey;
@@ -30,7 +29,7 @@ import brooklyn.location.basic.SshMachineLocation;
 
 import com.google.common.reflect.TypeToken;
 
-public interface WaratekVirtualLocation extends Location, Closeable {
+public interface WaratekVirtualLocation extends Location {
 
     ConfigKey<MachineProvisioningLocation<SshMachineLocation>> PROVISIONER =
             ConfigKeys.newConfigKey(new TypeToken<MachineProvisioningLocation<SshMachineLocation>>() { },

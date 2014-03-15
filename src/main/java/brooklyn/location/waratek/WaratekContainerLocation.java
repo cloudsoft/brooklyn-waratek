@@ -186,7 +186,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
     @Override
     public void close() throws IOException {
         // TODO close down resources used by this container only
-        jvc.stop();
+        LOG.info("Close called on JVC location (ignored): {}", this);
     }
 
     @Override
