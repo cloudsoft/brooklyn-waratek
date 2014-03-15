@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.basic.EntityPredicates;
 import brooklyn.location.Location;
 import brooklyn.util.flags.SetFromFlag;
 
@@ -35,9 +36,9 @@ public class EntityTypeAffinityStrategy extends AbstractAffinityStrategy {
     @Override
     public boolean apply(@Nullable Location input) {
         Collection<Entity> all = getManagementContext().getEntityManager().getEntities();
-        Iterable<Entity> typed = Iterables.filter(all, Predicates.instanceOf(entityType));
+        Iterable<? extends Entity> typed = Iterables.filter(all, entityType);
         for (Entity entity : typed) {
-            if (entity.getLocations().contains(input)) return true;
+            if (EntityPredicates.withLocation(input).apply(entity)) return true;
         }
         return false;
     }

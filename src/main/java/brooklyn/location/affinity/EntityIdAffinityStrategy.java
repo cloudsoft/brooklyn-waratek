@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.basic.EntityPredicates;
 import brooklyn.location.Location;
 import brooklyn.util.flags.SetFromFlag;
 
@@ -30,7 +31,7 @@ public class EntityIdAffinityStrategy extends AbstractAffinityStrategy {
     @Override
     public boolean apply(@Nullable Location input) {
         Entity entity = getManagementContext().getEntityManager().getEntity(entityId);
-        return entity.getLocations().contains(input);
+        return EntityPredicates.withLocation(input).apply(entity);
     }
 
 }
