@@ -239,6 +239,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         }
         newScript(MutableMap.of(DEBUG, true, USE_PID_FILE, false), LAUNCHING)
                 .body.append(useWaratekUser() ? BashCommands.sudoAsUser(JavaVirtualMachine.WARATEK_USERNAME, javad) : javad)
+                .uniqueSshConnection()
                 .execute();
     }
 
