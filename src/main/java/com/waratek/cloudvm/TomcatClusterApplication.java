@@ -35,6 +35,8 @@ import brooklyn.entity.basic.StartableApplication;
 import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
+import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
 import brooklyn.entity.webapp.DynamicWebAppCluster;
@@ -92,10 +94,12 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                 EntitySpec.create(MySqlNode.class)
                         .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
 
+        EntitySpec<TomcatServer> serverSpec = EntitySpec.create(TomcatServer.class).configure(UsesJmx.USE_JMX, Boolean.FALSE);
+
         ControlledDynamicWebAppCluster web = addChild(
                 EntitySpec.create(ControlledDynamicWebAppCluster.class)
                         .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
-                        .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, EntitySpec.create(TomcatServer.class))
+                        .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, serverSpec)
                         .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
                         .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
                                 formatString("jdbc:%s%s?user=%s\\&password=%s",
