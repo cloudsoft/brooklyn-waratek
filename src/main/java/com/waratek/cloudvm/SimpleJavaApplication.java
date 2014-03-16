@@ -26,6 +26,8 @@ import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.WaratekApplicationCluster;
 import brooklyn.entity.waratek.WaratekJavaApplication;
@@ -69,6 +71,8 @@ public class SimpleJavaApplication extends AbstractApplication {
         String mainClass = Iterables.getLast(Splitter.on(".").split(getConfig(MAIN_CLASS)));
 
         EntitySpec application = EntitySpec.create(WaratekJavaApplication.class)
+                .configure(UsesJmx.USE_JMX, Boolean.TRUE)
+                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE)
                 .configure(WaratekJavaApplication.ARGS, getConfig(ARGS))
                 .configure(WaratekJavaApplication.MAIN_CLASS, getConfig(MAIN_CLASS))
                 .configure(WaratekJavaApplication.CLASSPATH, getConfig(CLASSPATH))
