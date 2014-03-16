@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,19 +33,23 @@ import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcess.ChildStartableMode;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
-import brooklyn.entity.java.UsesJavaMXBeans;
+import brooklyn.entity.group.DynamicMultiGroup;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.basic.BasicLocationDefinition;
+import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.location.waratek.WaratekResolver;
 import brooklyn.management.LocationManager;
 import brooklyn.util.collections.MutableMap;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -55,7 +61,23 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     private DynamicCluster virtualMachines;
     private DynamicGroup fabric;
+    private DynamicMultiGroup buckets;
     private WaratekLocation waratek;
+
+    private Predicate<Entity> sameInfrastructure = new Predicate<Entity>() {
+        @Override
+        public boolean apply(@Nullable Entity input) {
+            // Check if entity is deployed to a WaratekContainerLocation
+            Optional<Location> lookup = Iterables.tryFind(input.getLocations(), Predicates.instanceOf(WaratekContainerLocation.class));
+            if (lookup.isPresent()) {
+                WaratekContainerLocation container = (WaratekContainerLocation) lookup.get();
+                // Only containers that are part of this infrastructure
+                return getId().equals(container.getWaratekInfrastructure().getId());
+            } else {
+                return false;
+            }
+        }
+    };
 
     @Override
     public void init() {
@@ -76,11 +98,22 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                 .configure(DynamicGroup.ENTITY_FILTER, Predicates.instanceOf(JavaVirtualContainer.class))
                 .displayName("All Java Virtual Containers"));
 
-        // TODO DynamicMultiGroup
+        buckets = addChild(EntitySpec.create(DynamicMultiGroup.class)
+                .configure(DynamicMultiGroup.ENTITY_FILTER, sameInfrastructure)
+                .configure(DynamicMultiGroup.RESCAN_INTERVAL, 15L)
+                .configure(DynamicMultiGroup.BUCKET_SPEC, EntitySpec.create(WaratekApplicationGroup.class))
+                .configure(DynamicMultiGroup.BUCKET_FUNCTION, new Function<Entity, String>() {
+                        @Override
+                        public String apply(@Nullable Entity input) {
+                            return input.getApplication().getDisplayName();
+                        }
+                    })
+                .displayName("Waratek Java Applications"));
 
         if (Entities.isManaged(this)) {
             Entities.manage(virtualMachines);
             Entities.manage(fabric);
+            Entities.manage(buckets);
         }
 
         virtualMachines.addEnricher(Enrichers.builder()
