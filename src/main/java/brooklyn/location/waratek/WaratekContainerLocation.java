@@ -40,6 +40,7 @@ import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -90,6 +91,20 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         return jvc.getJavaVirtualMachine();
     }
 
+    public List<String> injectWaratekPath(List<String> commands) {
+        String javaHome = getJavaVirtualMachine().getJavaHome();
+        String pathExport = String.format("export PATH=%s:$PATH", Os.mergePaths(javaHome, "bin"));
+        List<String> updated = ImmutableList.<String>builder()
+                .add(pathExport)
+                .addAll(commands)
+                .build();
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Updated commands: {}", Joiner.on(" ; ").join(updated));
+        }
+        return updated;
+    }
+
     public Map<String,?> injectWaratekEnvironment(Map<String,?> env) {
         List<String> opts = Lists.newArrayList();
         opts.add("--prefix=" + jvc.getJavaVirtualMachine().getRootDirectory());
@@ -107,12 +122,6 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
                 .put(JavaVirtualMachine.JAVA_OPTS_VAR, Joiner.on(" ").join(opts))
                 .put(JavaVirtualMachine.JAVA_HOME_VAR, javaHome)
                 .build();
-
-        // FIXME what if PATH is not set?
-        if (env.containsKey("PATH")) {
-            String path = env.get("PATH").toString();
-            updated.put("PATH", Os.mergePaths(javaHome, "bin") + ":" + path);
-        }
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
@@ -158,7 +167,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         if (LOG.isDebugEnabled()) {
             LOG.debug("Intercepted execWithLogging {}: {}", summaryForLogging, Strings.join(commands, ";"));
         }
-        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env), execCommand);
+        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env), execCommand);
     }
 
     @Override
@@ -172,7 +181,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
             LOG.debug("Calculating check-running status based on: {}", status);
             return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
         }
-        return super.execScript(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
+        return super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
     }
 
     @Override
@@ -180,7 +189,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         if (LOG.isDebugEnabled()) {
             LOG.debug("Intercepted execCommands {}: {}", summaryForLogging, Strings.join(commands, ";"));
         }
-        return super.execCommands(injectWaratekProps(props), summaryForLogging, commands, injectWaratekEnvironment(env));
+        return super.execCommands(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
     }
 
     @Override
