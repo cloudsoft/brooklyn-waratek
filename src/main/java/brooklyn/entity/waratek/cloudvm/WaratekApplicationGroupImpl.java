@@ -18,8 +18,6 @@ package brooklyn.entity.waratek.cloudvm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.entity.annotation.Effector;
-import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.BasicGroupImpl;
 
 public class WaratekApplicationGroupImpl extends BasicGroupImpl implements WaratekApplicationGroup {

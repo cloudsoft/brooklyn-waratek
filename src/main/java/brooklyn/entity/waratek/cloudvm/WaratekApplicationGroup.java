@@ -15,9 +15,9 @@
  */
 package brooklyn.entity.waratek.cloudvm;
 
-import brooklyn.entity.Group;
 import brooklyn.entity.annotation.Effector;
 import brooklyn.entity.annotation.EffectorParam;
+import brooklyn.entity.basic.BasicGroup;
 import brooklyn.entity.basic.MethodEffector;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
@@ -25,7 +25,7 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.Sensors;
 
 @ImplementedBy(WaratekApplicationGroupImpl.class)
-public interface WaratekApplicationGroup extends Group, HasShortName {
+public interface WaratekApplicationGroup extends BasicGroup, HasShortName {
 
     MethodEffector<Void> SET_ELASTIC_GROUP = new MethodEffector<Void>(WaratekApplicationGroup.class, "setElasticGroup");
     MethodEffector<Void> SET_ELASTIC_GROUP_HEAP = new MethodEffector<Void>(WaratekApplicationGroup.class, "setElasticGroupHeap");
