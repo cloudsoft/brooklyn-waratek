@@ -35,7 +35,12 @@ import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.internal.ssh.SshTool;
+import brooklyn.util.net.Protocol;
 import brooklyn.util.os.Os;
+import brooklyn.util.ssh.IptablesCommands;
+import brooklyn.util.ssh.IptablesCommands.Chain;
+import brooklyn.util.ssh.IptablesCommands.Policy;
+import brooklyn.util.task.Tasks;
 import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;
@@ -143,18 +148,42 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
     }
 
     /*
-     * Delegate port operations to machine. Note that firewall configuration is fixed after initial provisioning.
-     * TODO update using iptables or similar when adding comntainers
+     * Delegate port operations to machine. Note that firewall configuration is
+     * fixed after initial provisioning, so updates use iptables to open ports.
      */
+
+    private void addIptablesRule(Integer port) {
+        if (getWaratekInfrastructure().getConfig(WaratekInfrastructure.OPEN_IPTABLES)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Using iptables to add access for TCP/{} to {}", port, machine);
+            }
+            List<String> commands = ImmutableList.of(
+                    IptablesCommands.insertIptablesRule(Chain.INPUT, Protocol.TCP, port, Policy.ACCEPT),
+                    IptablesCommands.saveIptablesRules(),
+                    IptablesCommands.listIptablesRule());
+            int result = machine.execCommands(String.format("Open iptables TCP/%d", port), commands);
+            if (result != 0) {
+                String msg = String.format("Error running iptables update for TCP/{} on {}", port, machine);
+                LOG.error(msg);
+                throw new RuntimeException(msg);
+            }
+        }
+    }
 
     @Override
     public boolean obtainSpecificPort(int portNumber) {
-        return machine.obtainSpecificPort(portNumber);
+        boolean result = machine.obtainSpecificPort(portNumber);
+        if (result) {
+            addIptablesRule(portNumber);
+        }
+        return result;
     }
 
     @Override
     public int obtainPort(PortRange range) {
-        return machine.obtainPort(range);
+        int portNumber = machine.obtainPort(range);
+        addIptablesRule(portNumber);
+        return portNumber;
     }
 
     @Override

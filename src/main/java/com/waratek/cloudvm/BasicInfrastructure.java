@@ -74,6 +74,8 @@ public class BasicInfrastructure extends AbstractApplication {
                 .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE);
 
         addChild(EntitySpec.create(WaratekInfrastructure.class)
+                .configure(WaratekInfrastructure.SECURITY_GROUP, "universal") // All TCP and UDP ports from 0.0.0.0/0
+                .configure(WaratekInfrastructure.OPEN_IPTABLES, true)
                 .configure(WaratekInfrastructure.LOCATION_NAME, getConfig(LOCATION_NAME))
                 .configure(WaratekInfrastructure.JVM_CLUSTER_SIZE, getConfig(JVM_CLUSTER_SIZE))
                 .configure(WaratekInfrastructure.JVM_SPEC, jvmSpec)

@@ -29,12 +29,19 @@ import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.location.dynamic.LocationOwner;
+import brooklyn.location.jclouds.JcloudsLocationConfig;
 import brooklyn.location.waratek.WaratekLocation;
 import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekInfrastructureImpl.class)
 @Catalog(name="WaratekInfrastructure", description="Waratek CloudVM Infrastructure.", iconUrl="classpath://waratek-logo.png")
 public interface WaratekInfrastructure extends BasicStartable, LocationOwner<WaratekLocation, WaratekInfrastructure> {
+
+    @SetFromFlag("securityGroup")
+    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("waratek.jvm.securityGroup", "Set a security group for cloud servers to use (null to use default configuration)");
+
+    @SetFromFlag("openIptables")
+    ConfigKey<Boolean> OPEN_IPTABLES = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", JcloudsLocationConfig.OPEN_IPTABLES);
 
     @SetFromFlag("initialSize")
     ConfigKey<Integer> JVM_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);

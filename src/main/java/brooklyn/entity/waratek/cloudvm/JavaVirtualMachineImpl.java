@@ -137,7 +137,14 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         Map flags = super.obtainProvisioningFlags(location);
         Long heapSize = getConfig(HEAP_SIZE, 512 * (1024L * 1024L));
         int megabytes = (int) (heapSize / (1024L * 1024L));
-        flags.put("templateBuilder", new PortableTemplateBuilder().os64Bit(true).osFamily(OsFamily.CENTOS).minRam(megabytes));
+        flags.put("templateBuilder", new PortableTemplateBuilder()
+                .os64Bit(true)
+                .osFamily(OsFamily.CENTOS)
+                .minRam(megabytes));
+        String securityGroup = getConfig(WaratekInfrastructure.SECURITY_GROUP);
+        if (securityGroup != null) {
+            flags.put("securityGroups", securityGroup);
+        }
         return flags;
     }
 
