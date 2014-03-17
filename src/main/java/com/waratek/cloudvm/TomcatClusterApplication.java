@@ -36,7 +36,6 @@ import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
 import brooklyn.entity.java.UsesJmx;
-import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
 import brooklyn.entity.webapp.DynamicWebAppCluster;
@@ -56,36 +55,33 @@ import com.google.common.collect.ImmutableMap;
  * Launches a 3-tier app with Nginx, clustered Tomcat, and MySQL.
  */
 @Catalog(name="Elastic Java Web Application DB",
-    description="Deploys a WAR to a load-balanced elastic Java AppServer cluster.",
-    iconUrl="classpath://glossy-3d-blue-web-icon.png")
+        description="Deploys a WAR to a load-balanced elastic Java AppServer cluster.",
+        iconUrl="classpath://glossy-3d-blue-web-icon.png")
 public class TomcatClusterApplication extends AbstractApplication implements StartableApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(TomcatClusterApplication.class);
 
-    public static final String DEFAULT_LOCATION = "localhost";
+    @CatalogConfig(label="Tomcat Cluster Size", priority=0.1)
+    public static final ConfigKey<Integer> TOMCAT_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
 
     public static final String DEFAULT_WAR_PATH = BrooklynMavenArtifacts.localUrl("example", "brooklyn-example-hello-world-sql-webapp", "war");
 
-    @CatalogConfig(label="WAR (URL)", priority=2)
+    @CatalogConfig(label="War File (URL)", priority=0.2)
     public static final ConfigKey<String> WAR_PATH = ConfigKeys.newConfigKey(
-        "app.war", "URL to the application archive which should be deployed",
-        DEFAULT_WAR_PATH);
+            "app.war", "URL to the application archive which should be deployed", DEFAULT_WAR_PATH);
 
     public static final String DEFAULT_DB_SETUP_SQL_URL = "classpath://visitors-creation-script.sql";
 
-    @CatalogConfig(label="DB Setup SQL (URL)", priority=1)
+    @CatalogConfig(label="Database Setup SQL (URL)", priority=0.3)
     public static final ConfigKey<String> DB_SETUP_SQL_URL = ConfigKeys.newConfigKey(
-        "app.db_sql", "URL to the SQL script to set up the database",
-        DEFAULT_DB_SETUP_SQL_URL);
+            "app.db_sql", "URL to the SQL script to set up the database", DEFAULT_DB_SETUP_SQL_URL);
 
     public static final String DB_TABLE = "visitors";
     public static final String DB_USERNAME = "brooklyn";
     public static final String DB_PASSWORD = "br00k11n";
 
-    public static final AttributeSensor<Integer> APPSERVERS_COUNT = Sensors.newIntegerSensor(
-            "appservers.count", "Number of app servers deployed");
-    public static final AttributeSensor<Double> REQUESTS_PER_SECOND_IN_WINDOW =
-            WebAppServiceConstants.REQUESTS_PER_SECOND_IN_WINDOW;
+    public static final AttributeSensor<Integer> APPSERVERS_COUNT = Sensors.newIntegerSensor("appservers.count", "Number of app servers deployed");
+    public static final AttributeSensor<Double> REQUESTS_PER_SECOND_IN_WINDOW = WebAppServiceConstants.REQUESTS_PER_SECOND_IN_WINDOW;
     public static final AttributeSensor<String> ROOT_URL = WebAppServiceConstants.ROOT_URL;
 
     @Override
@@ -104,7 +100,7 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                         .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
                                 formatString("jdbc:%s%s?user=%s\\&password=%s",
                                         attributeWhenReady(mysql, MySqlNode.DATASTORE_URL), DB_TABLE, DB_USERNAME, DB_PASSWORD))
-                        .configure(DynamicCluster.INITIAL_SIZE, 2));
+                        .configure(DynamicCluster.INITIAL_SIZE, getConfig(TOMCAT_CLUSTER_SIZE)));
 
         web.addEnricher(HttpLatencyDetector.builder().
                 url(ROOT_URL).
@@ -129,4 +125,5 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                 .from(web)
                 .build());
     }
+
 }

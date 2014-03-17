@@ -31,7 +31,6 @@ import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.WaratekApplicationCluster;
 import brooklyn.entity.waratek.WaratekJavaApplication;
-import brooklyn.util.flags.SetFromFlag;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -43,28 +42,24 @@ import com.google.common.collect.Maps;
  * Brooklyn managed Waratek SimpleJavaApplication.
  */
 @Catalog(name="SimpleJavaApplication",
-    description="Deploys Simple Waratek Java Application.",
-    iconUrl="classpath://java-logo.png")
+        description="Deploys Simple Waratek Java Application.",
+        iconUrl="classpath://java-logo.png")
 public class SimpleJavaApplication extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
 
-    @SetFromFlag("args")
-    @CatalogConfig(label="Java Args", priority=0)
+    @CatalogConfig(label="Cluster Size", priority=0.1)
+    public static final ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 6);
+
+    @CatalogConfig(label="Java Args", priority=1.1)
     public static final ConfigKey<List> ARGS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.ARGS,
             ImmutableList.of(Integer.toString(1024 * 64))); // 64KiB
 
-    @SetFromFlag(value="main")
-    @CatalogConfig(label="Java Main Class", priority=0)
+    @CatalogConfig(label="Java Main Class", priority=1.2)
     public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.MAIN_CLASS, "com.example.HelloWorld");
 
-    @SetFromFlag("classpath")
-    @CatalogConfig(label="Java Classpath", priority=0)
+    @CatalogConfig(label="Java Classpath", priority=1.3)
     public static final ConfigKey<List> CLASSPATH = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.CLASSPATH, ImmutableList.of("brooklyn-waratek-examples.jar"));
-
-    @SetFromFlag("initialSize")
-    @CatalogConfig(label="Cluster Size", priority=1)
-    public static final ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 6);
 
     @Override
     public void init() {

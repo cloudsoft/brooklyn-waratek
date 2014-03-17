@@ -26,47 +26,44 @@ import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
-import brooklyn.util.flags.SetFromFlag;
 
 /**
  * Brooklyn managed basic Waratek infrastructure.
  */
 @Catalog(name="BasicWaratekInfrastructure",
-    description="Deploys Simple Waratek Infrastructure.",
-    iconUrl="classpath://waratek-logo.png")
+        description="Deploys Simple Waratek Infrastructure.",
+        iconUrl="classpath://waratek-logo.png")
 public class BasicInfrastructure extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(BasicInfrastructure.class);
 
-    @SetFromFlag("locationName")
-    @CatalogConfig(label="Location Name", priority=0)
+    @CatalogConfig(label="Location Name", priority=0.1)
     public static final ConfigKey<String> LOCATION_NAME = ConfigKeys.newConfigKeyWithDefault(
             WaratekInfrastructure.LOCATION_NAME.getConfigKey(), "waratek-infrastructure");
 
-    @SetFromFlag("runAs")
-    @CatalogConfig(label="Separate User", priority=0)
+    @CatalogConfig(label="Use Separate User", priority=0.2)
     public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVirtualMachine.USE_WARATEK_USER;
 
-    @SetFromFlag("debug")
-    @CatalogConfig(label="Enable Debug", priority=0)
-    public static final ConfigKey<Boolean> DEBUG = JavaVirtualMachine.DEBUG;
+    @CatalogConfig(label="Separate Username", priority=0.3)
+    public static final ConfigKey<String> WARATEK_USER = JavaVirtualMachine.WARATEK_USER;
 
-    @SetFromFlag("highAvailabilty")
-    @CatalogConfig(label="Enable HA Policies", priority=0)
-    public static final ConfigKey<Boolean> HA_POLICY_ENABLE = JavaVirtualMachine.HA_POLICY_ENABLE;
-
-    @SetFromFlag("heapSize")
     @CatalogConfig(label="Heap Size", priority=1.1)
     public static final ConfigKey<Long> HEAP_SIZE = ConfigKeys.newConfigKeyWithDefault(JavaVirtualMachine.HEAP_SIZE, 1000000000L);
 
-    @SetFromFlag("jvmClusterSize")
     @CatalogConfig(label="JVM Cluster Size", priority=1.2)
     public static final ConfigKey<Integer> JVM_CLUSTER_SIZE = WaratekInfrastructure.JVM_CLUSTER_SIZE;
+
+    @CatalogConfig(label="Enable Debug", priority=2.1)
+    public static final ConfigKey<Boolean> DEBUG = JavaVirtualMachine.DEBUG;
+
+    @CatalogConfig(label="Enable HA Policies", priority=2.2)
+    public static final ConfigKey<Boolean> HA_POLICY_ENABLE = JavaVirtualMachine.HA_POLICY_ENABLE;
 
     @Override
     public void init() {
         EntitySpec jvmSpec = EntitySpec.create(JavaVirtualMachine.class)
                 .configure(JavaVirtualMachine.USE_WARATEK_USER, getConfig(USE_WARATEK_USER))
+                .configure(JavaVirtualMachine.WARATEK_USER, getConfig(WARATEK_USER))
                 .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
                 .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
                 .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
