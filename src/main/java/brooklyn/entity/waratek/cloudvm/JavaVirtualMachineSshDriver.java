@@ -90,6 +90,11 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     }
 
     @Override
+    public String getWaratekUsername() {
+        return getEntity().getConfig(JavaVirtualMachine.WARATEK_USER);
+    }
+
+    @Override
     public String getHeapSize() {
         Long size = getEntity().getConfig(JavaVirtualMachine.HEAP_SIZE);
         int megabytes = (int) (size / (1024L * 1024L));
@@ -235,10 +240,10 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
                 Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
         if (log.isDebugEnabled()) {
-            log.debug("JVM command (as {}): {}", useWaratekUser() ? JavaVirtualMachine.WARATEK_USERNAME : "brooklyn user", javad);
+            log.debug("JVM command (as {}): {}", useWaratekUser() ? getWaratekUsername() : "brooklyn user", javad);
         }
         newScript(MutableMap.of(DEBUG, true, USE_PID_FILE, false), LAUNCHING)
-                .body.append(useWaratekUser() ? BashCommands.sudoAsUser(JavaVirtualMachine.WARATEK_USERNAME, javad) : javad)
+                .body.append(useWaratekUser() ? BashCommands.sudoAsUser(getWaratekUsername(), javad) : javad)
                 .uniqueSshConnection()
                 .execute();
     }
@@ -250,7 +255,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             builder.put(DEBUG, true);
         }
         if (useWaratekUser()) {
-            builder.put(PROCESS_OWNER, JavaVirtualMachine.WARATEK_USERNAME);
+            builder.put(PROCESS_OWNER, getWaratekUsername());
         }
         Map<String, ?> flags = builder.build();
         return flags;

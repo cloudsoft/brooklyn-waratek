@@ -132,7 +132,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
     public Map<String,?> injectWaratekProps(Map<String,?> props) {
         MutableMap.Builder<String, Object> builder = MutableMap.<String, Object>builder().putAll(props);
         if (getJavaVirtualMachine().getConfig(JavaVirtualMachine.USE_WARATEK_USER)) {
-            builder.put(SshTool.PROP_USER.getName(), JavaVirtualMachine.WARATEK_USERNAME);
+            builder.put(SshTool.PROP_USER.getName(), getJavaVirtualMachine().getConfig(JavaVirtualMachine.WARATEK_USER));
         }
         Map<String, ?> updated = builder.build();
 

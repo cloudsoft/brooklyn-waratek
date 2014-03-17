@@ -21,6 +21,8 @@ public interface JavaVirtualMachineDriver extends JavaSoftwareProcessDriver {
 
     boolean useWaratekUser();
 
+    String getWaratekUsername();
+
     String getHeapSize();
 
     String getJavaHome();

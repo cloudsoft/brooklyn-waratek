@@ -70,6 +70,9 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     @SetFromFlag("runAs")
     ConfigKey<Boolean> USE_WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", true);
 
+    @SetFromFlag("runAsUser")
+    ConfigKey<String> WARATEK_USER = ConfigKeys.newStringConfigKey("waratek.runAs.username", "User to use when running the JVM process", WARATEK_USERNAME);
+
     @SetFromFlag("heapSize")
     ConfigKey<Long> HEAP_SIZE = ConfigKeys.newLongConfigKey("waratek.jvm.heapSize", "Size of heap memory to allocate (in bytes)");
 
