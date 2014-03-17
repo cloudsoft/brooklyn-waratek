@@ -21,7 +21,7 @@
 
     <groupId>com.waratek.brooklyn</groupId>
     <artifactId>brooklyn-waratek</artifactId>
-    <version>0.4.0-SNAPSHOT</version>
+    <version>0.4.0</version>
     <packaging>jar</packaging>
     <name>Brooklyn Waratek JVM/JVC Deployment and Management</name>
 
