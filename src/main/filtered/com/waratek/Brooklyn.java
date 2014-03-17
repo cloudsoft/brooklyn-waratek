@@ -20,8 +20,17 @@ package com.waratek;
  */
 public class Brooklyn {
 
+    public static final String BANNER =
+        " _                     _    _             \n" +
+        "| |__  _ __ ___   ___ | | _| |_   _ _ __ (R)\n" +
+        "| '_ \\| '__/ _ \\ / _ \\| |/ / | | | | '_ \\ \n" +
+        "| |_) | | | (_) | (_) |   <| | |_| | | | |\n" +
+        "|_.__/|_|  \\___/ \\___/|_|\\_\\_|\\__, |_| |_|\n" +
+        "                              |___/             \n"+
+        "${project.artifactId} ${project.version}\n";
+
     public static void main(String...args) {
-        // Unused
+        System.out.print(BANNER);
     }
 
 }

@@ -8,6 +8,7 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.os.Os;
 
 /**
  * The SSH implementation of the {@link WaratekJavaAppDriver}.
@@ -40,9 +41,11 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         String jvc = getEntity().getAttribute(JavaVirtualContainer.JVC_NAME);
         log.info("Installing {}", jvc);
 
+        getMachine().installTo("classpath://brooklyn-waratek-container.jar", getRootDirectory());
+        String command = String.format("java -cp %s com.waratek.Brooklyn", Os.mergePaths(getRootDirectory(), "brooklyn-waratek-container.jar"));
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, "java brooklyn container", getRootDirectory());
+            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getRootDirectory());
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
