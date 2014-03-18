@@ -53,7 +53,8 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
             .requireResultCode(Predicates.in(ImmutableSet.of(0, 1)))
             .execute();
         if (exists != 0) {
-            getMachine().installTo(ResourceUtils.create(this), "classpath://brooklyn-waratek-container.jar", getInstallDir());
+            getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl("classpath://brooklyn-waratek-container.jar"),
+                    Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
         }
     }
 

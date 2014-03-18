@@ -51,9 +51,16 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
 
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
 
+    MethodEffector<Void> SHUT_DOWN = new MethodEffector<Void>(JavaVirtualContainer.class, "shutDown");
     MethodEffector<Void> PAUSE = new MethodEffector<Void>(JavaVirtualContainer.class, "pause");
     MethodEffector<Void> RESUME = new MethodEffector<Void>(JavaVirtualContainer.class, "resume");
     MethodEffector<Long> ALLOCATE_HEAP = new MethodEffector<Long>(JavaVirtualContainer.class, "allocateHeap");
+
+    /**
+     * Shut-down the JVC.
+     */
+    @Effector(description="Shut-down the JVC")
+    void shutDown();
 
     /**
      * Pause the JVC.

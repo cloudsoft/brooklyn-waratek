@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.Entity;
+import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
@@ -204,13 +205,23 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         if (LOG.isDebugEnabled()) {
             LOG.debug("Intercepted execScript {}: {}", summaryForLogging, Strings.join(commands, ";"));
         }
-        // Handle check-running by retrieving JVC status directly
-        if (summaryForLogging != null && summaryForLogging.startsWith("check-running")) {
-            String status = jvc.getAttribute(WaratekAttributes.STATUS);
-            LOG.debug("Calculating check-running status based on: {}", status);
-            return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
+        boolean ignoreResult = false;
+        if (summaryForLogging != null) {
+            // Handle check-running by retrieving JVC status directly
+            if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.CHECK_RUNNING)) {
+                String status = jvc.getAttribute(WaratekAttributes.STATUS);
+                LOG.debug("Calculating check-running status based on: {}", status);
+                return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
+            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING)) {
+                jvc.shutDown();
+                ignoreResult = true;
+            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING)) {
+                jvc.stop();
+                ignoreResult = true;
+            }
         }
-        return super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
+        int result = super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
+        return ignoreResult ? 0 : result;
     }
 
     @Override
