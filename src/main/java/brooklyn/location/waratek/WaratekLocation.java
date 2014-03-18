@@ -126,6 +126,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             for (Entity entity : infrastructure.getJvmList()) {
                 Integer maxSize = entity.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
                 Integer currentSize = entity.getAttribute(WaratekAttributes.JVC_COUNT);
+
                 // also try to satisfy the affinty rules etc.
                 if (currentSize == null || currentSize < maxSize) {
                     jvm = (JavaVirtualMachine) entity;

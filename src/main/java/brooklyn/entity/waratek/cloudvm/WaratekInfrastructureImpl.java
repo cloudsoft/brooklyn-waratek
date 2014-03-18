@@ -81,7 +81,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     @Override
     public void init() {
-        int initialSize = getConfig(JVM_CLUSTER_SIZE);
+        int initialSize = getConfig(JVM_CLUSTER_MIN_SIZE);
         EntitySpec jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
                 .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this)
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
@@ -226,10 +226,12 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         String locationSpec = String.format(WaratekResolver.WARATEK_INFRASTRUCTURE_SPEC, getId()) + String.format(":(name=\"%s\")", locationName);
         setAttribute(LOCATION_SPEC, locationSpec);
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
-        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         Location location = getManagementContext().getLocationRegistry().resolve(definition);
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
+        if (getConfig(REGISTER_JVM_LOCATIONS)) {
+            getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
+        }
 
         return (WaratekLocation) location;
     }
@@ -238,6 +240,16 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     public boolean isLocationAvailable() {
         // TODO implementation
         return waratek != null;
+    }
+
+    @Override
+    public Integer resize(Integer desiredSize) {
+        return virtualMachines.resize(desiredSize);
+    }
+
+    @Override
+    public Integer getCurrentSize() {
+        return virtualMachines.getCurrentSize();
     }
 
 }

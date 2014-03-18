@@ -91,7 +91,7 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
             "waratek.admin.http.port", "Port to use for JVM administration over HTTP", PortRanges.fromString("7777+"));
 
     @SetFromFlag("maxSize")
-    ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = ConfigKeys.newIntegerConfigKey("waratek.jvc.maxSize", "Maximum size of the JVC cluster");
+    ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = WaratekInfrastructure.JVC_CLUSTER_MAX_SIZE;
 
     @SetFromFlag("jvcSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVC_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(

@@ -26,6 +26,7 @@ import brooklyn.entity.basic.DynamicGroup;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.proxying.ImplementedBy;
+import brooklyn.entity.trait.Resizable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.location.dynamic.LocationOwner;
@@ -35,16 +36,23 @@ import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekInfrastructureImpl.class)
 @Catalog(name="WaratekInfrastructure", description="Waratek CloudVM Infrastructure.", iconUrl="classpath://waratek-logo.png")
-public interface WaratekInfrastructure extends BasicStartable, LocationOwner<WaratekLocation, WaratekInfrastructure> {
+public interface WaratekInfrastructure extends BasicStartable, Resizable, LocationOwner<WaratekLocation, WaratekInfrastructure> {
 
     @SetFromFlag("securityGroup")
-    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey("waratek.jvm.securityGroup", "Set a security group for cloud servers to use (null to use default configuration)");
+    ConfigKey<String> SECURITY_GROUP = ConfigKeys.newStringConfigKey(
+            "waratek.jvm.securityGroup", "Set a network security group for cloud servers to use; (null to use default configuration)");
 
     @SetFromFlag("openIptables")
     ConfigKey<Boolean> OPEN_IPTABLES = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", JcloudsLocationConfig.OPEN_IPTABLES);
 
-    @SetFromFlag("initialSize")
-    ConfigKey<Integer> JVM_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);
+    @SetFromFlag("registerJvms")
+    ConfigKey<Boolean> REGISTER_JVM_LOCATIONS = ConfigKeys.newBooleanConfigKey("waratek.jvm.register", "Register new JVM locations for deployment", Boolean.FALSE);
+
+    @SetFromFlag("minJvm")
+    ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);
+
+    @SetFromFlag("maxJvc")
+    ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = ConfigKeys.newIntegerConfigKey("waratek.jvc.maxSize", "Maximum size of a JVC cluster", 4);
 
     @SetFromFlag("jvmSpec")
     BasicAttributeSensorAndConfigKey<EntitySpec> JVM_SPEC = new BasicAttributeSensorAndConfigKey<EntitySpec>(

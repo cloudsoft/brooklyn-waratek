@@ -41,8 +41,11 @@ public class BasicInfrastructure extends AbstractApplication {
     public static final ConfigKey<String> LOCATION_NAME = ConfigKeys.newConfigKeyWithDefault(
             WaratekInfrastructure.LOCATION_NAME.getConfigKey(), "waratek-infrastructure");
 
-    @CatalogConfig(label="JVM Cluster Size", priority=3)
-    public static final ConfigKey<Integer> JVM_CLUSTER_SIZE = WaratekInfrastructure.JVM_CLUSTER_SIZE;
+    @CatalogConfig(label="JVM Cluster Minimum Size", priority=3)
+    public static final ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithDefault(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 2);
+
+    @CatalogConfig(label="Register JVM Locations", priority=2)
+    public static final ConfigKey<Boolean> REGISTER_JVM_LOCATIONS = WaratekInfrastructure.REGISTER_JVM_LOCATIONS;
 
     @CatalogConfig(label="Use Separate User", priority=2)
     public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVirtualMachine.USE_WARATEK_USER;
@@ -74,7 +77,8 @@ public class BasicInfrastructure extends AbstractApplication {
                 .configure(WaratekInfrastructure.SECURITY_GROUP, "universal") // All TCP and UDP ports from 0.0.0.0/0
                 .configure(WaratekInfrastructure.OPEN_IPTABLES, true)
                 .configure(WaratekInfrastructure.LOCATION_NAME, getConfig(LOCATION_NAME))
-                .configure(WaratekInfrastructure.JVM_CLUSTER_SIZE, getConfig(JVM_CLUSTER_SIZE))
+                .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, getConfig(JVM_CLUSTER_MIN_SIZE))
+                .configure(WaratekInfrastructure.REGISTER_JVM_LOCATIONS, getConfig(REGISTER_JVM_LOCATIONS))
                 .configure(WaratekInfrastructure.JVM_SPEC, jvmSpec)
                 .displayName("Waratek Infrastructure"));
     }
