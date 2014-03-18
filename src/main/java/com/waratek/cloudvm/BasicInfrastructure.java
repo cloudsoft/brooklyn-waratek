@@ -37,26 +37,26 @@ public class BasicInfrastructure extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(BasicInfrastructure.class);
 
-    @CatalogConfig(label="Location Name", priority=0.1)
+    @CatalogConfig(label="Location Name", priority=3)
     public static final ConfigKey<String> LOCATION_NAME = ConfigKeys.newConfigKeyWithDefault(
             WaratekInfrastructure.LOCATION_NAME.getConfigKey(), "waratek-infrastructure");
 
-    @CatalogConfig(label="Use Separate User", priority=0.2)
-    public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVirtualMachine.USE_WARATEK_USER;
-
-    @CatalogConfig(label="Separate Username", priority=0.3)
-    public static final ConfigKey<String> WARATEK_USER = JavaVirtualMachine.WARATEK_USER;
-
-    @CatalogConfig(label="Heap Size", priority=1.1)
-    public static final ConfigKey<Long> HEAP_SIZE = ConfigKeys.newConfigKeyWithDefault(JavaVirtualMachine.HEAP_SIZE, 1000000000L);
-
-    @CatalogConfig(label="JVM Cluster Size", priority=1.2)
+    @CatalogConfig(label="JVM Cluster Size", priority=3)
     public static final ConfigKey<Integer> JVM_CLUSTER_SIZE = WaratekInfrastructure.JVM_CLUSTER_SIZE;
 
-    @CatalogConfig(label="Enable Debug", priority=2.1)
+    @CatalogConfig(label="Use Separate User", priority=2)
+    public static final ConfigKey<Boolean> USE_WARATEK_USER = JavaVirtualMachine.USE_WARATEK_USER;
+
+    @CatalogConfig(label="Separate Username", priority=2)
+    public static final ConfigKey<String> WARATEK_USER = JavaVirtualMachine.WARATEK_USER;
+
+    @CatalogConfig(label="Heap Size", priority=2)
+    public static final ConfigKey<Long> HEAP_SIZE = ConfigKeys.newConfigKeyWithDefault(JavaVirtualMachine.HEAP_SIZE, 1000000000L);
+
+    @CatalogConfig(label="Enable Debug", priority=1)
     public static final ConfigKey<Boolean> DEBUG = JavaVirtualMachine.DEBUG;
 
-    @CatalogConfig(label="Enable HA Policies", priority=2.2)
+    @CatalogConfig(label="Enable HA Policies", priority=1)
     public static final ConfigKey<Boolean> HA_POLICY_ENABLE = JavaVirtualMachine.HA_POLICY_ENABLE;
 
     @Override

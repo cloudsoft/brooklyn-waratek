@@ -48,17 +48,17 @@ public class SimpleJavaApplication extends AbstractApplication {
 
     public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
 
-    @CatalogConfig(label="Cluster Size", priority=0.1)
+    @CatalogConfig(label="Cluster Size", priority=3)
     public static final ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 6);
 
-    @CatalogConfig(label="Java Args", priority=1.1)
+    @CatalogConfig(label="Java Args", priority=2)
     public static final ConfigKey<List> ARGS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.ARGS,
             ImmutableList.of(Integer.toString(1024 * 64))); // 64KiB
 
-    @CatalogConfig(label="Java Main Class", priority=1.2)
+    @CatalogConfig(label="Java Main Class", priority=2)
     public static final ConfigKey<String> MAIN_CLASS = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.MAIN_CLASS, "com.example.HelloWorld");
 
-    @CatalogConfig(label="Java Classpath", priority=1.3)
+    @CatalogConfig(label="Java Classpath", priority=2)
     public static final ConfigKey<List> CLASSPATH = ConfigKeys.newConfigKeyWithDefault(WaratekJavaApplication.CLASSPATH, ImmutableList.of("brooklyn-waratek-examples.jar"));
 
     @Override
@@ -67,7 +67,7 @@ public class SimpleJavaApplication extends AbstractApplication {
 
         EntitySpec application = EntitySpec.create(WaratekJavaApplication.class)
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
-                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE)
+                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE) // XXX Issue using -javaagent with Waratek
                 .configure(WaratekJavaApplication.ARGS, getConfig(ARGS))
                 .configure(WaratekJavaApplication.MAIN_CLASS, getConfig(MAIN_CLASS))
                 .configure(WaratekJavaApplication.CLASSPATH, getConfig(CLASSPATH))
@@ -77,6 +77,7 @@ public class SimpleJavaApplication extends AbstractApplication {
         addChild(EntitySpec.create(WaratekApplicationCluster.class)
                 .configure(DynamicCluster.INITIAL_SIZE, getConfig(INITIAL_SIZE))
                 .configure(DynamicCluster.MEMBER_SPEC, application)
+                .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
                 .displayName("Waratek " + mainClass + " Application"));
     }
 

@@ -15,7 +15,6 @@
  */
 package brooklyn.location.waratek;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;

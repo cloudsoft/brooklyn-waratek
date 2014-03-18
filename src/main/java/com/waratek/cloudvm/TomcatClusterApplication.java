@@ -61,18 +61,18 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
 
     public static final Logger LOG = LoggerFactory.getLogger(TomcatClusterApplication.class);
 
-    @CatalogConfig(label="Tomcat Cluster Size", priority=0.1)
+    @CatalogConfig(label="Tomcat Cluster Size", priority=3)
     public static final ConfigKey<Integer> TOMCAT_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
 
     public static final String DEFAULT_WAR_PATH = BrooklynMavenArtifacts.localUrl("example", "brooklyn-example-hello-world-sql-webapp", "war");
 
-    @CatalogConfig(label="War File (URL)", priority=0.2)
+    @CatalogConfig(label="War File (URL)", priority=2)
     public static final ConfigKey<String> WAR_PATH = ConfigKeys.newConfigKey(
             "app.war", "URL to the application archive which should be deployed", DEFAULT_WAR_PATH);
 
     public static final String DEFAULT_DB_SETUP_SQL_URL = "classpath://visitors-creation-script.sql";
 
-    @CatalogConfig(label="Database Setup SQL (URL)", priority=0.3)
+    @CatalogConfig(label="Database Setup SQL (URL)", priority=2)
     public static final ConfigKey<String> DB_SETUP_SQL_URL = ConfigKeys.newConfigKey(
             "app.db_sql", "URL to the SQL script to set up the database", DEFAULT_DB_SETUP_SQL_URL);
 
