@@ -63,7 +63,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         String jvc = getJvcName();
         if (log.isDebugEnabled()) log.debug("Creating {}", jvc);
 
-        String command = String.format("java -cp %s com.waratek.Brooklyn", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
+        String command = String.format("java -cp %s com.waratek.Brooklyn %s", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"), jvc);
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getRootDirectory());

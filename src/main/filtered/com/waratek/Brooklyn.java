@@ -16,7 +16,7 @@
 package com.waratek;
 
 /**
- * Placeholder class for JVC definition.
+ * Banner for initial Brooklyn JVC definition.
  */
 public class Brooklyn {
 
@@ -26,11 +26,15 @@ public class Brooklyn {
         "| '_ \\| '__/ _ \\ / _ \\| |/ / | | | | '_ \\ \n" +
         "| |_) | | | (_) | (_) |   <| | |_| | | | |\n" +
         "|_.__/|_|  \\___/ \\___/|_|\\_\\_|\\__, |_| |_|\n" +
-        "                              |___/             \n"+
-        "${project.artifactId} ${project.version}\n";
+        "                              |___/             \n" +
+        "${project.artifactId}-${project.version}\n" +
+        "%s\n" +
+        "Copyright 2014 by Cloudsoft Corporation Limited\n" +
+        "Licensed under the Apache License, Version 2.0\n" +
+        "\n";
 
-    public static void main(String...args) {
-        System.out.print(BANNER);
+    public static void main(String...argv) {
+        System.out.printf(BANNER, argv[0]);
     }
 
 }
