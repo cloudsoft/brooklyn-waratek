@@ -41,7 +41,6 @@ import brooklyn.util.os.Os;
 import brooklyn.util.ssh.IptablesCommands;
 import brooklyn.util.ssh.IptablesCommands.Chain;
 import brooklyn.util.ssh.IptablesCommands.Policy;
-import brooklyn.util.task.Tasks;
 import brooklyn.util.text.Strings;
 
 import com.google.common.base.Joiner;

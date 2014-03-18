@@ -40,8 +40,8 @@ import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
