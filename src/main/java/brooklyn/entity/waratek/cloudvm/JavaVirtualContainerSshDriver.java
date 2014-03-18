@@ -7,8 +7,12 @@ import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.util.ResourceUtils;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
+
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * The SSH implementation of the {@link WaratekJavaAppDriver}.
@@ -36,13 +40,29 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     @Override
     public final boolean isJmxEnabled() { return false; }
 
+    public String getJvcName() { return getEntity().getAttribute(JavaVirtualContainer.JVC_NAME); }
+
     @Override
     public void install() {
-        String jvc = getEntity().getAttribute(JavaVirtualContainer.JVC_NAME);
-        log.info("Installing {}", jvc);
+        String jvc = getJvcName();
+        if (log.isDebugEnabled()) log.debug("Setup {}", jvc);
 
-        getMachine().installTo("classpath://brooklyn-waratek-container.jar", getRootDirectory());
-        String command = String.format("java -cp %s com.waratek.Brooklyn", Os.mergePaths(getRootDirectory(), "brooklyn-waratek-container.jar"));
+        // Copy the container Jar file if not already in the install directory
+        int exists = newScript(INSTALLING)
+            .body.append("test -f brooklyn-waratek-container.jar")
+            .requireResultCode(Predicates.in(ImmutableSet.of(0, 1)))
+            .execute();
+        if (exists != 0) {
+            getMachine().installTo(ResourceUtils.create(this), "classpath://brooklyn-waratek-container.jar", getInstallDir());
+        }
+    }
+
+    @Override
+    public void customize() {
+        String jvc = getJvcName();
+        if (log.isDebugEnabled()) log.debug("Creating {}", jvc);
+
+        String command = String.format("java -cp %s com.waratek.Brooklyn", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getRootDirectory());
@@ -53,8 +73,8 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void launch() {
-        String jvc = getEntity().getAttribute(JavaVirtualContainer.JVC_NAME);
-        log.info("Launching {}", jvc);
+        String jvc = getJvcName();
+        if (log.isDebugEnabled()) log.debug("Starting {}", jvc);
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
@@ -66,7 +86,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public boolean isRunning() {
-        String jvc = getEntity().getAttribute(JavaVirtualContainer.JVC_NAME);
+        String jvc = getJvcName();
         if (log.isTraceEnabled()) log.trace("Checking {}", jvc);
 
         try {
@@ -84,8 +104,8 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void stop() {
-        String jvc = getEntity().getAttribute(JavaVirtualContainer.JVC_NAME);
-        log.info("Stopping {}", jvc);
+        String jvc = getJvcName();
+        if (log.isDebugEnabled()) log.debug("Stopping {}", jvc);
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
@@ -112,11 +132,6 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     @Override
     public String getRootDirectory() {
         return getRunDir();
-    }
-
-    @Override
-    public void customize() {
-
     }
 
 }
