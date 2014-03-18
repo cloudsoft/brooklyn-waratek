@@ -31,6 +31,7 @@ import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.WaratekApplicationCluster;
 import brooklyn.entity.waratek.WaratekJavaApplication;
+import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -78,6 +79,7 @@ public class SimpleJavaApplication extends AbstractApplication {
                 .configure(DynamicCluster.INITIAL_SIZE, getConfig(INITIAL_SIZE))
                 .configure(DynamicCluster.MEMBER_SPEC, application)
                 .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
+                .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy())
                 .displayName("Waratek " + mainClass + " Application"));
     }
 
