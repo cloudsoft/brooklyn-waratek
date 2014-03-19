@@ -229,9 +229,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         Location location = getManagementContext().getLocationRegistry().resolve(definition);
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
-        if (getConfig(REGISTER_JVM_LOCATIONS)) {
-            getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
-        }
+        getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
 
         return (WaratekLocation) location;
     }
