@@ -112,6 +112,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     public void postStart() {
         Long heapSize = getConfig(MAX_HEAP_SIZE);
         allocateHeap(heapSize);
+        shutDown();
     }
 
     @Override
@@ -124,7 +125,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     @Override
     public void shutDown() {
         String jvc = getAttribute(JavaVirtualContainer.JVC_NAME);
-        log.info("Pausing {}", jvc);
+        log.info("Shut-Down {}", jvc);
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(WaratekUtils.waratekMXBeanName(jvc, "VirtualContainer")));
