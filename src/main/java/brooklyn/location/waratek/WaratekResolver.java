@@ -30,6 +30,7 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
 import brooklyn.location.LocationRegistry;
+import brooklyn.location.LocationResolver;
 import brooklyn.location.LocationResolver.EnableableLocationResolver;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationRegistry;
@@ -61,7 +62,7 @@ public class WaratekResolver implements EnableableLocationResolver {
     public static final String WARATEK = "waratek";
     public static final Pattern PATTERN = Pattern.compile("("+WARATEK+"|"+WARATEK.toUpperCase()+")" + ":([a-zA-Z0-9]+)" +
             "(:([a-zA-Z0-9]+))?" + "(:\\((.*)\\))?$");
-    public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name");
+    public static final Set<String> ACCEPTABLE_ARGS = ImmutableSet.of("name", "displayName");
 
     public static final String WARATEK_INFRASTRUCTURE_SPEC = "waratek:%s";
     public static final String WARATEK_VIRTUAL_MACHINE_SPEC = "waratek:%s:%s";
@@ -96,13 +97,17 @@ public class WaratekResolver implements EnableableLocationResolver {
 
         String argsPart = matcher.group(6);
         Map<String, String> argsMap = (argsPart != null) ? KeyValueParser.parseMap(argsPart) : Collections.<String,String>emptyMap();
+        String displayNamePart = argsMap.get("displayName");
         String namePart = argsMap.get("name");
 
         if (!ACCEPTABLE_ARGS.containsAll(argsMap.keySet())) {
             Set<String> illegalArgs = Sets.difference(argsMap.keySet(), ACCEPTABLE_ARGS);
             throw new IllegalArgumentException("Invalid location '"+spec+"'; illegal args "+illegalArgs+"; acceptable args are "+ACCEPTABLE_ARGS);
         }
-        if (argsMap.containsKey("name") && (namePart == null || namePart.isEmpty())) {
+        if (argsMap.containsKey("displayName") && Strings.isEmpty(displayNamePart)) {
+            throw new IllegalArgumentException("Invalid location '"+spec+"'; if displayName supplied then value must be non-empty");
+        }
+        if (argsMap.containsKey("name") && Strings.isEmpty(namePart)) {
             throw new IllegalArgumentException("Invalid location '"+spec+"'; if name supplied then value must be non-empty");
         }
 
@@ -115,8 +120,22 @@ public class WaratekResolver implements EnableableLocationResolver {
         }
         String jvmId = matcher.group(4);
 
-        // Build the location name from parts
+        // Build the display name
         StringBuilder name = new StringBuilder();
+        if (displayNamePart != null) {
+            name.append(displayNamePart);
+        } else {
+            name.append("Waratek  ");
+            if (jvmId == null) {
+                name.append("Infrastructure ").append(infrastructureId);
+            } else {
+                name.append("JVM ").append(jvmId);
+            }
+        }
+        final String displayName =  name.toString();
+
+        // Build the location name
+        name = new StringBuilder();
         if (namePart != null) {
             name.append(namePart);
         } else {
@@ -127,14 +146,14 @@ public class WaratekResolver implements EnableableLocationResolver {
             }
         }
         final String locationName =  name.toString();
-        flags.put("name", locationName);
         WaratekInfrastructure infrastructure = (WaratekInfrastructure) managementContext.getEntityManager().getEntity(infrastructureId);
 
         if (jvmId == null) {
             LocationSpec<WaratekLocation> locationSpec = LocationSpec.create(WaratekLocation.class)
                     .configure(flags)
                     .configure(DynamicLocation.OWNER, infrastructure)
-                    .displayName(locationName);
+                    .configure(LocationInternal.NAMED_SPEC_NAME, locationName)
+                    .displayName(displayName);
             return managementContext.getLocationManager().createLocation(locationSpec);
         } else {
             JavaVirtualMachine jvm = (JavaVirtualMachine) managementContext.getEntityManager().getEntity(jvmId);
@@ -143,7 +162,8 @@ public class WaratekResolver implements EnableableLocationResolver {
                     .parent(infrastructure.getDynamicLocation())
                     .configure(flags)
                     .configure(DynamicLocation.OWNER, jvm)
-                    .displayName(locationName);
+                    .configure(LocationInternal.NAMED_SPEC_NAME, locationName)
+                    .displayName(displayName);
             return managementContext.getLocationManager().createLocation(locationSpec);
         }
     }
