@@ -211,10 +211,11 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
                 String status = jvc.getAttribute(WaratekAttributes.STATUS);
                 LOG.debug("Calculating check-running status based on: {}", status);
                 return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
-            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING)) {
+            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING) ||
+                    summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.INSTALLING)) {
                 jvc.shutDown();
                 ignoreResult = true;
-            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING)) {
+            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.KILLING)) {
                 jvc.stop();
                 ignoreResult = true;
             }
