@@ -62,13 +62,19 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
             Integer currentSize = machine.getOwner().getCurrentSize();
             remaining -= (maxSize - currentSize);
         }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Requested {}/{}, Available JVMs: {}",
+                    new Object[] { numToAdd, remaining, Iterables.toString(Iterables.transform(locs, identity())) });
+        }
 
         if (remaining > 0) {
             WaratekMachineLocation machine = Iterables.filter(currentMembers.keySet(), WaratekMachineLocation.class).iterator().next();
             Integer maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
-            Collection<Entity> added = machine.getWaratekInfrastructure().getVirtualMachineCluster().grow(remaining / maxSize);
+
+            int delta = (remaining / maxSize) + (remaining % maxSize > 0 ? 1 : 0);
+            Collection<Entity> added = machine.getWaratekInfrastructure().getVirtualMachineCluster().grow(delta);
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Added new JVMs: {}", Iterables.toString(Iterables.transform(added, identity())));
+                LOG.debug("Added {} JVMs: {}", delta, Iterables.toString(Iterables.transform(added, identity())));
             }
             Iterable<Location> jvms = Iterables.transform(added, new Function<Entity, Location>() {
                 @Override
