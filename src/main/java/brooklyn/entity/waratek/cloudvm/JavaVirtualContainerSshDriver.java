@@ -1,9 +1,12 @@
 package brooklyn.entity.waratek.cloudvm;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
 import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
@@ -27,7 +30,10 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     public JavaVirtualContainerSshDriver(JavaVirtualContainerImpl entity, SshMachineLocation machine) {
         super(entity, machine);
 
+        // Wait until the JVM has started up
         JavaVirtualMachine jvm = getEntity().getConfig(JavaVirtualContainer.JVM);
+        Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
+
         jmxHelper = new JmxHelper(jvm.getAttribute(UsesJmx.JMX_URL));
         try {
             jmxHelper.connect();
@@ -111,10 +117,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
             if (object != null) {
-                String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
-                if (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status)) {
-                    jmxHelper.operation(object.getObjectName(), "shutdownContainer");
-                }
+                getEntity().shutDown();
                 jmxHelper.operation(object.getObjectName(), "undefineContainer");
             }
         } catch (Exception e) {
@@ -128,6 +131,11 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         Long heapSize = getEntity().getConfig(JavaVirtualContainer.MAX_HEAP_SIZE);
         int megabytes = (int) (heapSize / (1024L * 1024L));
         return megabytes + "m";
+    }
+
+    @Override
+    public JavaVirtualContainerImpl getEntity() {
+        return (JavaVirtualContainerImpl) super.getEntity();
     }
 
     @Override

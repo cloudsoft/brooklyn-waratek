@@ -69,6 +69,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
     @Override
     protected void connectSensors() {
+        super.connectSensors();
         jmxHelper = new JmxHelper(getJavaVirtualMachine().getAttribute(UsesJmx.JMX_URL));
         try {
             jmxHelper.connect();
@@ -120,6 +121,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         disconnectServiceUpIsRunning();
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
         if (jmxHelper != null) jmxHelper.disconnect();
+        super.disconnectSensors();
     }
 
     @Override
@@ -129,7 +131,14 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(WaratekUtils.waratekMXBeanName(jvc, "VirtualContainer")));
-            jmxHelper.operation(object.getObjectName(), "shutdownContainer");
+            String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
+            if (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status)) {
+                jmxHelper.operation(object.getObjectName(), "shutdownContainer");
+                do {
+                    WaratekUtils.sleep(0.1d);
+                    status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
+                } while (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status));
+            }
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
