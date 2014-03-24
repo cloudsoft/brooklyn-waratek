@@ -104,6 +104,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
     @Override
     public MachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
+        LOG.info("XXX Obtain on WaratekLocation: {}", this);
         synchronized (mutex) {
             // Check context for entitiy implementing UsesJava interface
             Object context = flags.get(LocationConfigKeys.CALLER_CONTEXT.getName());
