@@ -134,6 +134,12 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             // Java options needed for launch only
             props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
             props.put("com.waratek.rootdir", getRootDirectory());
+            if (getEntity().getConfig(JavaVirtualMachine.DEBUG)) {
+                props.put("sun.rmi.transport.logLevel", "VERBOSE");
+                props.put("sun.rmi.transport.tcp.logLevel", "VERBOSE");
+                props.put("sun.rmi.server.logLevel", "VERBOSE");
+                props.put("sun.rmi.client.logCalls", "true");
+            }
             if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {
                 props.put("com.waratek.ssh.server", "on");
                 props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT).toString());
