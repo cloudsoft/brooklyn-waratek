@@ -68,7 +68,8 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
         }
 
         if (remaining > 0) {
-            WaratekMachineLocation machine = Iterables.filter(currentMembers.keySet(), WaratekMachineLocation.class).iterator().next();
+            // FIXME what happens if there are no locations available?
+            WaratekMachineLocation machine = Iterables.filter(locs, WaratekMachineLocation.class).iterator().next();
             Integer maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
 
             int delta = (remaining / maxSize) + (remaining % maxSize > 0 ? 1 : 0);

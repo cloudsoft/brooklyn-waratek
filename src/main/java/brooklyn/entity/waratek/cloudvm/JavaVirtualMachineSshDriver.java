@@ -220,7 +220,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         autoinstall.append(" -s");
         autoinstall.append(" -p ").append(getRunDir());
         if (!useWaratekUser()) {
-            autoinstall.append(" -u").append(getMachine().getUser());
+            autoinstall.append(" -u ").append(getMachine().getUser());
         }
         if (log.isDebugEnabled()) {
             log.debug("Running command: {}", autoinstall.toString());

@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,7 @@ import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.javalang.Reflections;
 
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Optional;
@@ -108,7 +108,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             // Check context for entitiy implementing UsesJava interface
             Object context = flags.get(LocationConfigKeys.CALLER_CONTEXT.getName());
             if (context instanceof Entity) {
-                List<Class<?>> implementations = ClassUtils.getAllInterfaces(context.getClass());
+                List<Class<?>> implementations = Reflections.getAllInterfaces(context.getClass());
                 boolean usesJava = Iterables.any(implementations, Predicates.<Class>equalTo(UsesJava.class));
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Context {}: UsesJava {}", context.toString(), Boolean.toString(usesJava));

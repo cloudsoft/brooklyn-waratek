@@ -30,7 +30,6 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
 import brooklyn.location.LocationRegistry;
-import brooklyn.location.LocationResolver;
 import brooklyn.location.LocationResolver.EnableableLocationResolver;
 import brooklyn.location.LocationSpec;
 import brooklyn.location.basic.BasicLocationRegistry;

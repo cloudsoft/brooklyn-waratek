@@ -82,7 +82,9 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
-        LOG.info("JVM {}: {} containers, max {}", new Object[] { jvm.getJvmName(), currentSize, maxSize });
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("JVM {}: {} containers, max {}", new Object[] { jvm.getJvmName(), currentSize, maxSize });
+        }
 
         // also try to satisfy the affinty rules etc.
         if (currentSize != null && currentSize >= maxSize) {
