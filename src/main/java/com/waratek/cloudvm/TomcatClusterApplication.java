@@ -20,9 +20,6 @@ import static brooklyn.event.basic.DependentConfiguration.formatString;
 
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.catalog.Catalog;
 import brooklyn.catalog.CatalogConfig;
 import brooklyn.config.ConfigKey;
@@ -36,7 +33,9 @@ import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
 import brooklyn.entity.webapp.DynamicWebAppCluster;
 import brooklyn.entity.webapp.JavaWebAppService;
@@ -58,8 +57,6 @@ import com.google.common.collect.ImmutableMap;
         description="Deploys a WAR to a load-balanced elastic Java AppServer cluster.",
         iconUrl="classpath://glossy-3d-blue-web-icon.png")
 public class TomcatClusterApplication extends AbstractApplication implements StartableApplication {
-
-    public static final Logger LOG = LoggerFactory.getLogger(TomcatClusterApplication.class);
 
     @CatalogConfig(label="Tomcat Cluster Size", priority=3)
     public static final ConfigKey<Integer> TOMCAT_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
@@ -90,12 +87,17 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                 EntitySpec.create(MySqlNode.class)
                         .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
 
-        EntitySpec<TomcatServer> serverSpec = EntitySpec.create(TomcatServer.class).configure(UsesJmx.USE_JMX, Boolean.FALSE);
+        EntitySpec<TomcatServer> serverSpec = EntitySpec.create(TomcatServer.class)
+                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE); // XXX Issue using -javaagent with Waratek
+        EntitySpec<DynamicWebAppCluster> clusterSpec = EntitySpec.create(DynamicWebAppCluster.class)
+                .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
+                .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy());
 
         ControlledDynamicWebAppCluster web = addChild(
                 EntitySpec.create(ControlledDynamicWebAppCluster.class)
                         .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
                         .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, serverSpec)
+                        .configure(ControlledDynamicWebAppCluster.WEB_CLUSTER_SPEC, clusterSpec)
                         .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
                         .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
                                 formatString("jdbc:%s%s?user=%s\\&password=%s",

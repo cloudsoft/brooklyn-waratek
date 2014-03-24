@@ -17,9 +17,6 @@ package com.waratek.cloudvm;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.catalog.Catalog;
 import brooklyn.catalog.CatalogConfig;
 import brooklyn.config.ConfigKey;
@@ -47,8 +44,6 @@ import com.google.common.collect.Maps;
         iconUrl="classpath://java-logo.png")
 public class SimpleJavaApplication extends AbstractApplication {
 
-    public static final Logger LOG = LoggerFactory.getLogger(SimpleJavaApplication.class);
-
     @CatalogConfig(label="Cluster Size", priority=3)
     public static final ConfigKey<Integer> INITIAL_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 6);
 
@@ -67,7 +62,6 @@ public class SimpleJavaApplication extends AbstractApplication {
         String mainClass = Iterables.getLast(Splitter.on(".").split(getConfig(MAIN_CLASS)));
 
         EntitySpec application = EntitySpec.create(WaratekJavaApplication.class)
-                .configure(UsesJmx.USE_JMX, Boolean.TRUE)
                 .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE) // XXX Issue using -javaagent with Waratek
                 .configure(WaratekJavaApplication.ARGS, getConfig(ARGS))
                 .configure(WaratekJavaApplication.MAIN_CLASS, getConfig(MAIN_CLASS))

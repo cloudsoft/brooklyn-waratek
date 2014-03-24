@@ -15,9 +15,6 @@
  */
 package com.waratek.cloudvm;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.catalog.Catalog;
 import brooklyn.catalog.CatalogConfig;
 import brooklyn.config.ConfigKey;
@@ -35,8 +32,6 @@ import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
         iconUrl="classpath://waratek-logo.png")
 public class BasicInfrastructure extends AbstractApplication {
 
-    public static final Logger LOG = LoggerFactory.getLogger(BasicInfrastructure.class);
-
     @CatalogConfig(label="Location Name", priority=3)
     public static final ConfigKey<String> LOCATION_NAME = ConfigKeys.newConfigKeyWithDefault(
             WaratekInfrastructure.LOCATION_NAME.getConfigKey(), "waratek-infrastructure");
@@ -44,7 +39,7 @@ public class BasicInfrastructure extends AbstractApplication {
     @CatalogConfig(label="JVM Cluster Minimum Size", priority=3)
     public static final ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithDefault(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 2);
 
-    @CatalogConfig(label="Register JVM Locations", priority=2)
+    @CatalogConfig(label="Register JVM Locations", priority=3)
     public static final ConfigKey<Boolean> REGISTER_JVM_LOCATIONS = WaratekInfrastructure.REGISTER_JVM_LOCATIONS;
 
     @CatalogConfig(label="Use Separate User", priority=2)
@@ -74,7 +69,7 @@ public class BasicInfrastructure extends AbstractApplication {
                 .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE);
 
         addChild(EntitySpec.create(WaratekInfrastructure.class)
-                .configure(WaratekInfrastructure.SECURITY_GROUP, "universal") // All TCP and UDP ports from 0.0.0.0/0
+                .configure(WaratekInfrastructure.SECURITY_GROUP, "universal") // AWS EC2 All TCP and UDP ports from 0.0.0.0/0
                 .configure(WaratekInfrastructure.OPEN_IPTABLES, true)
                 .configure(WaratekInfrastructure.LOCATION_NAME, getConfig(LOCATION_NAME))
                 .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, getConfig(JVM_CLUSTER_MIN_SIZE))
