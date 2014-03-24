@@ -51,11 +51,13 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
 
     @SetFromFlag("version")
     ConfigKey<String> SUGGESTED_VERSION = ConfigKeys.newConfigKeyWithDefault(SoftwareProcess.SUGGESTED_VERSION,
-            "mte_hotspot-942");
-//            "2.5.5.BK.2-1");
+//            "mte_hotspot-942");
+//            "mte_hotspot_DBG-942");
+            "2.5.5.BK.2-1");
 
     @SetFromFlag("downloadUrl")
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>( SoftwareProcess.DOWNLOAD_URL,
+//            "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/waratek_release_${version}_package.tar.gz");
             "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz?src=brooklyn");
 
     @SetFromFlag("debug")
