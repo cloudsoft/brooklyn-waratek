@@ -27,18 +27,19 @@ import brooklyn.entity.basic.EntityPredicates;
 import brooklyn.location.Location;
 import brooklyn.util.flags.SetFromFlag;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 
-public class EntityTypeAffinityRule extends AbstractAffinityRule {
+public class EntityTypeAntiAffinityRule extends AbstractAffinityRule {
 
     public static final ConfigKey<Class<? extends Entity>> ENTITY_TYPE = ConfigKeys.newConfigKey(
-            new TypeToken<Class<? extends Entity>>() { }, "entityType", "The class of entity to have affinity with");
+            new TypeToken<Class<? extends Entity>>() { }, "entityType", "The class of entity to have anti-affinity with");
 
     @SetFromFlag("entityType")
     private Class<? extends Entity> entityType;
 
-    public EntityTypeAffinityRule(Map<String, ?> properties) {
+    public EntityTypeAntiAffinityRule(Map<String, ?> properties) {
         super(properties);
     }
 
@@ -50,6 +51,6 @@ public class EntityTypeAffinityRule extends AbstractAffinityRule {
     @Override
     public boolean apply(@Nullable Location input) {
         Collection<Entity> all = getManagementContext().getEntityManager().getEntities();
-        return Iterables.any(Iterables.filter(all, entityType), EntityPredicates.withLocation(input));
+        return Iterables.all(Iterables.filter(all, entityType), Predicates.not(EntityPredicates.withLocation(input)));
     }
 }
