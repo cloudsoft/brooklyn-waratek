@@ -50,8 +50,8 @@ import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.guava.Maybe;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -192,7 +192,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     public void doStart(Collection<? extends Location> locations) {
         super.doStart(locations);
 
-        Optional<SshMachineLocation> found = Machines.findUniqueSshMachineLocation(getLocations());
+        Maybe<SshMachineLocation> found = Machines.findUniqueSshMachineLocation(getLocations());
         Map<String, ?> flags = MutableMap.<String, Object>builder()
                 .putAll(getConfig(LOCATION_FLAGS))
                 .put("machine", found.get())

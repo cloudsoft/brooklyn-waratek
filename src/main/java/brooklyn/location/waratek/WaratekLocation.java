@@ -41,6 +41,7 @@ import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.guava.Maybe;
 import brooklyn.util.javalang.Reflections;
 
 import com.google.common.base.Objects.ToStringHelper;
@@ -152,7 +153,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             // Obtain a new JVC location, save and return it
             WaratekMachineLocation location = jvm.getDynamicLocation();
             WaratekContainerLocation container = location.obtain();
-            Optional<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
+            Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Storing container mapping: {}-{}", deployed.get(), container.getId());

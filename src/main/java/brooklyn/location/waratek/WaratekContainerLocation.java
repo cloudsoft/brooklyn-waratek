@@ -30,7 +30,6 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
-import brooklyn.entity.waratek.cloudvm.WaratekUtils;
 import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.dynamic.DynamicLocation;
