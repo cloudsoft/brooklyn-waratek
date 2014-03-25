@@ -26,11 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
-import brooklyn.entity.group.DynamicCluster;
+import brooklyn.entity.group.DynamicCluster.NodePlacementStrategy;
 import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
-import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
+import brooklyn.location.Location;
 import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
@@ -45,7 +46,6 @@ import brooklyn.util.guava.Maybe;
 import brooklyn.util.javalang.Reflections;
 
 import com.google.common.base.Objects.ToStringHelper;
-import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -66,6 +66,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
     @SetFromFlag("owner")
     private WaratekInfrastructure infrastructure;
+
+    @SetFromFlag("strategy")
+    private NodePlacementStrategy strategy;
 
     /* Mappings for provisioned locations */
 
@@ -88,6 +91,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @Override
     public void init() {
         super.init();
+        if (strategy == null) {
+            strategy = new WaratekNodePlacementStrategy();
+        }
         addExtension(AvailabilityZoneExtension.class, new WaratekMachineExtension(getManagementContext(), this));
     }
 
@@ -105,7 +111,6 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
     @Override
     public MachineLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
-        LOG.info("XXX Obtain on WaratekLocation: {}", this);
         synchronized (mutex) {
             // Check context for entitiy implementing UsesJava interface
             Object context = flags.get(LocationConfigKeys.CALLER_CONTEXT.getName());
@@ -123,29 +128,11 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                 }
             }
 
-            // Look through existing infrastructure for non-empty JVMs
-            JavaVirtualMachine jvm = null;
-            for (Entity entity : infrastructure.getJvmList()) {
-                Integer maxSize = entity.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
-                Integer currentSize = entity.getAttribute(WaratekAttributes.JVC_COUNT);
-
-                // also try to satisfy the affinty rules etc.
-                if (currentSize == null || currentSize < maxSize) {
-                    jvm = (JavaVirtualMachine) entity;
-                    break;
-                }
-            }
-
-            // If we do not have a JVM, increase size of JVM cluster
-            if (jvm == null) {
-                DynamicCluster cluster = infrastructure.getVirtualMachineCluster();
-                Optional<Entity> added = cluster.growByOne(provisioner, flags);
-                if (added.isPresent()) {
-                    jvm = (JavaVirtualMachine) added.get();
-                } else {
-                    throw new IllegalStateException("Failed to add JVM to cluster");
-                }
-            }
+            // Use the waratek strategy to add a single JVM
+            List<Location> jvms = getExtension(WaratekMachineExtension.class).doGetAllSubLocations();
+            List<Location> added = strategy.locationsForAdditions(null, jvms, 1);
+            WaratekMachineLocation machine = (WaratekMachineLocation) Iterables.getOnlyElement(added);
+            JavaVirtualMachine jvm = machine.getOwner();
 
             // Now wait until the JVM has started up
             Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
@@ -228,7 +215,8 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     public ToStringHelper string() {
         return super.string()
                 .add("provisioner", provisioner)
-                .add("infrastructure", infrastructure);
+                .add("infrastructure", infrastructure)
+                .add("strategy", strategy);
     }
 
     @Override

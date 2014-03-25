@@ -80,7 +80,6 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
     @Override
     public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
-        LOG.info("XXX Obtain on WaratekMachineLocation: {}", this);
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
         if (LOG.isDebugEnabled()) {
