@@ -15,7 +15,6 @@
  */
 package brooklyn.location.affinity;
 
-import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import brooklyn.config.ConfigKey;
-import brooklyn.entity.Entity;
 import brooklyn.internal.storage.Reference;
 import brooklyn.internal.storage.impl.BasicReference;
 import brooklyn.location.Location;
@@ -35,12 +33,10 @@ import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.flags.TypeCoercions;
 import brooklyn.util.text.Identifiers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
 
-public abstract class AbstractAffinityStrategy implements AffinityStrategy {
+public abstract class AbstractAffinityRule implements AffinityRule {
 
     private ConfigBag configBag = new ConfigBag();
     private volatile ManagementContext managementContext;
@@ -53,7 +49,7 @@ public abstract class AbstractAffinityStrategy implements AffinityStrategy {
     @SetFromFlag("id")
     protected String id = Identifiers.makeRandomId(8);
 
-    public AbstractAffinityStrategy(Map<String, ?> properties) {
+    public AbstractAffinityRule(Map<String, ?> properties) {
         inConstruction = true;
 
         configure(properties);
@@ -135,13 +131,8 @@ public abstract class AbstractAffinityStrategy implements AffinityStrategy {
     public abstract boolean apply(@Nullable Location input);
 
     @Override
-    public SortedSet<Location> locationsForAdditions(Multimap<Location, Entity> currentMembers, List<Location> locs, int numToAdd) {
+    public SortedSet<Location> checkLocations(Iterable<Location> locs) {
         return ImmutableSortedSet.orderedBy(this).addAll(Iterables.filter(locs, this)).build();
-    }
-
-    @Override
-    public List<Entity> entitiesToRemove(Multimap<Location, Entity> currentMembers, int numToRemove) {
-        return ImmutableList.copyOf(Iterables.limit(currentMembers.values(), numToRemove));
     }
 
 }

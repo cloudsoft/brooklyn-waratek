@@ -20,23 +20,21 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import brooklyn.config.ConfigKey;
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.ConfigKeys;
+import brooklyn.entity.basic.EntityPredicates;
 import brooklyn.location.Location;
 import brooklyn.util.flags.SetFromFlag;
 
-import com.google.common.base.Predicate;
-import com.google.common.reflect.TypeToken;
+public class EntityIdAffinityRule extends AbstractAffinityRule {
 
-public class PredicateAffinityStrategy extends AbstractAffinityStrategy {
+    public static final ConfigKey<String> ENTITY_ID = ConfigKeys.newStringConfigKey(
+            "entityId", "The id of the entity to have affinity with");
 
-    public static final ConfigKey<Predicate<? super Location>> ENTITY_ID = ConfigKeys.newConfigKey(
-            new TypeToken<Predicate<? super Location>>() { },
-            "predicate", "A predicate to select suitable locations");
+    @SetFromFlag("entityId")
+    private String entityId;
 
-    @SetFromFlag("predicate")
-    private Predicate<? super Location> predicate;
-
-    public PredicateAffinityStrategy(Map<String, ?> properties) {
+    public EntityIdAffinityRule(Map<String, ?> properties) {
         super(properties);
     }
 
@@ -47,7 +45,8 @@ public class PredicateAffinityStrategy extends AbstractAffinityStrategy {
 
     @Override
     public boolean apply(@Nullable Location input) {
-        return predicate.apply(input);
+        Entity entity = getManagementContext().getEntityManager().getEntity(entityId);
+        return EntityPredicates.withLocation(input).apply(entity);
     }
 
 }

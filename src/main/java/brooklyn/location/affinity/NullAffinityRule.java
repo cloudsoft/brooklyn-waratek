@@ -21,9 +21,9 @@ import javax.annotation.Nullable;
 
 import brooklyn.location.Location;
 
-public class NullAffinityStrategy extends AbstractAffinityStrategy {
+public class NullAffinityRule extends AbstractAffinityRule {
 
-    public NullAffinityStrategy(Map<String, ?> properties) {
+    public NullAffinityRule(Map<String, ?> properties) {
         super(properties);
     }
 

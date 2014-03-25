@@ -15,23 +15,33 @@
  */
 package brooklyn.location.affinity;
 
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
-import java.util.SortedSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.Entity;
-import brooklyn.entity.trait.Configurable;
+import brooklyn.entity.group.DynamicCluster.NodePlacementStrategy;
 import brooklyn.location.Location;
 
-import com.google.common.annotations.Beta;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
-@Beta
-public interface AffinityStrategy extends Comparator<Location>, Predicate<Location>, Configurable {
+/**
+ * Placement strategy that checks {@link AffinityRule}s on the {@link Location}s.
+ */
+public class AffinityRulePlacementStrategy implements NodePlacementStrategy {
 
-    SortedSet<Location> locationsForAdditions(Multimap<Location, Entity> currentMembers, List<Location> locs, int numToAdd);
+    private static final Logger LOG = LoggerFactory.getLogger(AffinityRulePlacementStrategy.class);
 
-    List<Entity> entitiesToRemove(Multimap<Location, Entity> currentMembers, int numToRemove);
+    @Override
+    public List<Location> locationsForAdditions(Multimap<Location, Entity> currentMembers, Collection<? extends Location> locs, int numToAdd) {
+        return null;
+    }
+
+    @Override
+    public List<Entity> entitiesToRemove(Multimap<Location, Entity> currentMembers, int numToRemove) {
+        return null;
+    }
 
 }

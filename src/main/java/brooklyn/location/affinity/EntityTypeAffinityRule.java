@@ -15,6 +15,7 @@
  */
 package brooklyn.location.affinity;
 
+import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -26,15 +27,18 @@ import brooklyn.entity.basic.EntityPredicates;
 import brooklyn.location.Location;
 import brooklyn.util.flags.SetFromFlag;
 
-public class EntityIdAffinityStrategy extends AbstractAffinityStrategy {
+import com.google.common.collect.Iterables;
+import com.google.common.reflect.TypeToken;
 
-    public static final ConfigKey<String> ENTITY_ID = ConfigKeys.newStringConfigKey(
-            "entityId", "The id of the entity to have affinity with");
+public class EntityTypeAffinityRule extends AbstractAffinityRule {
 
-    @SetFromFlag("entityId")
-    private String entityId;
+    public static final ConfigKey<Class<? extends Entity>> ENTITY_TYPE = ConfigKeys.newConfigKey(
+            new TypeToken<Class<? extends Entity>>() { }, "entityType", "The class of entity to have affinity with");
 
-    public EntityIdAffinityStrategy(Map<String, ?> properties) {
+    @SetFromFlag("entityType")
+    private Class<? extends Entity> entityType;
+
+    public EntityTypeAffinityRule(Map<String, ?> properties) {
         super(properties);
     }
 
@@ -45,8 +49,11 @@ public class EntityIdAffinityStrategy extends AbstractAffinityStrategy {
 
     @Override
     public boolean apply(@Nullable Location input) {
-        Entity entity = getManagementContext().getEntityManager().getEntity(entityId);
-        return EntityPredicates.withLocation(input).apply(entity);
+        Collection<Entity> all = getManagementContext().getEntityManager().getEntities();
+        Iterable<? extends Entity> typed = Iterables.filter(all, entityType);
+        for (Entity entity : typed) {
+            if (EntityPredicates.withLocation(input).apply(entity)) return true;
+        }
+        return false;
     }
-
 }
