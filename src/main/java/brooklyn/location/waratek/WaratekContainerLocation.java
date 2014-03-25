@@ -24,7 +24,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.entity.Entity;
 import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
@@ -49,8 +48,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekContainerLocation extends SshMachineLocation implements WaratekVirtualLocation,
-        DynamicLocation<JavaVirtualContainer, WaratekContainerLocation> {
+public class WaratekContainerLocation extends SshMachineLocation implements DynamicLocation<JavaVirtualContainer, WaratekContainerLocation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekContainerLocation.class);
 
@@ -70,21 +68,6 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
         if (isLegacyConstruction()) {
             init();
         }
-    }
-
-    @Override
-    public List<Entity> getJvcList() {
-        return Lists.<Entity>newArrayList(jvc);
-    }
-
-    @Override
-    public List<Entity> getJvmList() {
-        return Lists.<Entity>newArrayList(jvc.getJavaVirtualMachine());
-    }
-
-    @Override
-    public WaratekInfrastructure getWaratekInfrastructure() {
-        return ((WaratekVirtualLocation) getParent()).getWaratekInfrastructure();
     }
 
     @Override
@@ -153,7 +136,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Wara
      */
 
     private void addIptablesRule(Integer port) {
-        if (getWaratekInfrastructure().getConfig(WaratekInfrastructure.OPEN_IPTABLES)) {
+        if (getOwner().getJavaVirtualMachine().getInfrastructure().getConfig(WaratekInfrastructure.OPEN_IPTABLES)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Using iptables to add access for TCP/{} to {}", port, machine);
             }

@@ -115,6 +115,8 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
 
     DynamicCluster getJvcCluster();
 
+    WaratekInfrastructure getInfrastructure();
+
     String getJvmName();
 
     String getJavaHome();

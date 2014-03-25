@@ -72,7 +72,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
             if (lookup.isPresent()) {
                 WaratekContainerLocation container = (WaratekContainerLocation) lookup.get();
                 // Only containers that are part of this infrastructure
-                return getId().equals(container.getWaratekInfrastructure().getId());
+                return getId().equals(container.getJavaVirtualMachine().getInfrastructure().getId());
             } else {
                 return false;
             }

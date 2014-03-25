@@ -45,8 +45,8 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>, WaratekVirtualLocation,
-        DynamicLocation<JavaVirtualMachine, WaratekMachineLocation> {
+public class WaratekMachineLocation extends AbstractLocation implements MachineLocation, MachineProvisioningLocation<WaratekContainerLocation>,
+        WaratekVirtualLocation, DynamicLocation<JavaVirtualMachine, WaratekMachineLocation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(WaratekMachineLocation.class);
 
@@ -155,6 +155,14 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
     public SshMachineLocation getMachine() {
         return machine;
+    }
+
+    public int getCurrentSize() {
+        return jvm.getCurrentSize();
+    }
+
+    public int getMaxSize() {
+        return jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
     }
 
     @Override

@@ -149,6 +149,9 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     }
 
     @Override
+    public WaratekInfrastructure getInfrastructure() { return getConfig(WARATEK_INFRASTRUCTURE); }
+
+    @Override
     public Integer getSshPort() { return getConfig(SSH_ADMIN_ENABLE) ? getAttribute(SSH_PORT) :  null; }
 
     @Override

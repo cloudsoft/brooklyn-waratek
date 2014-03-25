@@ -32,6 +32,7 @@ import brooklyn.location.waratek.WaratekMachineLocation;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -62,10 +63,9 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
             throw new IllegalArgumentException("No locations supplied, when requesting locations for "+numToAdd+" nodes");
         }
 
-        List<Location> available = Lists.newArrayList(locs);
+        List<WaratekMachineLocation> available = Lists.newArrayList(Iterables.filter(locs,  WaratekMachineLocation.class));
         int remaining = numToAdd;
-
-        for (WaratekMachineLocation machine : Iterables.filter(locs, WaratekMachineLocation.class)) {
+        for (WaratekMachineLocation machine : available) {
             int maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
             int currentSize = machine.getOwner().getCurrentSize();
             remaining -= (maxSize - currentSize);
@@ -76,62 +76,64 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
         }
 
         if (remaining > 0) {
-            // FIXME what happens if there are no locations available?
-            WaratekMachineLocation machine = Iterables.filter(locs, WaratekMachineLocation.class).iterator().next();
-            int maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
+            // FIXME what happens if there are no JVMs available?
+            WaratekMachineLocation machine = Iterables.get(available, 0);
 
+            // Grow the JVM cluster; based on max number of JVCs
+            int maxSize = machine.getMaxSize();
             int delta = (remaining / maxSize) + (remaining % maxSize > 0 ? 1 : 0);
             Collection<Entity> added = machine.getWaratekInfrastructure().getVirtualMachineCluster().grow(delta);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Added {} JVMs: {}", delta, Iterables.toString(Iterables.transform(added, identity())));
             }
+
+            // Add the newly created locations for each JVM
             // TODO wait until all JVMs have started up?
-            Collection<Location> jvms = Collections2.transform(added, new Function<Entity, Location>() {
+            Collection<WaratekMachineLocation> jvms = Collections2.transform(added, new Function<Entity, WaratekMachineLocation>() {
                 @Override
-                public Location apply(@Nullable Entity input) {
+                public WaratekMachineLocation apply(@Nullable Entity input) {
                     return ((JavaVirtualMachine) input).getDynamicLocation();
                 }
             });
             available.addAll(jvms);
         }
 
-        // Logic from parent, with enhancements.
+        // Logic from parent, with enhancements and types
         List<Location> result = Lists.newArrayList();
-        Map<Location, Integer> locSizes = toAvailableLocationSizes(available);
+        Map<WaratekMachineLocation, Integer> sizes = toAvailableLocationSizes(available);
         for (int i = 0; i < numToAdd; i++) {
-            // TODO Inefficient to loop this many times! But not called with big numbers.
-            Location leastPopulatedLoc = null;
-            int leastPopulatedLocSize = 0;
-            for (Location loc : locSizes.keySet()) {
-                int locSize = locSizes.get(loc);
-                if (leastPopulatedLoc == null || locSize < leastPopulatedLocSize) {
-                    leastPopulatedLoc = loc;
-                    leastPopulatedLocSize = locSize;
+            WaratekMachineLocation smallest = null;
+            int minSize = 0;
+            for (WaratekMachineLocation loc : sizes.keySet()) {
+                int size = sizes.get(loc);
+                if (smallest == null || size < minSize) {
+                    smallest = loc;
+                    minSize = size;
                 }
             }
-            Preconditions.checkState(leastPopulatedLoc != null, "leastPopulatedLoc was null; locs=%s", locSizes.keySet());
-            result.add(leastPopulatedLoc);
+            Preconditions.checkState(smallest != null, "smallest was null; locs=%s", sizes.keySet());
+            result.add(smallest);
 
             // Update population in locations, removing if maximum reached
-            int maxSize = ((WaratekMachineLocation) leastPopulatedLoc).getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
-            int currentSize = locSizes.get(leastPopulatedLoc) + 1;
+            int maxSize = smallest.getMaxSize();
+            int currentSize = sizes.get(smallest) + 1;
             if (currentSize < maxSize) {
-                locSizes.put(leastPopulatedLoc, currentSize);
+                sizes.put(smallest, currentSize);
             } else {
-                locSizes.remove(leastPopulatedLoc);
+                sizes.remove(smallest);
             }
         }
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Placement for {} nodes: {}", numToAdd, Iterables.toString(Iterables.transform(result, identity())));
         }
         return result;
     }
 
-    protected Map<Location,Integer> toAvailableLocationSizes(Iterable<? extends Location> locs) {
-        Map<Location,Integer> result = Maps.newLinkedHashMap();
-        for (Location loc : locs) {
-            int currentSize = ((WaratekMachineLocation) loc).getOwner().getCurrentSize();
-            result.put(loc, currentSize);
+    protected Map<WaratekMachineLocation, Integer> toAvailableLocationSizes(Iterable<WaratekMachineLocation> locs) {
+        Map<WaratekMachineLocation, Integer> result = Maps.newLinkedHashMap();
+        for (WaratekMachineLocation loc : locs) {
+            result.put(loc, loc.getCurrentSize());
         }
         return result;
     }
