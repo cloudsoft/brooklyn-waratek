@@ -134,21 +134,24 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             // Java options needed for launch only
             props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
             props.put("com.waratek.rootdir", getRootDirectory());
+            // TODO JMXRMI debugging
+            // props.put("sun.rmi.transport.logLevel", "VERBOSE");
+            // props.put("sun.rmi.transport.tcp.logLevel", "VERBOSE");
+            // props.put("sun.rmi.server.logLevel", "VERBOSE");
+            // props.put("sun.rmi.client.logCalls", "true");
             if (getEntity().getConfig(JavaVirtualMachine.DEBUG)) {
-                props.put("sun.rmi.transport.logLevel", "VERBOSE");
-                props.put("sun.rmi.transport.tcp.logLevel", "VERBOSE");
-                props.put("sun.rmi.server.logLevel", "VERBOSE");
-                props.put("sun.rmi.client.logCalls", "true");
+                props.put("com.waratek.debug.log", "guest.log");
+                props.put("com.waratek.debug.log_level", "debug");
             }
             if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {
                 props.put("com.waratek.ssh.server", "on");
                 props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT).toString());
-                props.put("com.waratek.jirsh.shell", "ascii"); // TODO check if requried?
-                /* -Dcom.waratek.ssh.ip=n.n.n.n */
+                props.put("com.waratek.ssh.ip", getMachine().getAddress().getHostAddress());
             } else {
                 props.put("com.waratek.ssh.server", "off");
             }
             if (getEntity().getConfig(JavaVirtualMachine.HTTP_ADMIN_ENABLE)) {
+                // TODO extra properties and configuration required?
                 props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVirtualMachine.HTTP_PORT).toString());
             }
             String javaagent = Iterables.find(super.getJmxJavaConfigOptions(), Predicates.containsPattern("javaagent"));
@@ -190,7 +193,8 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         DownloadResolver resolver = Entities.newDownloader(this);
         List<String> urls = resolver.getTargets();
         String saveAs = resolver.getFilename();
-        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", getVersion()))));
+//        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", getVersion()))));
+        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", "2.5.5.BK.2-20140331"))));
 
         // We must be able to run sudo, to customize and launch
         DynamicTasks.queueIfPossible(SshTasks.dontRequireTtyForSudo(getMachine(), true)).orSubmitAndBlock();

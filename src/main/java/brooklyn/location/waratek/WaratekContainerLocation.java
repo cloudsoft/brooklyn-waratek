@@ -79,13 +79,15 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
         return jvc.getJavaVirtualMachine();
     }
 
-    public List<String> injectWaratekPath(List<String> commands) {
+    public List<String> injectWaratekCommands(List<String> commands) {
+        List<String> updated  = Lists.newArrayList();
+        if (getOwner().getJavaVirtualMachine().getConfig(JavaVirtualMachine.DEBUG)) {
+            updated.add("set -x");
+        }
         String javaHome = getJavaVirtualMachine().getJavaHome();
         String pathExport = String.format("export PATH=%s:$PATH", Os.mergePaths(javaHome, "bin"));
-        List<String> updated = ImmutableList.<String>builder()
-                .add(pathExport)
-                .addAll(commands)
-                .build();
+        updated.add(pathExport);
+        updated.addAll(commands);
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("Updated commands: {}", Joiner.on(" ; ").join(updated));
@@ -101,6 +103,9 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
         opts.add("--jvc=" + jvc.getJvcName());
         if (env.containsKey(JavaVirtualMachine.JAVA_OPTS_VAR)) {
             opts.add(env.get(JavaVirtualMachine.JAVA_OPTS_VAR).toString());
+        }
+        if (getOwner().getJavaVirtualMachine().getConfig(JavaVirtualMachine.DEBUG)) {
+            opts.add("-verbose");
         }
 
         String javaHome = getJavaVirtualMachine().getJavaHome();
@@ -179,7 +184,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
         if (LOG.isDebugEnabled()) {
             LOG.debug("Intercepted execWithLogging {}: {}", summaryForLogging, Strings.join(commands, ";"));
         }
-        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env), execCommand);
+        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env), execCommand);
     }
 
     @Override
@@ -203,7 +208,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
                 ignoreResult = true;
             }
         }
-        int result = super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
+        int result = super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
         return ignoreResult ? 0 : result;
     }
 
@@ -212,7 +217,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
         if (LOG.isDebugEnabled()) {
             LOG.debug("Intercepted execCommands {}: {}", summaryForLogging, Strings.join(commands, ";"));
         }
-        return super.execCommands(injectWaratekProps(props), summaryForLogging, injectWaratekPath(commands), injectWaratekEnvironment(env));
+        return super.execCommands(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
     }
 
     @Override
