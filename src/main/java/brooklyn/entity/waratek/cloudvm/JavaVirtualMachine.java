@@ -72,7 +72,7 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     ConfigKey<Integer> START_TIMEOUT = ConfigKeys.newConfigKeyWithDefault(BrooklynConfigKeys.START_TIMEOUT, 300);
 
     @SetFromFlag("runAs")
-    ConfigKey<Boolean> USE_WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", true);
+    ConfigKey<Boolean> USE_WARATEK_USER = ConfigKeys.newBooleanConfigKey("waratek.runAs", "Run the JVM process as the waratek user", false);
 
     @SetFromFlag("runAsUser")
     ConfigKey<String> WARATEK_USER = ConfigKeys.newStringConfigKey("waratek.runAs.username", "User to use when running the JVM process", WARATEK_USERNAME);
