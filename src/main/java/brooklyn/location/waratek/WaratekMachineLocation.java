@@ -29,6 +29,7 @@ import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekAttributes;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
+import brooklyn.location.MachineDetails;
 import brooklyn.location.MachineLocation;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.NoMachinesAvailableException;
@@ -151,6 +152,11 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     @Override
     public JavaVirtualMachine getOwner() {
         return jvm;
+    }
+
+    @Override
+    public MachineDetails getMachineDetails() {
+        return machine.getMachineDetails();
     }
 
     public SshMachineLocation getMachine() {
