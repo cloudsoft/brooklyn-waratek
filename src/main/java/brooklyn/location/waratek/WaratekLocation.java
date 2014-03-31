@@ -129,7 +129,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             }
 
             // Use the waratek strategy to add a single JVM
-            List<Location> jvms = getExtension(WaratekMachineExtension.class).doGetAllSubLocations();
+            List<Location> jvms = getExtension(AvailabilityZoneExtension.class).getAllSubLocations();
             List<Location> added = strategy.locationsForAdditions(null, jvms, 1);
             WaratekMachineLocation machine = (WaratekMachineLocation) Iterables.getOnlyElement(added);
             JavaVirtualMachine jvm = machine.getOwner();
