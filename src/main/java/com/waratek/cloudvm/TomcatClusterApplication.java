@@ -33,7 +33,6 @@ import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
 import brooklyn.entity.java.UsesJmx;
-import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
@@ -88,7 +87,7 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                         .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
 
         EntitySpec<TomcatServer> serverSpec = EntitySpec.create(TomcatServer.class)
-                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE); // XXX Issue using -javaagent with Waratek
+                .configure(UsesJmx.USE_JMX, Boolean.FALSE); // FIXME See TomcatApplication config
         EntitySpec<DynamicWebAppCluster> clusterSpec = EntitySpec.create(DynamicWebAppCluster.class)
                 .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
                 .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy());
