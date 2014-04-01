@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 by Cloudsoft Corp.
+ * Copyright 2012-2014 by Cloudsoft Corporation Limted
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import brooklyn.policy.ha.ServiceFailureDetector;
 import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 
-@Catalog(name="Cassandra Cluster",
-        description="Simple clustered Cassandra deployment",
+@Catalog(name="Cassandra",
+        description="Clustered Cassandra with resilience policies.",
         iconUrl="classpath://cassandra-logo.png")
 public class CassandraCluster extends AbstractApplication {
     

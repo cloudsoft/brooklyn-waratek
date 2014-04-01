@@ -27,8 +27,8 @@ import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 /**
  * Brooklyn managed basic Waratek infrastructure.
  */
-@Catalog(name="BasicWaratekInfrastructure",
-        description="Deploys Simple Waratek Infrastructure.",
+@Catalog(name="Waratek Infrastructure",
+        description="Waratek Cloud VM infrastructure.",
         iconUrl="classpath://waratek-logo.png")
 public class BasicInfrastructure extends AbstractApplication {
 

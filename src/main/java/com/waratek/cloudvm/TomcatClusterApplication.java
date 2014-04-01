@@ -52,8 +52,8 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Launches a 3-tier app with Nginx, clustered Tomcat, and MySQL.
  */
-@Catalog(name="Elastic Java Web Application DB",
-        description="Deploys a WAR to a load-balanced elastic Java AppServer cluster.",
+@Catalog(name="Elastic Web Cluster",
+        description="Load-balanced elastic Tomcat cluster with a database.",
         iconUrl="classpath://glossy-3d-blue-web-icon.png")
 public class TomcatClusterApplication extends AbstractApplication implements StartableApplication {
 

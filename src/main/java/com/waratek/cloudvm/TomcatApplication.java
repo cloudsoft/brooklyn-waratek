@@ -31,10 +31,10 @@ import brooklyn.entity.webapp.tomcat.TomcatServer;
 import brooklyn.location.basic.PortRanges;
 
 /**
- * Launches a 3-tier app with Nginx, clustered Tomcat, and MySQL.
+ * Single-node Tomcat server instance.
  */
-@Catalog(name="Tomcat Application",
-        description="Deploys a WAR to a Tomcat AppServer.",
+@Catalog(name="Tomcat",
+        description="Single Tomcat server.",
         iconUrl="classpath://tomcat-logo.png")
 public class TomcatApplication extends AbstractApplication implements StartableApplication {
 

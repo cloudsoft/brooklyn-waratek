@@ -39,8 +39,8 @@ import com.google.common.collect.Maps;
 /**
  * Brooklyn managed Waratek SimpleJavaApplication.
  */
-@Catalog(name="SimpleJavaApplication",
-        description="Deploys Simple Waratek Java Application.",
+@Catalog(name="Java Application",
+        description="Simple stateless Java application cluster.",
         iconUrl="classpath://java-logo.png")
 public class SimpleJavaApplication extends AbstractApplication {
 
