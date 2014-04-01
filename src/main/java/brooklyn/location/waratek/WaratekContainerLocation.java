@@ -101,20 +101,25 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
         opts.add("--async");
         opts.add("--jvm=" + jvc.getJavaVirtualMachine().getJvmName());
         opts.add("--jvc=" + jvc.getJvcName());
-        if (env.containsKey(JavaVirtualMachine.JAVA_OPTS_VAR)) {
-            opts.add(env.get(JavaVirtualMachine.JAVA_OPTS_VAR).toString());
-        }
         if (getOwner().getJavaVirtualMachine().getConfig(JavaVirtualMachine.DEBUG)) {
             opts.add("-verbose");
         }
+        String waratekOpts = Joiner.on(" ").join(opts);
 
         String javaHome = getJavaVirtualMachine().getJavaHome();
 
         MutableMap<String, Object> updated = MutableMap.<String, Object>builder()
                 .putAll(env)
-                .put(JavaVirtualMachine.JAVA_OPTS_VAR, Joiner.on(" ").join(opts))
                 .put(JavaVirtualMachine.JAVA_HOME_VAR, javaHome)
                 .build();
+
+        // TODO make this configurable? we would need to know the entity being deployed here...
+        // List of possible 'JAVA_OPTS' environment variables
+        for (String var : ImmutableList.of("ACTIVEMQ_OPTS", "QPID_OPTS", "JAVA_OPTIONS", "JVM_OPTS", JavaVirtualMachine.JAVA_OPTS_VAR)) {
+            if (env.containsKey(var)) {
+                updated.put(var, waratekOpts + " " + env.get(var).toString());
+            }
+        }
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("Updated environment: {}", Joiner.on(",").withKeyValueSeparator("=").join(updated));
