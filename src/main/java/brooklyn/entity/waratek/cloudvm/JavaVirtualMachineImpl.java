@@ -15,10 +15,16 @@
  */
 package brooklyn.entity.waratek.cloudvm;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nonnull;
 
 import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
@@ -27,12 +33,17 @@ import org.slf4j.LoggerFactory;
 import brooklyn.enricher.Enrichers;
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.EntityLocal;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.group.Cluster;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.event.feed.function.FunctionFeed;
+import brooklyn.event.feed.function.FunctionPollConfig;
+import brooklyn.event.feed.http.HttpValueFunctions;
+import brooklyn.event.feed.jmx.JmxAttributePollConfig;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
@@ -51,11 +62,20 @@ import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.guava.Maybe;
+import brooklyn.util.math.MathFunctions;
+import brooklyn.util.time.Duration;
 
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Callables;
 
 public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaVirtualMachine {
+
+    static {
+        JavaAppUtils.init();
+    }
 
     private static final Logger log = LoggerFactory.getLogger(JavaVirtualMachineImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
@@ -180,13 +200,17 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     @Override
     protected void connectSensors() {
         super.connectSensors();
-        jmxMxBeanFeed = JavaAppUtils.connectMXBeanSensors(this);
-        connectServiceUpIsRunning();
+        jmxMxBeanFeed = JavaAppUtils.getMxBeanSensorsBuilder(this)
+                .pollAttribute(new JmxAttributePollConfig<Boolean>(SERVICE_UP)
+                        .objectName(WaratekUtils.VIRTUAL_MACHINE_MX_BEAN)
+                        .attributeName("Vendor")
+                        .onException(Functions.constant(Boolean.FALSE))
+                        .onSuccess(Functions.constant(Boolean.TRUE)))
+                .build();
     }
 
     @Override
     protected void disconnectSensors() {
-        disconnectServiceUpIsRunning();
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
         super.disconnectSensors();
     }

@@ -115,10 +115,16 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
 
         // TODO make this configurable? we would need to know the entity being deployed here...
         // List of possible 'JAVA_OPTS' environment variables
+        boolean modified = false;
         for (String var : ImmutableList.of("ACTIVEMQ_OPTS", "QPID_OPTS", "JAVA_OPTIONS", "JVM_OPTS", JavaVirtualMachine.JAVA_OPTS_VAR)) {
             if (env.containsKey(var)) {
                 updated.put(var, waratekOpts + " " + env.get(var).toString());
+                modified = true;
             }
+        }
+        // Create 'JAVA_OPTS' if it (or equivalent) doesn't exist
+        if (!modified) {
+            updated.put(JavaVirtualMachine.JAVA_OPTS_VAR, waratekOpts);
         }
 
         if (LOG.isTraceEnabled()) {

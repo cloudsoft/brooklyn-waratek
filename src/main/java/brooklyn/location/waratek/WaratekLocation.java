@@ -138,8 +138,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
 
             // Obtain a new JVC location, save and return it
-            WaratekMachineLocation location = jvm.getDynamicLocation();
-            WaratekContainerLocation container = location.obtain();
+            WaratekContainerLocation container = machine.obtain();
             Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
                 if (LOG.isDebugEnabled()) {

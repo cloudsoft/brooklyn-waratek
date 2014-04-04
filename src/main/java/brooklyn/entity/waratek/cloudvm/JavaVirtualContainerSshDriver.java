@@ -1,5 +1,8 @@
 package brooklyn.entity.waratek.cloudvm;
 
+import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_CONTAINER_MX_BEAN;
+import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_MACHINE_MX_BEAN;
+
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -11,20 +14,13 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.ResourceUtils;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
-
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * The SSH implementation of the {@link WaratekJavaAppDriver}.
  */
 public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDriver implements JavaVirtualContainerDriver {
-
-    public static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
-    public static final String VIRTUAL_CONTAINER_MX_BEAN = "com.waratek:type=%s,name=VirtualContainer";
 
     private volatile JmxHelper jmxHelper;
 
@@ -51,18 +47,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void install() {
-        String jvc = getJvcName();
-        if (log.isDebugEnabled()) log.debug("Setup {}", jvc);
-
-        // Copy the container Jar file if not already in the install directory
-        int exists = newScript(INSTALLING)
-            .body.append("test -f brooklyn-waratek-container.jar")
-            .requireResultCode(Predicates.in(ImmutableSet.of(0, 1)))
-            .execute();
-        if (exists != 0) {
-            getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl("classpath://brooklyn-waratek-container.jar"),
-                    Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
-        }
+        // Does nothing
     }
 
     @Override
@@ -74,7 +59,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
             WaratekUtils.sleep(new Random().nextDouble());
-            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getRootDirectory());
+            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getInstallDir());
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }

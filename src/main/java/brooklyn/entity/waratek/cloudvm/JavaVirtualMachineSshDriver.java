@@ -29,6 +29,7 @@ import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.location.basic.PortRanges;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.net.Networking;
@@ -193,8 +194,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         DownloadResolver resolver = Entities.newDownloader(this);
         List<String> urls = resolver.getTargets();
         String saveAs = resolver.getFilename();
-//        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", getVersion()))));
-        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", "2.5.5.BK.2-20140331"))));
+        setExpandedInstallDir(Os.mergePaths(getInstallDir(), resolver.getUnpackedDirectoryName(format("waratek_release_%s_package", getVersion()))));
 
         // We must be able to run sudo, to customize and launch
         DynamicTasks.queueIfPossible(SshTasks.dontRequireTtyForSudo(getMachine(), true)).orSubmitAndBlock();
@@ -208,6 +208,9 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         newScript(INSTALLING)
                 .body.append(commands)
                 .execute();
+
+        getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl("classpath://brooklyn-waratek-container.jar"),
+                Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
     }
 
     @Override
@@ -245,8 +248,9 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     public void launch() {
         log.info("Launching {}", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
 
-        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s",
-                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize());
+        String javad = String.format("%1$s -Xdaemon $JAVA_OPTS -Xms%2$s -Xmx%2$s %3$s",
+                Os.mergePaths("$JAVA_HOME", "bin", "javad"), getHeapSize(),
+                getEntity().getConfig(JavaVirtualMachine.DEBUG) ? "-Xverboselog:debug.log -Xtrace:management" : "");
         if (log.isDebugEnabled()) {
             log.debug("JVM command (as {}): {}", useWaratekUser() ? getWaratekUsername() : "brooklyn user", javad);
         }

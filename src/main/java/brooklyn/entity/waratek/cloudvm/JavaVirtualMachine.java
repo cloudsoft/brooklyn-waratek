@@ -57,9 +57,9 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
             "2.5.5.BK.2-1");
 
     @SetFromFlag("downloadUrl")
-    BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>( SoftwareProcess.DOWNLOAD_URL,
-            "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/waratek_release_${version}_package.tar.gz");
-//            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz?src=brooklyn");
+    BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>(SoftwareProcess.DOWNLOAD_URL,
+//            "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/waratek_release_${version}_package.tar.gz");
+            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz?src=brooklyn");
 
     @SetFromFlag("debug")
     ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey("waratek.debug", "Enable debug options", false);

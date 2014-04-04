@@ -34,6 +34,13 @@ import com.google.common.base.Function;
 
 public class WaratekUtils  {
 
+    static {
+        JavaAppUtils.init();
+    }
+
+    public static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
+    public static final String VIRTUAL_CONTAINER_MX_BEAN = "com.waratek:type=%s,name=VirtualContainer";
+
     public static String waratekMXBeanName(String jvcName, String type) {
         return String.format("com.waratek:type=%s,name=%s", jvcName, type);
     }

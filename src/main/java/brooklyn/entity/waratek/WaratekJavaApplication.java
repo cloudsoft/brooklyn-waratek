@@ -16,6 +16,7 @@
 package brooklyn.entity.waratek;
 
 import brooklyn.config.ConfigKey;
+import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.java.VanillaJavaApp;
 import brooklyn.entity.proxying.ImplementedBy;
@@ -24,6 +25,9 @@ import brooklyn.util.flags.SetFromFlag;
 
 @ImplementedBy(WaratekJavaApplicationImpl.class)
 public interface WaratekJavaApplication extends VanillaJavaApp {
+
+    @SetFromFlag("startTimeout")
+    ConfigKey<Integer> START_TIMEOUT = ConfigKeys.newConfigKeyWithDefault(BrooklynConfigKeys.START_TIMEOUT, 300);
 
     @SetFromFlag("maxHeapSize")
     BasicAttributeSensorAndConfigKey<Long> MAX_HEAP_SIZE = new BasicAttributeSensorAndConfigKey(Long.class,
