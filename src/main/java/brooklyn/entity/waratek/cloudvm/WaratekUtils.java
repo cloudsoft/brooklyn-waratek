@@ -36,6 +36,7 @@ public class WaratekUtils  {
 
     static {
         JavaAppUtils.init();
+        WaratekAttributes.init();
     }
 
     public static final String VIRTUAL_MACHINE_MX_BEAN = "com.waratek:type=VirtualMachine";
@@ -142,12 +143,4 @@ public class WaratekUtils  {
         entity.addEnricher(new RollingTimeWindowMeanEnricher<Double>(entity, WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_LAST, WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, Duration.ONE_MINUTE));
     }
 
-    public static void sleep(double seconds) {
-        try {
-            Thread.sleep((long) (seconds * 1000d));
-        } catch (InterruptedException ie) {
-            Thread.interrupted();
-            Exceptions.propagate(ie);
-        }
-    }
 }

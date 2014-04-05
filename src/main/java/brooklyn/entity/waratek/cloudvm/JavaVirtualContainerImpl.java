@@ -41,6 +41,7 @@ import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
+import brooklyn.util.time.Time;
 
 public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements JavaVirtualContainer {
 
@@ -135,7 +136,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
             if (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status)) {
                 jmxHelper.operation(object.getObjectName(), "shutdownContainer");
                 do {
-                    WaratekUtils.sleep(0.1d);
+                    Time.sleep(Duration.seconds(0.1d));
                     status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
                 } while (!JavaVirtualContainer.STATUS_SHUT_OFF.equals(status));
             }

@@ -3,7 +3,6 @@ package brooklyn.entity.waratek.cloudvm;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_CONTAINER_MX_BEAN;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_MACHINE_MX_BEAN;
 
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectInstance;
@@ -58,7 +57,6 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         String command = String.format("java -cp %s com.waratek.Brooklyn %s", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"), jvc);
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            WaratekUtils.sleep(new Random().nextDouble());
             jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getInstallDir());
         } catch (Exception e) {
             throw Exceptions.propagate(e);
