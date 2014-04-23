@@ -79,7 +79,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         setDisplayName(jvmName);
         setAttribute(JVM_NAME, jvmName);
 
-        EntitySpec jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
+        EntitySpec<?> jvcSpec = EntitySpec.create(getConfig(JVC_SPEC))
                 .configure(JavaVirtualContainer.JVM, this);
         if (getConfig(HA_POLICY_ENABLE)) {
             jvcSpec.policy(PolicySpec.create(ServiceFailureDetector.class));
@@ -101,21 +101,21 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
 
         containers.addEnricher(Enrichers.builder()
                 .aggregating(WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
-                .computingSum()
-                .fromMembers()
                 .publishing(WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .fromMembers()
+                .computingSum()
                 .build());
         containers.addEnricher(Enrichers.builder()
                 .aggregating(UsesJavaMXBeans.USED_HEAP_MEMORY)
-                .computingSum()
-                .fromMembers()
                 .publishing(WaratekAttributes.TOTAL_HEAP_MEMORY)
+                .fromMembers()
+                .computingSum()
                 .build());
         containers.addEnricher(Enrichers.builder()
                 .aggregating(WaratekAttributes.CPU_USAGE)
-                .computingAverage()
-                .fromMembers()
                 .publishing(WaratekAttributes.AVERAGE_CPU_USAGE)
+                .fromMembers()
+                .computingAverage()
                 .build());
 
         addEnricher(Enrichers.builder()
