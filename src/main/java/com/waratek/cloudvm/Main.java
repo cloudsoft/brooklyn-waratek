@@ -83,6 +83,10 @@ public class Main extends brooklyn.cli.Main {
             super.populateCatalog(catalog);
             catalog.addItem(BasicInfrastructure.class);
             catalog.addItem(SimpleJavaApplication.class);
+            catalog.addItem(TomcatClusterApplication.class);
+            catalog.addItem(CassandraCluster.class);
+            catalog.addItem(ActiveMQApplication.class);
+            catalog.addItem(TomcatApplication.class);
         }
 
         @Override

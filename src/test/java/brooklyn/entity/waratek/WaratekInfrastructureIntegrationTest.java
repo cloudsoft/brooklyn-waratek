@@ -89,6 +89,7 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
 
         EntityTestUtils.assertAttributeEqualsEventually(simpleJava, Startable.SERVICE_UP, true);
 
+        simpleJava.stop();
         infrastructure.stop();
     }
 }
