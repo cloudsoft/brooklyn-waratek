@@ -33,6 +33,7 @@ import brooklyn.location.PortRange;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.internal.ssh.SshTool;
 import brooklyn.util.net.Protocol;
@@ -192,43 +193,64 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
 
     @Override
     protected int execWithLogging(Map<String,?> props, String summaryForLogging, List<String> commands, Map env, final Closure<Integer> execCommand) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Intercepted execWithLogging {}: {}", summaryForLogging, Strings.join(commands, ";"));
+        try {
+            machine.acquireMutex("exec", "execWithLogging");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Intercepted execWithLogging {}: {}", summaryForLogging, Strings.join(commands, ";"));
+            }
+            return super.execWithLogging(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env), execCommand);
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            machine.releaseMutex("exec");
         }
-        return super.execWithLogging(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env), execCommand);
     }
 
     @Override
     public int execScript(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Intercepted execScript {}: {}", summaryForLogging, Strings.join(commands, ";"));
-        }
-        boolean ignoreResult = false;
-        if (summaryForLogging != null) {
-            // Handle check-running by retrieving JVC status directly
-            if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.CHECK_RUNNING)) {
-                String status = jvc.getAttribute(WaratekAttributes.STATUS);
-                LOG.debug("Calculating check-running status based on: {}", status);
-                return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
-            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING) ||
-                    summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.INSTALLING)) {
-                jvc.shutDown();
-                ignoreResult = true;
-            } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.KILLING)) {
-                jvc.stop();
-                ignoreResult = true;
+        try {
+            machine.acquireMutex("exec", "execWithLogging");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Intercepted execScript {}: {}", summaryForLogging, Strings.join(commands, ";"));
             }
+            boolean ignoreResult = false;
+            if (summaryForLogging != null) {
+                // Handle check-running by retrieving JVC status directly
+                if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.CHECK_RUNNING)) {
+                    String status = jvc.getAttribute(WaratekAttributes.STATUS);
+                    LOG.debug("Calculating check-running status based on: {}", status);
+                    return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
+                } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING) ||
+                        summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.INSTALLING)) {
+                    jvc.shutDown();
+                    ignoreResult = true;
+                } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.KILLING)) {
+                    jvc.stop();
+                    ignoreResult = true;
+                }
+            }
+            int result = super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
+            return ignoreResult ? 0 : result;
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            machine.releaseMutex("exec");
         }
-        int result = super.execScript(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
-        return ignoreResult ? 0 : result;
     }
 
     @Override
     public int execCommands(Map<String,?> props, String summaryForLogging, List<String> commands, Map<String,?> env) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Intercepted execCommands {}: {}", summaryForLogging, Strings.join(commands, ";"));
+        try {
+            machine.acquireMutex("exec", "execWithLogging");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Intercepted execCommands {}: {}", summaryForLogging, Strings.join(commands, ";"));
+            }
+            return super.execCommands(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            machine.releaseMutex("exec");
         }
-        return super.execCommands(injectWaratekProps(props), summaryForLogging, injectWaratekCommands(commands), injectWaratekEnvironment(env));
     }
 
     @Override

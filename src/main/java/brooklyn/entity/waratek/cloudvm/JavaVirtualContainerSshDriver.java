@@ -51,64 +51,96 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void customize() {
-        String jvc = getJvcName();
-        if (log.isDebugEnabled()) log.debug("Creating {}", jvc);
-
-        String command = String.format("java -cp %s com.waratek.Brooklyn %s", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"), jvc);
         try {
-            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getInstallDir());
-        } catch (Exception e) {
-            throw Exceptions.propagate(e);
+            getMachine().acquireMutex("exec", "customize");
+
+            String jvc = getJvcName();
+            if (log.isDebugEnabled()) log.debug("Creating {}", jvc);
+
+            String command = String.format("java -cp %s com.waratek.Brooklyn %s", Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"), jvc);
+            try {
+                ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+                jmxHelper.operation(object.getObjectName(), "defineContainer", jvc, command, getInstallDir());
+            } catch (Exception e) {
+                throw Exceptions.propagate(e);
+            }
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            getMachine().releaseMutex("exec");
         }
     }
 
     @Override
     public void launch() {
-        String jvc = getJvcName();
-        if (log.isDebugEnabled()) log.debug("Starting {}", jvc);
-
         try {
-            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
-            jmxHelper.operation(object.getObjectName(), "startContainer", jvc);
-        } catch (Exception e) {
-            throw Exceptions.propagate(e);
+            getMachine().acquireMutex("exec", "customize");
+
+            String jvc = getJvcName();
+            if (log.isDebugEnabled()) log.debug("Starting {}", jvc);
+
+            try {
+                ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(VIRTUAL_MACHINE_MX_BEAN));
+                jmxHelper.operation(object.getObjectName(), "startContainer", jvc);
+            } catch (Exception e) {
+                throw Exceptions.propagate(e);
+            }
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            getMachine().releaseMutex("exec");
         }
     }
 
     @Override
     public boolean isRunning() {
-        String jvc = getJvcName();
-        if (log.isTraceEnabled()) log.trace("Checking {}", jvc);
-
         try {
-            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
-            if (object != null) {
-                String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
-                return status != null; // As long as a status is returned, OK
-            } else {
-                return false;
+            getMachine().acquireMutex("exec", "customize");
+
+            String jvc = getJvcName();
+            if (log.isTraceEnabled()) log.trace("Checking {}", jvc);
+
+            try {
+                ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
+                if (object != null) {
+                    String status = (String) jmxHelper.getAttribute(object.getObjectName(), "Status");
+                    return status != null; // As long as a status is returned, OK
+                } else {
+                    return false;
+                }
+            } catch (Exception e) {
+                throw Exceptions.propagate(e);
             }
-        } catch (Exception e) {
-            throw Exceptions.propagate(e);
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            getMachine().releaseMutex("exec");
         }
     }
 
     @Override
     public void stop() {
-        String jvc = getJvcName();
-        if (log.isDebugEnabled()) log.debug("Stopping {}", jvc);
-
         try {
-            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
-            if (object != null) {
-                getEntity().shutDown();
-                jmxHelper.operation(object.getObjectName(), "undefineContainer");
+            getMachine().acquireMutex("exec", "customize");
+
+            String jvc = getJvcName();
+            if (log.isDebugEnabled()) log.debug("Stopping {}", jvc);
+
+            try {
+                ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(String.format(VIRTUAL_CONTAINER_MX_BEAN, jvc)));
+                if (object != null) {
+                    getEntity().shutDown();
+                    jmxHelper.operation(object.getObjectName(), "undefineContainer");
+                }
+            } catch (Exception e) {
+                throw Exceptions.propagate(e);
             }
-        } catch (Exception e) {
-            throw Exceptions.propagate(e);
+            if (jmxHelper != null) jmxHelper.disconnect();
+        } catch (InterruptedException ie) {
+            throw Exceptions.propagate(ie);
+        } finally {
+            getMachine().releaseMutex("exec");
         }
-        if (jmxHelper != null) jmxHelper.disconnect();
     }
 
     @Override
