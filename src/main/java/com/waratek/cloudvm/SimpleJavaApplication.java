@@ -61,7 +61,7 @@ public class SimpleJavaApplication extends AbstractApplication {
     public void init() {
         String mainClass = Iterables.getLast(Splitter.on(".").split(getConfig(MAIN_CLASS)));
 
-        EntitySpec application = EntitySpec.create(WaratekJavaApplication.class)
+        EntitySpec<?> application = EntitySpec.create(WaratekJavaApplication.class)
                 .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.NONE) // XXX Issue using -javaagent with Waratek
                 .configure(WaratekJavaApplication.ARGS, getConfig(ARGS))
                 .configure(WaratekJavaApplication.MAIN_CLASS, getConfig(MAIN_CLASS))

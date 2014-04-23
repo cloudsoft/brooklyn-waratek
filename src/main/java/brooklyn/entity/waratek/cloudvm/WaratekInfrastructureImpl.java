@@ -86,7 +86,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     @Override
     public void init() {
         int initialSize = getConfig(JVM_CLUSTER_MIN_SIZE);
-        EntitySpec jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
+        EntitySpec<?> jvmSpec = EntitySpec.create(getConfig(JVM_SPEC))
                 .configure(JavaVirtualMachine.WARATEK_INFRASTRUCTURE, this)
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
                 .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
