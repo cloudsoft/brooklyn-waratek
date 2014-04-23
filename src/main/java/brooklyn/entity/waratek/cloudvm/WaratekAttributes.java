@@ -17,10 +17,15 @@ package brooklyn.entity.waratek.cloudvm;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.annotation.Nullable;
+
 import brooklyn.config.render.RendererHints;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.Sensors;
 import brooklyn.util.text.ByteSizeStrings;
+
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
 
 public class WaratekAttributes  {
 
@@ -55,18 +60,23 @@ public class WaratekAttributes  {
     /** Setup renderer hints for the MXBean attributes. */
     @SuppressWarnings("rawtypes")
     public static void init() {
-        if (initialized.get()) return;
-        synchronized (initialized) {
-            if (initialized.get()) return;
+        if (initialized.getAndSet(true)) return;
 
-            RendererHints.register(TOTAL_HEAP_MEMORY, new RendererHints.DisplayValue(ByteSizeStrings.metric()));
-            RendererHints.register(HEAP_MEMORY_DELTA_PER_SECOND_LAST, new RendererHints.DisplayValue(ByteSizeStrings.metric()));
-            RendererHints.register(HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, new RendererHints.DisplayValue(ByteSizeStrings.metric()));
-            RendererHints.register(BYTES_SENT, new RendererHints.DisplayValue(ByteSizeStrings.metric()));
-            RendererHints.register(BYTES_RECEIVED, new RendererHints.DisplayValue(ByteSizeStrings.metric()));
+        Function longValue = new Function<Double, Long>() {
+            @Override
+            public Long apply(@Nullable Double input) {
+                if (input == null) return null;
+                return input.longValue();
+            }
+            
+        };
 
-            initialized.set(true);
-        }
+        RendererHints.register(TOTAL_HEAP_MEMORY, RendererHints.displayValue(ByteSizeStrings.metric()));
+        RendererHints.register(HEAP_MEMORY_DELTA_PER_SECOND_LAST, RendererHints.displayValue(Functions.compose(ByteSizeStrings.metric(), longValue)));
+        RendererHints.register(HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, RendererHints.displayValue(Functions.compose(ByteSizeStrings.metric(), longValue)));
+
+        RendererHints.register(BYTES_SENT, RendererHints.displayValue(ByteSizeStrings.iso()));
+        RendererHints.register(BYTES_RECEIVED, RendererHints.displayValue(ByteSizeStrings.iso()));
     }
 
     static {

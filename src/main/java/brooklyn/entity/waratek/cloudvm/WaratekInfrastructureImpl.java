@@ -57,6 +57,10 @@ import com.google.common.collect.Iterables;
 
 public class WaratekInfrastructureImpl extends BasicStartableImpl implements WaratekInfrastructure {
 
+    static {
+        WaratekAttributes.init();
+    }
+
     private static final Logger log = LoggerFactory.getLogger(WaratekInfrastructureImpl.class);
 
     private DynamicCluster virtualMachines;
