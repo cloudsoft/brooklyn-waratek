@@ -24,8 +24,6 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.Startable;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
-import brooklyn.location.LocationSpec;
-import brooklyn.location.basic.FixedListMachineProvisioningLocation;
 import brooklyn.test.EntityTestUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -42,8 +40,7 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        testLocation = mgmt.getLocationManager().createLocation(LocationSpec.create(FixedListMachineProvisioningLocation.class)
-                .configure("machines", "192.168.2.149"));
+        testLocation = app.newLocalhostProvisioningLocation();
     }
 
     /**
@@ -53,7 +50,7 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
     public void canStartupAndShutdown() {
         infrastructure = app.createAndManageChild(EntitySpec.create(WaratekInfrastructure.class)
                 .configure("initialSize", "1")
-                .configure("", "test-infrastructure"));
+                .configure("locationName", "test-infrastructure"));
         app.start(ImmutableList.of(testLocation));
 
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, true);
