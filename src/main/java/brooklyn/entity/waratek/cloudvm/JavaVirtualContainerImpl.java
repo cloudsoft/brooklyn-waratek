@@ -48,7 +48,6 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     private static final Logger log = LoggerFactory.getLogger(JavaVirtualContainerImpl.class);
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    private WaratekContainerLocation container;
     private JmxHelper jmxHelper;
     private JmxFeed jmxMxBeanFeed;
 
@@ -89,8 +88,8 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         Map<String, ?> flags = MutableMap.<String, Object>builder()
                 .putAll(getConfig(LOCATION_FLAGS))
                 .build();
-        container = createLocation(flags);
-        log.info("New JVC location {} created", container);
+
+        createLocation(flags);
     }
 
     @Override
@@ -102,12 +101,17 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
     @Override
     public void deleteLocation() {
-        LocationManager mgr = getManagementContext().getLocationManager();
         WaratekContainerLocation location = getDynamicLocation();
-        if (location != null && mgr.isManaged(location)) {
-            mgr.unmanage(location);
-            setAttribute(DYNAMIC_LOCATION,  null);
+        log.info("Deleting JVC location {}", location);
+
+        if (location != null) {
+            LocationManager mgr = getManagementContext().getLocationManager();
+            if (mgr.isManaged(location)) {
+                mgr.unmanage(location);
+            }
         }
+        setAttribute(DYNAMIC_LOCATION,  null);
+        setAttribute(LOCATION_NAME,  null);
     }
 
     @Override
@@ -230,13 +234,13 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
 
+        log.info("New JVC location {} created", location);
         return location;
     }
 
     @Override
     public boolean isLocationAvailable() {
-        // TODO implementation
-        return container != null;
+        return getDynamicLocation() != null;
     }
 
     @Override

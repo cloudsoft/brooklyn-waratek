@@ -71,7 +71,6 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     private DynamicCluster virtualMachines;
     private DynamicGroup fabric;
     private DynamicMultiGroup buckets;
-    private WaratekLocation waratek;
 
     private volatile AtomicBoolean started = new AtomicBoolean(false);
 
@@ -221,8 +220,8 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                     .putAll(getConfig(LOCATION_FLAGS))
                     .put("provisioner", provisioner)
                     .build();
-            waratek = createLocation(flags);
-            log.info("New Waratek location {} created", waratek);
+
+            createLocation(flags);
 
             super.start(locations);
         }
@@ -236,7 +235,6 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         if (started.compareAndSet(true, false)) {
             super.stop();
 
-            log.info("Deleting Waratek location {}", waratek);
             deleteLocation();
 
             setAttribute(SERVICE_UP, false);
@@ -244,17 +242,21 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     }
 
     @Override
-    public WaratekLocation getDynamicLocation() { return waratek; }
+    public WaratekLocation getDynamicLocation() {
+        return (WaratekLocation) getAttribute(DYNAMIC_LOCATION);
+    }
 
     @Override
     public void deleteLocation() {
-        LocationManager mgr = getManagementContext().getLocationManager();
-        if (waratek != null) {
-            if (mgr.isManaged(waratek)) {
-                mgr.unmanage(waratek);
+        WaratekLocation location = getDynamicLocation();
+        log.info("Deleting Waratek location {}", location);
+
+        if (location != null) {
+            LocationManager mgr = getManagementContext().getLocationManager();
+            if (mgr.isManaged(location)) {
+                mgr.unmanage(location);
             }
-            getManagementContext().getLocationRegistry().removeDefinedLocation(waratek.getId());
-            waratek = null;
+            getManagementContext().getLocationRegistry().removeDefinedLocation(location.getId());
         }
         setAttribute(DYNAMIC_LOCATION,  null);
         setAttribute(LOCATION_NAME,  null);
@@ -276,16 +278,19 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         setAttribute(LOCATION_SPEC, locationSpec);
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
         Location location = getManagementContext().getLocationRegistry().resolve(definition);
+        getManagementContext().getLocationManager().manage(location);
+
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
         getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
 
+        log.info("New Waratek location {} created", location);
         return (WaratekLocation) location;
     }
 
     @Override
     public boolean isLocationAvailable() {
-        return waratek != null;
+        return getDynamicLocation() != null;
     }
 
     @Override

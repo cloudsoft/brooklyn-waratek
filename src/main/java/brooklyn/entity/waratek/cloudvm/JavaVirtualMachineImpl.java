@@ -69,7 +69,6 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
 
     private JmxFeed jmxMxBeanFeed;
     private DynamicCluster containers;
-    private WaratekMachineLocation machine;
 
     @Override
     public void init() {
@@ -211,8 +210,8 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                 .putAll(getConfig(LOCATION_FLAGS))
                 .put("machine", found.get())
                 .build();
-        machine = createLocation(flags);
-        log.info("New JVM location {} created", machine);
+
+        createLocation(flags);
     }
 
     @Override
@@ -224,12 +223,20 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
 
     @Override
     public void deleteLocation() {
-        LocationManager mgr = getManagementContext().getLocationManager();
         WaratekMachineLocation location = getDynamicLocation();
-        if (location != null && mgr.isManaged(location)) {
-            mgr.unmanage(location);
-            setAttribute(DYNAMIC_LOCATION,  null);
+        log.info("Deleting JVM location {}", location);
+
+        if (location != null) {
+            LocationManager mgr = getManagementContext().getLocationManager();
+            if (mgr.isManaged(location)) {
+                mgr.unmanage(location);
+            }
+            if (getConfig(WaratekInfrastructure.REGISTER_JVM_LOCATIONS)) {
+                getManagementContext().getLocationRegistry().removeDefinedLocation(location.getId());
+            }
         }
+        setAttribute(DYNAMIC_LOCATION,  null);
+        setAttribute(LOCATION_NAME,  null);
     }
 
     @Override
@@ -266,19 +273,21 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
         setAttribute(LOCATION_SPEC, locationSpec);
         LocationDefinition definition = new BasicLocationDefinition(locationName, locationSpec, flags);
         Location location = getManagementContext().getLocationRegistry().resolve(definition);
+        getManagementContext().getLocationManager().manage(location);
+
         setAttribute(DYNAMIC_LOCATION, location);
         setAttribute(LOCATION_NAME, location.getId());
         if (getConfig(WaratekInfrastructure.REGISTER_JVM_LOCATIONS)) {
             getManagementContext().getLocationRegistry().updateDefinedLocation(definition);
         }
 
+        log.info("New JVM location {} created", location);
         return (WaratekMachineLocation) location;
     }
 
     @Override
     public boolean isLocationAvailable() {
-        // TODO implementation
-        return machine != null;
+        return getDynamicLocation() != null;
     }
 
     @Override
