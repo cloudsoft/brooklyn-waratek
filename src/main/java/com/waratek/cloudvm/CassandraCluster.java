@@ -37,14 +37,15 @@ import brooklyn.policy.ha.ServiceRestarter;
         description="Clustered Cassandra with resilience policies.",
         iconUrl="classpath://cassandra-logo.png")
 public class CassandraCluster extends AbstractApplication {
-    
+
     @CatalogConfig(label="Initial Cluster Size", priority=0)
     public static final ConfigKey<Integer> CASSANDRA_CLUSTER_SIZE = ConfigKeys.newConfigKey(
-        "cassandra.cluster.initialSize", "Initial size of the Cassandra cluster", 6);
+            "cassandra.cluster.initialSize", "Initial size of the Cassandra cluster", 6);
 
     @Override
     public void init() {
         addChild(EntitySpec.create(CassandraDatacenter.class)
+                .displayName("Cassandra Brooklyn Cluster")
                 .configure(CassandraDatacenter.CLUSTER_NAME, "Brooklyn")
                 .configure(CassandraDatacenter.INITIAL_SIZE, getConfig(CASSANDRA_CLUSTER_SIZE))
                 .configure(CassandraDatacenter.ENABLE_AVAILABILITY_ZONES, true)

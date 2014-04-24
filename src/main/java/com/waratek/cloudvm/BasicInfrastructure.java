@@ -59,23 +59,21 @@ public class BasicInfrastructure extends AbstractApplication {
 
     @Override
     public void init() {
-        EntitySpec jvmSpec = EntitySpec.create(JavaVirtualMachine.class)
-                .configure(JavaVirtualMachine.USE_WARATEK_USER, getConfig(USE_WARATEK_USER))
-                .configure(JavaVirtualMachine.WARATEK_USER, getConfig(WARATEK_USER))
-                .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
-                .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
-                .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
-                .configure(JavaVirtualMachine.HEAP_SIZE, getConfig(HEAP_SIZE))
-                .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE);
-
         addChild(EntitySpec.create(WaratekInfrastructure.class)
+                .displayName("Waratek Infrastructure")
                 .configure(WaratekInfrastructure.SECURITY_GROUP, "universal") // AWS EC2 All TCP and UDP ports from 0.0.0.0/0
                 .configure(WaratekInfrastructure.OPEN_IPTABLES, true)
                 .configure(WaratekInfrastructure.LOCATION_NAME, getConfig(LOCATION_NAME))
                 .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, getConfig(JVM_CLUSTER_MIN_SIZE))
                 .configure(WaratekInfrastructure.REGISTER_JVM_LOCATIONS, getConfig(REGISTER_JVM_LOCATIONS))
-                .configure(WaratekInfrastructure.JVM_SPEC, jvmSpec)
-                .displayName("Waratek Infrastructure"));
+                .configure(WaratekInfrastructure.JVM_SPEC, EntitySpec.create(JavaVirtualMachine.class)
+                        .configure(JavaVirtualMachine.USE_WARATEK_USER, getConfig(USE_WARATEK_USER))
+                        .configure(JavaVirtualMachine.WARATEK_USER, getConfig(WARATEK_USER))
+                        .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
+                        .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
+                        .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
+                        .configure(JavaVirtualMachine.HEAP_SIZE, getConfig(HEAP_SIZE))
+                        .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE)));
     }
 
 }

@@ -33,6 +33,7 @@ import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
 import brooklyn.entity.java.UsesJmx;
+import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
@@ -45,7 +46,6 @@ import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.Sensors;
 import brooklyn.location.basic.PortRanges;
 import brooklyn.policy.autoscaling.AutoScalerPolicy;
-import brooklyn.util.BrooklynMavenArtifacts;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -57,16 +57,15 @@ import com.google.common.collect.ImmutableMap;
         iconUrl="classpath://glossy-3d-blue-web-icon.png")
 public class TomcatClusterApplication extends AbstractApplication implements StartableApplication {
 
+    public static final String DEFAULT_WAR_PATH = "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/hello-world-sql.war";
+    public static final String DEFAULT_DB_SETUP_SQL_URL = "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/visitors-creation-script.sql";
+
     @CatalogConfig(label="Tomcat Cluster Size", priority=3)
     public static final ConfigKey<Integer> TOMCAT_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
-
-    public static final String DEFAULT_WAR_PATH = BrooklynMavenArtifacts.localUrl("example", "brooklyn-example-hello-world-sql-webapp", "war");
 
     @CatalogConfig(label="War File (URL)", priority=2)
     public static final ConfigKey<String> WAR_PATH = ConfigKeys.newConfigKey(
             "app.war", "URL to the application archive which should be deployed", DEFAULT_WAR_PATH);
-
-    public static final String DEFAULT_DB_SETUP_SQL_URL = "classpath://visitors-creation-script.sql";
 
     @CatalogConfig(label="Database Setup SQL (URL)", priority=2)
     public static final ConfigKey<String> DB_SETUP_SQL_URL = ConfigKeys.newConfigKey(
@@ -82,45 +81,40 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
 
     @Override
     public void init() {
-        MySqlNode mysql = addChild(
-                EntitySpec.create(MySqlNode.class)
-                        .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
+        MySqlNode mysql = addChild(EntitySpec.create(MySqlNode.class)
+                .displayName("MySQL Database")
+                .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
 
-        EntitySpec<TomcatServer> serverSpec = EntitySpec.create(TomcatServer.class)
-                .configure(UsesJmx.USE_JMX, Boolean.FALSE); // FIXME See TomcatApplication config
-        EntitySpec<DynamicWebAppCluster> clusterSpec = EntitySpec.create(DynamicWebAppCluster.class)
-                .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
-                .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy());
+        ControlledDynamicWebAppCluster web = addChild(EntitySpec.create(ControlledDynamicWebAppCluster.class)
+                .displayName("Tomcat Cluster")
+                .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
+                .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, EntitySpec.create(TomcatServer.class)
+                        .configure(UsesJmx.USE_JMX, Boolean.TRUE)
+                        .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
+                        .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+"))
+                        .configure(UsesJmx.RMI_REGISTRY_PORT, PortRanges.fromString("40000+")))
+                .configure(ControlledDynamicWebAppCluster.WEB_CLUSTER_SPEC, EntitySpec.create(DynamicWebAppCluster.class)
+                        .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
+                        .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy()))
+                .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
+                .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
+                        formatString("jdbc:%s%s?user=%s\\&password=%s", attributeWhenReady(mysql, MySqlNode.DATASTORE_URL), DB_TABLE, DB_USERNAME, DB_PASSWORD))
+                .configure(DynamicCluster.INITIAL_SIZE, getConfig(TOMCAT_CLUSTER_SIZE)));
 
-        ControlledDynamicWebAppCluster web = addChild(
-                EntitySpec.create(ControlledDynamicWebAppCluster.class)
-                        .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
-                        .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, serverSpec)
-                        .configure(ControlledDynamicWebAppCluster.WEB_CLUSTER_SPEC, clusterSpec)
-                        .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
-                        .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
-                                formatString("jdbc:%s%s?user=%s\\&password=%s",
-                                        attributeWhenReady(mysql, MySqlNode.DATASTORE_URL), DB_TABLE, DB_USERNAME, DB_PASSWORD))
-                        .configure(DynamicCluster.INITIAL_SIZE, getConfig(TOMCAT_CLUSTER_SIZE)));
-
-        web.addEnricher(HttpLatencyDetector.builder().
-                url(ROOT_URL).
-                rollup(10, TimeUnit.SECONDS).
-                build());
-
-        web.getCluster().addPolicy(AutoScalerPolicy.builder().
-                metric(DynamicWebAppCluster.REQUESTS_PER_SECOND_IN_WINDOW_PER_NODE).
-                metricRange(10, 100).
-                sizeRange(2, 5).
-                build());
-
-        addEnricher(Enrichers.builder()
-                .propagating(WebAppServiceConstants.ROOT_URL,
-                        DynamicWebAppCluster.REQUESTS_PER_SECOND_IN_WINDOW,
-                        HttpLatencyDetector.REQUEST_LATENCY_IN_SECONDS_IN_WINDOW)
-                .from(web)
+        web.addEnricher(HttpLatencyDetector.builder()
+                .url(ROOT_URL)
+                .rollup(10, TimeUnit.SECONDS)
+                .build());
+        web.getCluster().addPolicy(AutoScalerPolicy.builder()
+                .metric(DynamicWebAppCluster.REQUESTS_PER_SECOND_IN_WINDOW_PER_NODE)
+                .metricRange(10, 100)
+                .sizeRange(2, 5)
                 .build());
 
+        addEnricher(Enrichers.builder()
+                .propagating(WebAppServiceConstants.ROOT_URL, DynamicWebAppCluster.REQUESTS_PER_SECOND_IN_WINDOW, HttpLatencyDetector.REQUEST_LATENCY_IN_SECONDS_IN_WINDOW)
+                .from(web)
+                .build());
         addEnricher(Enrichers.builder()
                 .propagating(ImmutableMap.of(DynamicWebAppCluster.GROUP_SIZE, APPSERVERS_COUNT))
                 .from(web)

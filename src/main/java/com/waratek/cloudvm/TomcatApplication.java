@@ -46,14 +46,14 @@ public class TomcatApplication extends AbstractApplication implements StartableA
 
     @Override
     public void init() {
-        EntitySpec<TomcatServer> spec = EntitySpec.create(TomcatServer.class)
+        addChild(EntitySpec.create(TomcatServer.class)
+                .displayName("Tomcat Server")
                 .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
                 .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
                 .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
                 .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+"))
-                .configure(UsesJmx.RMI_REGISTRY_PORT, PortRanges.fromString("40000+"));
-        addChild(spec);
+                .configure(UsesJmx.RMI_REGISTRY_PORT, PortRanges.fromString("40000+")));
     }
 
 }

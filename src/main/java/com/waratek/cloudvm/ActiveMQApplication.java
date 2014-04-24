@@ -39,6 +39,7 @@ public class ActiveMQApplication extends AbstractApplication {
     @Override
     public void init() {
         addChild(EntitySpec.create(ActiveMQBroker.class)
+                .displayName("ActiveMQ Broker")
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
                 .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
                 .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+"))
