@@ -37,6 +37,8 @@ import brooklyn.entity.group.DynamicMultiGroup;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.event.SensorEvent;
+import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
 import brooklyn.location.LocationDefinition;
 import brooklyn.location.basic.BasicLocationDefinition;
@@ -153,6 +155,22 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                 .propagating(ImmutableMap.of(DynamicCluster.GROUP_SIZE, JVM_COUNT))
                 .from(virtualMachines)
                 .build());
+
+        subscribeToMembers(virtualMachines, SERVICE_UP, new SensorEventListener<Boolean>() {
+            @Override
+            public void onEvent(SensorEvent<Boolean> event) {
+                setAttribute(SERVICE_UP, calculateServiceUp());
+            }
+        });
+    }
+
+    private boolean calculateServiceUp() {
+        List<Entity> jvms = getJvmList();
+        if (jvms.isEmpty()) return true;
+        for (Entity jvm : jvms) {
+            if (Boolean.TRUE.equals(jvm.getAttribute(SERVICE_UP))) return true;
+        }
+        return false; // No JVMs running
     }
 
     @Override
