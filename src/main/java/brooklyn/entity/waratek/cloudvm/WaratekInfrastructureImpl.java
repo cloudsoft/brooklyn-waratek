@@ -18,6 +18,7 @@ package brooklyn.entity.waratek.cloudvm;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
@@ -29,6 +30,7 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicStartableImpl;
 import brooklyn.entity.basic.DynamicGroup;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.Lifecycle;
 import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcess.ChildStartableMode;
 import brooklyn.entity.group.Cluster;
@@ -37,6 +39,7 @@ import brooklyn.entity.group.DynamicMultiGroup;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.entity.trait.Startable;
 import brooklyn.event.SensorEvent;
 import brooklyn.event.SensorEventListener;
 import brooklyn.location.Location;
@@ -69,6 +72,8 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     private DynamicGroup fabric;
     private DynamicMultiGroup buckets;
     private WaratekLocation waratek;
+
+    private volatile AtomicBoolean started = new AtomicBoolean(false);
 
     private Predicate<Entity> sameInfrastructure = new Predicate<Entity>() {
         @Override
@@ -164,13 +169,22 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
         });
     }
 
-    private boolean calculateServiceUp() {
-        List<Entity> jvms = getJvmList();
-        if (jvms.isEmpty()) return true;
-        for (Entity jvm : jvms) {
-            if (Boolean.TRUE.equals(jvm.getAttribute(SERVICE_UP))) return true;
+    /**
+     * Caclulates the {@link Startable#SERVICE_UP} sensor value.
+     * <p>
+     * Returns {@code true} if the infrastructure is started and
+     * all JVMs are not {@link Lifecycle#ON_FIRE on fire}.
+     */
+    public boolean calculateServiceUp() {
+        if (started.get()) {
+            List<Entity> jvms = getJvmList();
+            if (jvms.isEmpty()) return true;
+
+            for (Entity jvm : jvms) {
+                if (Boolean.TRUE.equals(jvm.getAttribute(SERVICE_UP))) return true;
+            }
         }
-        return false; // No JVMs running
+        return false;
     }
 
     @Override
@@ -199,26 +213,34 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     @Override
     public void start(Collection<? extends Location> locations) {
-        Location provisioner = Iterables.getOnlyElement(locations);
-        log.info("Creating new WaratekLocation wrapping {}", provisioner);
+        if (started.compareAndSet(false, true)) {
+            Location provisioner = Iterables.getOnlyElement(locations);
+            log.info("Creating new WaratekLocation wrapping {}", provisioner);
 
-        Map<String, ?> flags = MutableMap.<String, Object>builder()
-                .putAll(getConfig(LOCATION_FLAGS))
-                .put("provisioner", provisioner)
-                .build();
-        waratek = createLocation(flags);
-        log.info("New Waratek location {} created", waratek);
+            Map<String, ?> flags = MutableMap.<String, Object>builder()
+                    .putAll(getConfig(LOCATION_FLAGS))
+                    .put("provisioner", provisioner)
+                    .build();
+            waratek = createLocation(flags);
+            log.info("New Waratek location {} created", waratek);
 
-        super.start(locations);
+            super.start(locations);
+        }
     }
 
     /**
      * De-register our {@link WaratekLocation} and its children.
      */
+    @Override
     public void stop() {
-        super.stop();
+        if (started.compareAndSet(true, false)) {
+            super.stop();
 
-        deleteLocation();
+            log.info("Deleting Waratek location {}", waratek);
+            deleteLocation();
+
+            setAttribute(SERVICE_UP, false);
+        }
     }
 
     @Override
@@ -227,10 +249,15 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     @Override
     public void deleteLocation() {
         LocationManager mgr = getManagementContext().getLocationManager();
-        if (waratek != null && mgr.isManaged(waratek)) {
-            mgr.unmanage(waratek);
-            setAttribute(DYNAMIC_LOCATION,  null);
+        if (waratek != null) {
+            if (mgr.isManaged(waratek)) {
+                mgr.unmanage(waratek);
+            }
+            getManagementContext().getLocationRegistry().removeDefinedLocation(waratek.getId());
+            waratek = null;
         }
+        setAttribute(DYNAMIC_LOCATION,  null);
+        setAttribute(LOCATION_NAME,  null);
     }
 
     /**
@@ -258,7 +285,6 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     @Override
     public boolean isLocationAvailable() {
-        // TODO implementation
         return waratek != null;
     }
 
