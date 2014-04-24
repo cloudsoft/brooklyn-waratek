@@ -72,7 +72,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
     /* Mappings for provisioned locations */
 
-    private final Set<SshMachineLocation> obtained = Sets.newHashSet();
+    private final Set<MachineLocation> obtained = Sets.newHashSet();
     private final Multimap<SshMachineLocation, String> machines = HashMultimap.create();
     private final Map<String, SshMachineLocation> containers = Maps.newHashMap();
 
@@ -142,7 +142,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Storing container mapping: {}-{}", deployed.get(), container.getId());
+                    LOG.debug("Storing container mapping {} to {}", deployed.toString(), container.getId());
                 }
                 machines.put(deployed.get(), container.getId());
                 containers.put(container.getId(), deployed.get());
@@ -155,32 +155,31 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     public void release(MachineLocation machine) {
         if (provisioner != null) {
             synchronized (mutex) {
-                if (machine instanceof WaratekContainerLocation) {
-                    String id = machine.getId();
-                    SshMachineLocation ssh = containers.remove(id);
+                String id = machine.getId();
+                SshMachineLocation ssh = containers.remove(id);
+                if (ssh != null) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Request to release container mapping {}-{}", ssh, id);
+                        LOG.debug("Request to remove container mapping {} to {}", ssh, id);
                     }
-                    if (ssh != null) {
-                        machines.remove(ssh, id);
+                    if (machines.remove(ssh, id)) {
                         if (machines.get(ssh).isEmpty()) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Releasing {} from {}", ssh, provisioner);
+                            }
                             provisioner.release(ssh);
                         }
                     } else {
-                        throw new IllegalArgumentException("Request to release "+machine+", but no SSH machine found");
+                        throw new IllegalArgumentException("Request to release "+machine+", but container mapping not found");
                     }
-                } else if (machine instanceof SshMachineLocation) {
+                } else {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Request to release SSH machine {}", machine);
+                        LOG.debug("Request to release machine {}", machine);
                     }
-                    if (obtained.contains(machine)) {
+                    if (obtained.remove(machine)) {
                         provisioner.release((SshMachineLocation) machine);
-                        obtained.remove(machine);
                     } else {
                         throw new IllegalArgumentException("Request to release "+machine+", but this machine is not currently allocated");
                     }
-                } else {
-                    throw new IllegalArgumentException("Request to release "+machine+", but location type is not supported");
                 }
             }
         } else {
