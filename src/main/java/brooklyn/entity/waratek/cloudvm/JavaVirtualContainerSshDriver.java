@@ -15,6 +15,7 @@ import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
+import brooklyn.util.text.ByteSizeStrings;
 
 /**
  * The SSH implementation of the {@link WaratekJavaAppDriver}.
@@ -74,7 +75,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     @Override
     public void launch() {
         try {
-            getMachine().acquireMutex("exec", "customize");
+            getMachine().acquireMutex("exec", "launch");
 
             String jvc = getJvcName();
             if (log.isDebugEnabled()) log.debug("Starting {}", jvc);
@@ -95,7 +96,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     @Override
     public boolean isRunning() {
         try {
-            getMachine().acquireMutex("exec", "customize");
+            getMachine().acquireMutex("exec", "isRunning");
 
             String jvc = getJvcName();
             if (log.isTraceEnabled()) log.trace("Checking {}", jvc);
@@ -121,7 +122,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
     @Override
     public void stop() {
         try {
-            getMachine().acquireMutex("exec", "customize");
+            getMachine().acquireMutex("exec", "stop");
 
             String jvc = getJvcName();
             if (log.isDebugEnabled()) log.debug("Stopping {}", jvc);
@@ -145,9 +146,9 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public String getHeapSize() {
-        Long heapSize = getEntity().getConfig(JavaVirtualContainer.MAX_HEAP_SIZE);
-        int megabytes = (int) (heapSize / (1024L * 1024L));
-        return megabytes + "m";
+        Long size = getEntity().getConfig(JavaVirtualContainer.MAX_HEAP_SIZE);
+        String xmx = ByteSizeStrings.java().apply(size);
+        return xmx;
     }
 
     @Override

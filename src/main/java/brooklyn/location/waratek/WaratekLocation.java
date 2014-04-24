@@ -164,9 +164,9 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                     if (machines.remove(ssh, id)) {
                         if (machines.get(ssh).isEmpty()) {
                             if (LOG.isDebugEnabled()) {
-                                LOG.debug("Releasing {} from {}", ssh, provisioner);
+                                // TODO shut down JVM if too many open?
+                                LOG.debug("Empty JVM at {}", ssh);
                             }
-                            provisioner.release(ssh);
                         }
                     } else {
                         throw new IllegalArgumentException("Request to release "+machine+", but container mapping not found");
