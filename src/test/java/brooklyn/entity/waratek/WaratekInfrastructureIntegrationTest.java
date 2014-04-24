@@ -21,12 +21,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import brooklyn.entity.BrooklynAppLiveTestSupport;
+import brooklyn.entity.basic.ApplicationBuilder;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.Startable;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
 import brooklyn.test.EntityTestUtils;
+import brooklyn.test.entity.TestApplication;
 
 import com.waratek.cloudvm.SimpleJavaApplication;
 
@@ -55,8 +57,7 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
     @Test(groups = "Integration")
     public void canStartupAndShutdown() {
         infrastructure = app.createAndManageChild(EntitySpec.create(WaratekInfrastructure.class)
-                .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 1)
-                .configure(WaratekInfrastructure.LOCATION_NAME, "test-infrastructure"));
+                .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 1));
         app.start(ImmutableList.of(testLocation));
 
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, true);
@@ -74,22 +75,23 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
     public void canDeploySimpleJavaApplication() {
         infrastructure = app.createAndManageChild(EntitySpec.create(WaratekInfrastructure.class)
                 .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 1)
-                .configure(WaratekInfrastructure.LOCATION_NAME, "test-infrastructure"));
+                .configure(WaratekInfrastructure.LOCATION_NAME, "deployment-infrastructure"));
         app.start(ImmutableList.of(testLocation));
 
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, true);
 
-        waratekLocation = mgmt.getLocationManager().getLocation("test-infrastructure");
+        waratekLocation = mgmt.getLocationManager().getLocation("deployment-infrastructure");
         assertNotNull(waratekLocation);
 
-        SimpleJavaApplication simpleJava = app.createAndManageChild(EntitySpec.create(SimpleJavaApplication.class)
+        EntitySpec<SimpleJavaApplication> spec = EntitySpec.create(SimpleJavaApplication.class)
                 .configure(SimpleJavaApplication.INITIAL_SIZE, 1)
-                .configure(SimpleJavaApplication.CLASSPATH, ImmutableList.of("https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/brooklyn-waratek-examples.jar")));
-        simpleJava.start(ImmutableList.of(waratekLocation));
+                .configure(SimpleJavaApplication.CLASSPATH, ImmutableList.of("https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/brooklyn-waratek-examples.jar"));
+        SimpleJavaApplication simple = ApplicationBuilder.newManagedApp(spec, mgmt);
+        simple.start(ImmutableList.of(waratekLocation));
 
-        EntityTestUtils.assertAttributeEqualsEventually(simpleJava, Startable.SERVICE_UP, true);
+        EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, true);
 
-        simpleJava.stop();
+        simple.stop();
         infrastructure.stop();
     }
 }
