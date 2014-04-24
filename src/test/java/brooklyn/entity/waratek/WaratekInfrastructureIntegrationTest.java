@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import brooklyn.entity.BrooklynAppLiveTestSupport;
 import brooklyn.entity.basic.ApplicationBuilder;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.StartableApplication;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.Startable;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
@@ -95,10 +96,10 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
         assertNotNull(definition);
 
         // Deploy simple Java application
-        EntitySpec<SimpleJavaApplication> spec = EntitySpec.create(SimpleJavaApplication.class)
+        EntitySpec<StartableApplication> spec = EntitySpec.create(StartableApplication.class, SimpleJavaApplication.class)
                 .configure(SimpleJavaApplication.INITIAL_SIZE, 1)
                 .configure(SimpleJavaApplication.CLASSPATH, ImmutableList.of("https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/brooklyn-waratek-examples.jar"));
-        SimpleJavaApplication simple = ApplicationBuilder.newManagedApp(spec, mgmt);
+        StartableApplication simple = ApplicationBuilder.newManagedApp(spec, mgmt);
         simple.start(ImmutableList.of(location));
 
         // Wait until Java application started
