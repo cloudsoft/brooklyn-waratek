@@ -37,6 +37,7 @@ import brooklyn.util.os.Os;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
+import brooklyn.util.text.ByteSizeStrings;
 import brooklyn.util.text.Strings;
 
 import com.google.common.base.Predicates;
@@ -96,9 +97,9 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     @Override
     public String getHeapSize() {
         Long size = getEntity().getConfig(JavaVirtualMachine.HEAP_SIZE);
-        int megabytes = (int) (size / (1024L * 1024L));
-        log.info(String.format("Heap set to %d bytes (%s) - using '-X%sm' JVM argument", size, Strings.makeSizeString(size), megabytes));
-        return megabytes + "m";
+        String xmx = ByteSizeStrings.java().apply(size);
+        log.info(String.format("Heap set to %d bytes (%s) - using '-X%s' JVM argument", size, ByteSizeStrings.iso().apply(size), xmx));
+        return xmx;
     }
 
     @Override

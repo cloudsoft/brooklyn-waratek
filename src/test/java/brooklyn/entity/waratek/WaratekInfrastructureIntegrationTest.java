@@ -15,6 +15,7 @@
  */
 package brooklyn.entity.waratek;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import org.testng.annotations.BeforeMethod;
@@ -27,8 +28,10 @@ import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.trait.Startable;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.location.Location;
+import brooklyn.location.LocationDefinition;
+import brooklyn.location.basic.LocationInternal;
+import brooklyn.location.dynamic.LocationOwner;
 import brooklyn.test.EntityTestUtils;
-import brooklyn.test.entity.TestApplication;
 
 import com.waratek.cloudvm.SimpleJavaApplication;
 
@@ -39,7 +42,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSupport {
 
-    protected Location testLocation, waratekLocation;
+    protected Location testLocation;
     protected WaratekInfrastructure infrastructure;
 
     @BeforeMethod(alwaysRun = true)
@@ -60,11 +63,12 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
                 .configure(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 1));
         app.start(ImmutableList.of(testLocation));
 
+        // Wait until started
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, true);
         Entities.dumpInfo(app);
 
+        // Stop and wait until stopped
         infrastructure.stop();
-
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, false);
     }
 
@@ -78,20 +82,26 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
                 .configure(WaratekInfrastructure.LOCATION_NAME, "deployment-infrastructure"));
         app.start(ImmutableList.of(testLocation));
 
+        // Wait until started
         EntityTestUtils.assertAttributeEqualsEventually(infrastructure, Startable.SERVICE_UP, true);
 
-        waratekLocation = mgmt.getLocationManager().getLocation("deployment-infrastructure");
-        assertNotNull(waratekLocation);
+        // Check the dynamic location details
+        Location location = infrastructure.getAttribute(LocationOwner.DYNAMIC_LOCATION);
+        assertNotNull(location);
+        assertEquals(location.getConfig(LocationInternal.NAMED_SPEC_NAME), "deployment-infrastructure");
 
+        // Look up the location definition
+        LocationDefinition definition = mgmt.getLocationRegistry().getDefinedLocationByName("deployment-infrastructure");
+        assertNotNull(definition);
+
+        // Deploy simple Java application
         EntitySpec<SimpleJavaApplication> spec = EntitySpec.create(SimpleJavaApplication.class)
                 .configure(SimpleJavaApplication.INITIAL_SIZE, 1)
                 .configure(SimpleJavaApplication.CLASSPATH, ImmutableList.of("https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/brooklyn-waratek-examples.jar"));
         SimpleJavaApplication simple = ApplicationBuilder.newManagedApp(spec, mgmt);
-        simple.start(ImmutableList.of(waratekLocation));
+        simple.start(ImmutableList.of(location));
 
+        // Wait until Java application started
         EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, true);
-
-        simple.stop();
-        infrastructure.stop();
     }
 }
