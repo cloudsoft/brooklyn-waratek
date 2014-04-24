@@ -104,5 +104,9 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
 
         // Wait until Java application started
         EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, true);
+
+        // Stop Java application and wait until stopped
+        simple.stop();
+        EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, false);
     }
 }

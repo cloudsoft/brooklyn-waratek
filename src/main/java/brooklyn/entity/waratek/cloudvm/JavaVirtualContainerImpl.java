@@ -17,6 +17,7 @@ package brooklyn.entity.waratek.cloudvm;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.ObjectInstance;
@@ -26,19 +27,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.entity.basic.Attributes;
+import brooklyn.entity.basic.Lifecycle;
+import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
 import brooklyn.location.LocationSpec;
+import brooklyn.location.basic.Machines;
+import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.management.LocationManager;
+import brooklyn.management.Task;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.guava.Maybe;
 import brooklyn.util.os.Os;
+import brooklyn.util.task.DynamicTasks;
+import brooklyn.util.task.Tasks;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
 import brooklyn.util.time.Time;
@@ -94,9 +103,13 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
 
     @Override
     public void doStop() {
+        disconnectSensors();
         deleteLocation();
 
-        super.doStop();
+        setAttribute(SoftwareProcess.SERVICE_STATE, Lifecycle.STOPPING);
+        getDriver().stop();
+        setAttribute(SoftwareProcess.SERVICE_UP, false);
+        setAttribute(SoftwareProcess.SERVICE_STATE, Lifecycle.STOPPED);
     }
 
     @Override
