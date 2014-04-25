@@ -39,6 +39,9 @@ public class BasicInfrastructure extends AbstractApplication {
     @CatalogConfig(label="JVM Cluster Minimum Size", priority=3)
     public static final ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithDefault(WaratekInfrastructure.JVM_CLUSTER_MIN_SIZE, 2);
 
+    @CatalogConfig(label="JVM Cluster MaxSize", priority=3)
+    public static final ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = ConfigKeys.newConfigKeyWithDefault(WaratekInfrastructure.JVC_CLUSTER_MAX_SIZE, 4);
+
     @CatalogConfig(label="Register JVM Locations", priority=3)
     public static final ConfigKey<Boolean> REGISTER_JVM_LOCATIONS = WaratekInfrastructure.REGISTER_JVM_LOCATIONS;
 
@@ -71,7 +74,7 @@ public class BasicInfrastructure extends AbstractApplication {
                         .configure(JavaVirtualMachine.WARATEK_USER, getConfig(WARATEK_USER))
                         .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
                         .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
-                        .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
+                        .configure( JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, getConfig( JVC_CLUSTER_MAX_SIZE ) )
                         .configure(JavaVirtualMachine.HEAP_SIZE, getConfig(HEAP_SIZE))
                         .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE)));
     }
