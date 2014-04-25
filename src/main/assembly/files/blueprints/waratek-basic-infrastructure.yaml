@@ -12,34 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id: waratek-infrastructure
-name: Waratek Infrastructure (3 GiB m3.medium JVMs)
+id: waratek-basic-infrastructure
+name: Waratek Basic Infrastructure (500 MiB t1.tiny JVMs)
 origin: https://github.com/cloudsoft/brooklyn-waratek/
 locations:
 - jclouds:aws-ec2:eu-west-1:
-    hardwareId: m3.medium
-    imageId: eu-west-1/ami-3bbaa54f # CentOS 6.4 x64 HVM
+    hardwareId: t1.tiny
 services:
 - serviceType: brooklyn.entity.waratek.cloudvm.WaratekInfrastructure
   id: infrastructure
   brooklyn.config:
-    entity.dynamicLocation.name: waratek-infrastructure
-    waratek.jvm.cluster.initial.size: 2
-    waratek.jvm.register: true
+    entity.dynamicLocation.name: waratek-basic-infrastructure
+    waratek.jvm.cluster.initial.size: 1
     waratek.jvm.spec:
       $brooklyn:entitySpec:
         type: brooklyn.entity.waratek.cloudvm.JavaVirtualMachine
         brooklyn.config:
-          waratek.runAs: false
-          waratek.debug: true
-          waratek.policy.ha.enable: true
-          waratek.jvm.heapSize: 3000000000
-          waratek.jvc.initialSize: 0
-          waratek.jvc.maxSize: 4
-          waratek.admin.ssh.enable: true
-          waratek.admin.ssh.port: 1022
-          waratek.jvc.spec:
-            $brooklyn:entitySpec:
-              type: brooklyn.entity.waratek.cloudvm.JavaVirtualContainer
-              brooklyn.config:
-                waratek.jvc.nameFormat: "jvc-%2$d"
+          waratek.jvm.heapSize: 500000000

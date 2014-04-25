@@ -22,12 +22,14 @@ services:
    id: waratek-helloworld-application
    name: Waratek HelloWorld Application
    brooklyn.config:
-     enableAvailabilityZones: true
+     dynamiccluster.zone.enable: true
+     dynamiccluster.zone.placementStrategy: "brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy"
      initialSize: 6
      memberSpec:
        $brooklyn:entitySpec:
          type: brooklyn.entity.waratek.WaratekJavaApplication
          brooklyn.config:
-           args: "65535"
-           mainClass: com.example.HelloWorld
+           waratek.jvc.maxHeapSize: 200000000
+           args: "1024"
+           mainClass: "com.example.HelloWorld"
            classpath: brooklyn-waratek-examples.jar
