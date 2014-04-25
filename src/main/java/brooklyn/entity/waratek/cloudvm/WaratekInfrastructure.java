@@ -43,13 +43,13 @@ public interface WaratekInfrastructure extends BasicStartable, Resizable, Locati
             "waratek.jvm.securityGroup", "Set a network security group for cloud servers to use; (null to use default configuration)");
 
     @SetFromFlag("openIptables")
-    ConfigKey<Boolean> OPEN_IPTABLES = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", JcloudsLocationConfig.OPEN_IPTABLES);
+    ConfigKey<Boolean> OPEN_IPTABLES = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm.", JcloudsLocationConfig.OPEN_IPTABLES);
 
     @SetFromFlag("registerJvms")
     ConfigKey<Boolean> REGISTER_JVM_LOCATIONS = ConfigKeys.newBooleanConfigKey("waratek.jvm.register", "Register new JVM locations for deployment", Boolean.FALSE);
 
     @SetFromFlag("minJvm")
-    ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm", DynamicCluster.INITIAL_SIZE);
+    ConfigKey<Integer> JVM_CLUSTER_MIN_SIZE = ConfigKeys.newConfigKeyWithPrefix("waratek.jvm.", DynamicCluster.INITIAL_SIZE);
 
     @SetFromFlag("maxJvc")
     ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = ConfigKeys.newIntegerConfigKey("waratek.jvc.maxSize", "Maximum size of a JVC cluster", 4);
