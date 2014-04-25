@@ -74,7 +74,7 @@ public class BasicInfrastructure extends AbstractApplication {
                         .configure(JavaVirtualMachine.WARATEK_USER, getConfig(WARATEK_USER))
                         .configure(JavaVirtualMachine.DEBUG, getConfig(DEBUG))
                         .configure(JavaVirtualMachine.HA_POLICY_ENABLE, getConfig(HA_POLICY_ENABLE))
-                        .configure( JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, getConfig( JVC_CLUSTER_MAX_SIZE ) )
+                        .configure(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE, 4) // TODO Make configurable
                         .configure(JavaVirtualMachine.HEAP_SIZE, getConfig(HEAP_SIZE))
                         .configure(JavaVirtualMachine.SSH_ADMIN_ENABLE, Boolean.TRUE)));
     }

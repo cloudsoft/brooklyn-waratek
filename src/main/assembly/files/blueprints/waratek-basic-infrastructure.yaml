@@ -29,4 +29,7 @@ services:
         type: brooklyn.entity.waratek.cloudvm.JavaVirtualMachine
         brooklyn.config:
           waratek.jvm.heapSize: 500000000
+<<<<<<< HEAD
           start.timeout: 900
+=======
+>>>>>>> f860f32... Merge branch 'master' of https://github.com/cloudsoft/brooklyn-waratek
