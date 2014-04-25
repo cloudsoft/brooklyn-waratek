@@ -24,7 +24,7 @@ services:
   id: infrastructure
   brooklyn.config:
     entity.dynamicLocation.name: waratek-infrastructure
-    waratek.jvm.cluster.initial.size: 2
+    waratek.jvm.cluster.initial.size: 3
     waratek.jvm.register: true
     waratek.jvm.spec:
       $brooklyn:entitySpec:
@@ -37,7 +37,7 @@ services:
           waratek.jvc.initialSize: 0
           waratek.jvc.maxSize: 4
           waratek.admin.ssh.enable: true
-          waratek.admin.ssh.port: 1022
+          waratek.admin.ssh.port: 2022
           waratek.jvc.spec:
             $brooklyn:entitySpec:
               type: brooklyn.entity.waratek.cloudvm.JavaVirtualContainer

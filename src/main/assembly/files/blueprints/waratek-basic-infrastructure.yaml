@@ -29,3 +29,4 @@ services:
         type: brooklyn.entity.waratek.cloudvm.JavaVirtualMachine
         brooklyn.config:
           waratek.jvm.heapSize: 500000000
+          start.timeout: 900
