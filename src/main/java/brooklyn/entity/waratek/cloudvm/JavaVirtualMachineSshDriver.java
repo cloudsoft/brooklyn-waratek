@@ -47,6 +47,7 @@ import com.google.common.collect.Iterables;
 public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver implements JavaVirtualMachineDriver {
 
     private AtomicBoolean installed = new AtomicBoolean(false);
+    private static final String LICENSE_KEY_NAME = "LICENSE_KEY";
 
     public JavaVirtualMachineSshDriver(EntityLocal entity, SshMachineLocation machine) {
         super(entity, machine);
@@ -90,6 +91,12 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     @Override
     public String getWaratekUsername() {
         return getEntity().getConfig(JavaVirtualMachine.WARATEK_USER);
+    }
+
+    @Override
+    public String getLicenseUrl()
+    {
+        return getEntity().getConfig(JavaVirtualMachine.WARATEK_LICENSE_URL);
     }
 
     @Override
@@ -235,11 +242,22 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             log.debug("Running command: {}", autoinstall.toString());
         }
 
+        String moveLicenseFileCommands = new String();
+        if (getLicenseUrl() != null) {
+            //the directory we want the license file in require root permission (which cannot be obtained through ssh)
+            //so first copy the file down
+            getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl(getLicenseUrl()),
+                    Os.mergePaths(getInstallDir(), LICENSE_KEY_NAME));
+            //then sudo move the file to the correct directory.
+            moveLicenseFileCommands = "mv " + Os.mergePaths(getInstallDir(), LICENSE_KEY_NAME) + " "
+                    + Os.mergePaths(getLibDirectory(), "javad", LICENSE_KEY_NAME);
+            moveLicenseFileCommands = BashCommands.sudo(moveLicenseFileCommands);
+        }
+
         newScript(CUSTOMIZING)
-                .failOnNonZeroResultCode()
-                .body.append(
-                        "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
-                        BashCommands.sudo(autoinstall.toString()))
+                .failOnNonZeroResultCode().body.append(
+                "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
+                BashCommands.sudo(autoinstall.toString()), moveLicenseFileCommands)
                 .closeSshConnection()
                 .execute();
 

@@ -92,6 +92,10 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     PortAttributeSensorAndConfigKey HTTP_PORT = new PortAttributeSensorAndConfigKey(
             "waratek.admin.http.port", "Port to use for JVM administration over HTTP", PortRanges.fromString("7777+"));
 
+    @SetFromFlag("licenceUrl")
+    ConfigKey<String> WARATEK_LICENSE_URL = ConfigKeys.newStringConfigKey(
+            "waratek.license.url", "The url for the license file on the local machine");
+
     @SetFromFlag("maxSize")
     ConfigKey<Integer> JVC_CLUSTER_MAX_SIZE = WaratekInfrastructure.JVC_CLUSTER_MAX_SIZE;
 

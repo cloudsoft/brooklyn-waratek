@@ -29,4 +29,5 @@ public interface JavaVirtualMachineDriver extends JavaSoftwareProcessDriver {
 
     String getRootDirectory();
 
+    String getLicenseUrl();
 }
