@@ -32,19 +32,17 @@ import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
+import brooklyn.util.collections.MutableSet;
 import brooklyn.util.net.Networking;
 import brooklyn.util.os.Os;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
 import brooklyn.util.text.ByteSizeStrings;
-import brooklyn.util.text.Strings;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 
 public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver implements JavaVirtualMachineDriver {
 
@@ -104,11 +102,12 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
 
     @Override
     public Map<String, String> getShellEnvironment() {
-        Map<String,String> env = super.getShellEnvironment();
+        MutableMap.Builder<String, String> builder = MutableMap.<String, String>builder()
+                .putAll(super.getShellEnvironment());
         if (installed.get()) {
-            env.put("JAVA_HOME", getJavaHome());
+            builder.put("JAVA_HOME", getJavaHome());
         }
-        return env;
+        return builder.build();
     }
 
     @Override
@@ -131,47 +130,49 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
 
     @Override
     public Map<String, String> getCustomJavaSystemProperties() {
-        Map<String,String> props = super.getCustomJavaSystemProperties();
+        MutableMap.Builder<String, String> builder = MutableMap.<String, String>builder()
+                .putAll(super.getCustomJavaSystemProperties());
         if (installed.get()) {
             // Java options needed for launch only
-            props.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
-            props.put("com.waratek.rootdir", getRootDirectory());
+            builder.put("com.waratek.jvm.name", getEntity().getAttribute(JavaVirtualMachine.JVM_NAME));
+            builder.put("com.waratek.rootdir", getRootDirectory());
             // TODO JMXRMI debugging
-            // props.put("sun.rmi.transport.logLevel", "VERBOSE");
-            // props.put("sun.rmi.transport.tcp.logLevel", "VERBOSE");
-            // props.put("sun.rmi.server.logLevel", "VERBOSE");
-            // props.put("sun.rmi.client.logCalls", "true");
+            // builder.put("sun.rmi.transport.logLevel", "VERBOSE");
+            // builder.put("sun.rmi.transport.tcp.logLevel", "VERBOSE");
+            // builder.put("sun.rmi.server.logLevel", "VERBOSE");
+            // builder.put("sun.rmi.client.logCalls", "true");
             if (getEntity().getConfig(JavaVirtualMachine.DEBUG)) {
-                props.put("com.waratek.debug.log", "guest.log");
-                props.put("com.waratek.debug.log_level", "debug");
+                builder.put("com.waratek.debug.log", "guest.log");
+                builder.put("com.waratek.debug.log_level", "debug");
             }
             if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {
-                props.put("com.waratek.ssh.server", "on");
-                props.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT).toString());
-                props.put("com.waratek.ssh.ip", getMachine().getAddress().getHostAddress());
+                builder.put("com.waratek.ssh.server", "on");
+                builder.put("com.waratek.ssh.port", getEntity().getAttribute(JavaVirtualMachine.SSH_PORT).toString());
+                builder.put("com.waratek.ssh.ip", getMachine().getAddress().getHostAddress());
             } else {
-                props.put("com.waratek.ssh.server", "off");
+                builder.put("com.waratek.ssh.server", "off");
             }
             if (getEntity().getConfig(JavaVirtualMachine.HTTP_ADMIN_ENABLE)) {
                 // TODO extra properties and configuration required?
-                props.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVirtualMachine.HTTP_PORT).toString());
+                builder.put("com.waratek.jmxhttp.jolokia", "port=" + getEntity().getAttribute(JavaVirtualMachine.HTTP_PORT).toString());
             }
             String javaagent = Iterables.find(super.getJmxJavaConfigOptions(), Predicates.containsPattern("javaagent"));
-            props.put("com.waratek.javaagent", javaagent);
+            builder.put("com.waratek.javaagent", javaagent);
 
         }
-        return props;
+        return builder.build();
     }
 
     @Override
     public Set<Integer> getPortsUsed() {
-        Set<Integer> result = Sets.newLinkedHashSet(super.getPortsUsed());
-        result.addAll(getPortMap().values());
-        return result;
+        return MutableSet.<Integer>builder()
+                .addAll(super.getPortsUsed())
+                .addAll(getPortMap().values())
+                .build();
     }
 
     protected Map<String, Integer> getPortMap() {
-        ImmutableMap.Builder<String, Integer> builder = ImmutableMap.<String, Integer>builder()
+        MutableMap.Builder<String, Integer> builder = MutableMap.<String, Integer>builder()
                 .put("jmxPort", getEntity().getAttribute(UsesJmx.JMX_PORT))
                 .put("rmiPort", getEntity().getAttribute(UsesJmx.RMI_REGISTRY_PORT));
         if (getEntity().getConfig(JavaVirtualMachine.SSH_ADMIN_ENABLE)) {

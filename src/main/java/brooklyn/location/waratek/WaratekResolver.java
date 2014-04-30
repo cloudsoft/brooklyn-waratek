@@ -124,7 +124,7 @@ public class WaratekResolver implements EnableableLocationResolver {
         if (displayNamePart != null) {
             name.append(displayNamePart);
         } else {
-            name.append("Waratek  ");
+            name.append("Waratek ");
             if (jvmId == null) {
                 name.append("Infrastructure ").append(infrastructureId);
             } else {

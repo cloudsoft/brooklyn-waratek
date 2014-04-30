@@ -192,14 +192,17 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
         return Maps.<String,Object>newLinkedHashMap();
     }
 
+    @Override
     public List<Entity> getJvcList() {
         return infrastructure.getJvcList();
     }
 
+    @Override
     public List<Entity> getJvmList() {
         return infrastructure.getJvmList();
     }
 
+    @Override
     public WaratekInfrastructure getWaratekInfrastructure() {
         return infrastructure;
     }
@@ -212,6 +215,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
     @Override
     public ToStringHelper string() {
         return super.string()
+                .omitNullValues()
                 .add("provisioner", provisioner)
                 .add("infrastructure", infrastructure)
                 .add("strategy", strategy);

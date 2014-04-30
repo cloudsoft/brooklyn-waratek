@@ -41,8 +41,8 @@ import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
-import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Optional;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -94,13 +94,11 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
         // increase size of JVC cluster
         DynamicCluster cluster = jvm.getJvcCluster();
-        Optional<Entity> added = cluster.growByOne(machine, flags);
+        Optional<Entity> added = cluster.addInSingleLocation(machine, flags);
         if (!added.isPresent()) {
             throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
         }
-        JavaVirtualContainer jvc = (JavaVirtualContainer) added.get();
-        WaratekContainerLocation location = jvc.getDynamicLocation();
-        return location;
+        return ((JavaVirtualContainer) added.get()).getDynamicLocation();
     }
 
     @Override

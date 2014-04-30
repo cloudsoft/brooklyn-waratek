@@ -32,7 +32,6 @@ import brooklyn.location.waratek.WaratekMachineLocation;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -82,7 +81,7 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
             // Grow the JVM cluster; based on max number of JVCs
             int maxSize = machine.getMaxSize();
             int delta = (remaining / maxSize) + (remaining % maxSize > 0 ? 1 : 0);
-            Collection<Entity> added = machine.getWaratekInfrastructure().getVirtualMachineCluster().grow(delta);
+            Collection<Entity> added = machine.getWaratekInfrastructure().getVirtualMachineCluster().resizeByDelta(delta);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Added {} JVMs: {}", delta, Iterables.toString(Iterables.transform(added, identity())));
             }

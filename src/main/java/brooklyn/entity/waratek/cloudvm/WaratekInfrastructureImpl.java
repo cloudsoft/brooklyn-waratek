@@ -213,6 +213,8 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
     @Override
     public void start(Collection<? extends Location> locations) {
         if (started.compareAndSet(false, true)) {
+            // TODO support multiple locations
+//            Location provisioner = new AggregatingMachineProvisioningLocation(MutableMap.of("provisioners", Iterables.filter(locations, MachineProvisioningLocation.class)));
             Location provisioner = Iterables.getOnlyElement(locations);
             log.info("Creating new WaratekLocation wrapping {}", provisioner);
 

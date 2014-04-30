@@ -38,7 +38,7 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     String STATUS_PAUSED = "Paused";
 
     String DEFAULT_JVC_NAME_FORMAT = "jvc-brooklyn-%1$s";
-    String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-%2$d";
+    String ALTERNATIVE_JVC_NAME_FORMAT = "jvc-%3$s-%2$d";
 
     @SetFromFlag("maxHeapSize")
     BasicAttributeSensorAndConfigKey<Long> MAX_HEAP_SIZE = new BasicAttributeSensorAndConfigKey(Long.class,

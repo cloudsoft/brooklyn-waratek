@@ -27,7 +27,6 @@ import brooklyn.event.feed.http.HttpValueFunctions;
 import brooklyn.event.feed.jmx.JmxAttributePollConfig;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
-import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.time.Duration;
 
 import com.google.common.base.Function;

@@ -17,7 +17,6 @@ package brooklyn.entity.waratek.cloudvm;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.ObjectInstance;
@@ -35,19 +34,13 @@ import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.Location;
 import brooklyn.location.LocationSpec;
-import brooklyn.location.basic.Machines;
-import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.location.waratek.WaratekMachineLocation;
 import brooklyn.management.LocationManager;
-import brooklyn.management.Task;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
-import brooklyn.util.guava.Maybe;
 import brooklyn.util.os.Os;
-import brooklyn.util.task.DynamicTasks;
-import brooklyn.util.task.Tasks;
 import brooklyn.util.text.Strings;
 import brooklyn.util.time.Duration;
 import brooklyn.util.time.Time;
@@ -64,7 +57,8 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     public void init() {
         log.info("Starting JVC id {}", getId());
 
-        String jvcName = String.format(getConfig(JavaVirtualContainer.JVC_NAME_FORMAT), getId(), counter.incrementAndGet());
+        // Format JVC name. Arguments are: %1$s JVC id, %2$d JVC number, %3$s JVM id.
+        String jvcName = String.format(getConfig(JavaVirtualContainer.JVC_NAME_FORMAT), getId(), counter.incrementAndGet(), getJavaVirtualMachine().getId());
         setDisplayName(jvcName);
         setAttribute(JVC_NAME, jvcName);
         setAttribute(Attributes.LOG_FILE_LOCATION, getLogFileLocation());

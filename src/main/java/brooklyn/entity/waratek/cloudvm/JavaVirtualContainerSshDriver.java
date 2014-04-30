@@ -3,6 +3,7 @@ package brooklyn.entity.waratek.cloudvm;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_CONTAINER_MX_BEAN;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_MACHINE_MX_BEAN;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectInstance;
@@ -13,7 +14,9 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
+import brooklyn.util.internal.ssh.SshTool;
 import brooklyn.util.os.Os;
 import brooklyn.util.text.ByteSizeStrings;
 
