@@ -47,6 +47,13 @@ public class WaratekMachineExtension extends AbstractAvailabilityZoneExtension {
         return result;
     }
 
+    /** Forces call to {@link #doGetAllSubLocations()} each time. */
+    @Override
+    public List<Location> getAllSubLocations() {
+        subLocations.set(null);
+        return super.getAllSubLocations();
+    }
+
     @Override
     protected boolean isNameMatch(Location loc, Predicate<? super String> namePredicate) {
         return namePredicate.apply(((WaratekMachineLocation) loc).getWaratekInfrastructure().getId());

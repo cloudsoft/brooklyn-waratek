@@ -18,7 +18,10 @@ package brooklyn.entity.waratek.cloudvm;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nullable;
 
 import org.jclouds.compute.domain.OsFamily;
 import org.slf4j.Logger;
@@ -33,6 +36,8 @@ import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaAppUtils;
 import brooklyn.entity.java.UsesJavaMXBeans;
 import brooklyn.entity.proxying.EntitySpec;
+import brooklyn.event.feed.function.FunctionFeed;
+import brooklyn.event.feed.function.FunctionPollConfig;
 import brooklyn.event.feed.jmx.JmxAttributePollConfig;
 import brooklyn.event.feed.jmx.JmxFeed;
 import brooklyn.location.Location;
@@ -52,10 +57,13 @@ import brooklyn.policy.ha.ServiceReplacer;
 import brooklyn.policy.ha.ServiceRestarter;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.guava.Maybe;
+import brooklyn.util.time.Duration;
 
 import com.google.common.base.Functions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 
 public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaVirtualMachine {
 
@@ -68,6 +76,7 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     private JmxFeed jmxMxBeanFeed;
+    private FunctionFeed jvcFeed;
     private DynamicCluster containers;
 
     @Override
@@ -193,11 +202,37 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                         .onException(Functions.constant(Boolean.FALSE))
                         .onSuccess(Functions.constant(Boolean.TRUE)))
                 .build();
+        jvcFeed = FunctionFeed.builder()
+                .entity(this)
+                .period(Duration.TEN_SECONDS)
+                .poll(new FunctionPollConfig<Integer, Integer>(STOPPED_JVCS)
+                        .callable(new Callable<Integer>() {
+                            @Override
+                            public Integer call() throws Exception {
+                                return Iterables.size(getStoppedJvcs());
+                            }
+                        }))
+                .poll(new FunctionPollConfig<Integer, Integer>(RUNNING_JVCS)
+                        .callable(new Callable<Integer>() {
+                            @Override
+                            public Integer call() throws Exception {
+                                return Iterables.size(getRunningJvcs());
+                            }
+                        }))
+                .poll(new FunctionPollConfig<Integer, Integer>(PAUSED_JVCS)
+                        .callable(new Callable<Integer>() {
+                            @Override
+                            public Integer call() throws Exception {
+                                return Iterables.size(getPausedJvcs());
+                            }
+                        }))
+                .build();
     }
 
     @Override
     protected void disconnectSensors() {
         if (jmxMxBeanFeed != null) jmxMxBeanFeed.stop();
+        if (jvcFeed != null) jvcFeed.stop();
         super.disconnectSensors();
     }
 
@@ -253,6 +288,36 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     @Override
     public Integer getCurrentSize() {
         return getJvcCluster().getCurrentSize();
+    }
+
+    @Override
+    public Iterable<Entity> getStoppedJvcs() {
+        return Iterables.filter(getJvcList(), new Predicate<Entity>() {
+            @Override
+            public boolean apply(@Nullable Entity input) {
+                return JavaVirtualContainer.STATUS_SHUT_OFF.equals(input.getAttribute(WaratekAttributes.STATUS));
+            }
+        });
+    }
+
+    @Override
+    public Iterable<Entity> getRunningJvcs() {
+        return Iterables.filter(getJvcList(), new Predicate<Entity>() {
+            @Override
+            public boolean apply(@Nullable Entity input) {
+                return JavaVirtualContainer.STATUS_RUNNING.equals(input.getAttribute(WaratekAttributes.STATUS));
+            }
+        });
+    }
+
+    @Override
+    public Iterable<Entity> getPausedJvcs() {
+        return Iterables.filter(getJvcList(), new Predicate<Entity>() {
+            @Override
+            public boolean apply(@Nullable Entity input) {
+                return JavaVirtualContainer.STATUS_PAUSED.equals(input.getAttribute(WaratekAttributes.STATUS));
+            }
+        });
     }
 
     @Override

@@ -125,4 +125,12 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
 
     Integer getHttpPort();
 
+    AttributeSensor<Integer> STOPPED_JVCS = Sensors.newIntegerSensor("waratek.jvm.stopped", "The number of stopped JVCs in the JVM");
+    AttributeSensor<Integer> RUNNING_JVCS = Sensors.newIntegerSensor("waratek.jvm.running", "The number of running JVCs in the JVM");
+    AttributeSensor<Integer> PAUSED_JVCS = Sensors.newIntegerSensor("waratek.jvm.paused", "The number of paused JVCs in the JVM");
+
+    Iterable<Entity> getStoppedJvcs();
+    Iterable<Entity> getRunningJvcs();
+    Iterable<Entity> getPausedJvcs();
+
 }

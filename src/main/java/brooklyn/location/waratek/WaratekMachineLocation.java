@@ -36,13 +36,12 @@ import brooklyn.location.NoMachinesAvailableException;
 import brooklyn.location.OsDetails;
 import brooklyn.location.basic.AbstractLocation;
 import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.location.dynamic.DynamicLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -69,12 +68,6 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
         }
     }
 
-    @Override
-    public void init() {
-        super.init();
-        addExtension(AvailabilityZoneExtension.class, new WaratekContainerExtension(getManagementContext(), this));
-    }
-
     public WaratekContainerLocation obtain() throws NoMachinesAvailableException {
         return obtain(Maps.<String,Object>newLinkedHashMap());
     }
@@ -83,22 +76,29 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
+        Iterable<Entity> stopped = jvm.getStoppedJvcs();
         if (LOG.isDebugEnabled()) {
-            LOG.debug("JVM {}: {} containers, max {}", new Object[] { jvm.getJvmName(), currentSize, maxSize });
+            LOG.debug("JVM {}: {} containers, {} stopped, max {}", new Object[] { jvm.getJvmName(), currentSize, Iterables.size(stopped), maxSize });
         }
 
         // also try to satisfy the affinty rules etc.
-        if (currentSize != null && currentSize >= maxSize) {
-            throw new NoMachinesAvailableException(String.format("Limit of %d containers reached at %s", maxSize, jvm.getJvmName()));
-        }
 
-        // increase size of JVC cluster
-        DynamicCluster cluster = jvm.getJvcCluster();
-        Optional<Entity> added = cluster.addInSingleLocation(machine, flags);
-        if (!added.isPresent()) {
-            throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
+        // If there are no stopped JVCs then add a new one
+        if (Iterables.isEmpty(stopped)) {
+            if (currentSize != null && currentSize >= maxSize) {
+                throw new NoMachinesAvailableException(String.format("Limit of %d containers reached at %s", maxSize, jvm.getJvmName()));
+            }
+
+            // increase size of JVC cluster
+            DynamicCluster cluster = jvm.getJvcCluster();
+            Collection<Entity> added = cluster.resizeByDelta(1);
+            if (added.isEmpty()) {
+                throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
+            }
+            return ((JavaVirtualContainer) Iterables.getOnlyElement(added)).getDynamicLocation();
+        } else {
+            return ((JavaVirtualContainer) Iterables.getLast(stopped)).getDynamicLocation();
         }
-        return ((JavaVirtualContainer) added.get()).getDynamicLocation();
     }
 
     @Override
@@ -161,8 +161,8 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
         return machine;
     }
 
-    public int getCurrentSize() {
-        return jvm.getCurrentSize();
+    public int getCurrentJvcCount() {
+        return jvm.getCurrentSize() - Iterables.size(jvm.getStoppedJvcs());
     }
 
     public int getMaxSize() {

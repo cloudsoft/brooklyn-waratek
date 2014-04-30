@@ -66,11 +66,11 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
         int remaining = numToAdd;
         for (WaratekMachineLocation machine : available) {
             int maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
-            int currentSize = machine.getOwner().getCurrentSize();
+            int currentSize = Iterables.size(machine.getOwner().getStoppedJvcs());
             remaining -= (maxSize - currentSize);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Requested {}/{}, Available JVMs: {}",
+            LOG.debug("Requested {}/{}, Remaining JVMs: {}",
                     new Object[] { numToAdd, remaining, Iterables.toString(Iterables.transform(locs, identity())) });
         }
 
@@ -132,7 +132,7 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
     protected Map<WaratekMachineLocation, Integer> toAvailableLocationSizes(Iterable<WaratekMachineLocation> locs) {
         Map<WaratekMachineLocation, Integer> result = Maps.newLinkedHashMap();
         for (WaratekMachineLocation loc : locs) {
-            result.put(loc, loc.getCurrentSize());
+            result.put(loc, loc.getCurrentJvcCount());
         }
         return result;
     }
