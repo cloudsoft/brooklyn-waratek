@@ -24,6 +24,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
@@ -59,6 +60,8 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
     @SetFromFlag("owner")
     private JavaVirtualContainer jvc;
 
+    private Entity entity;
+
     public WaratekContainerLocation() {
         this(Maps.newLinkedHashMap());
     }
@@ -74,6 +77,15 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
     @Override
     public JavaVirtualContainer getOwner() {
         return jvc;
+    }
+
+    public void setEntity(Entity entity) {
+        this.entity = entity;
+        jvc.setRunningEntity(entity);
+    }
+
+    public Entity getEntity() {
+        return entity;
     }
 
     public JavaVirtualMachine getJavaVirtualMachine() {
@@ -220,9 +232,11 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
                     String status = jvc.getAttribute(WaratekAttributes.STATUS);
                     LOG.debug("Calculating check-running status based on: {}", status);
                     return JavaVirtualContainer.STATUS_SHUT_OFF.equals(status) ? 1 : 0;
-                } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING) ||
-                        summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.INSTALLING)) {
+                } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.INSTALLING)) {
                     jvc.shutDown();
+                } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.STOPPING)) {
+                    jvc.shutDown();
+                    jvc.getDynamicLocation().setEntity(null);
                     ignoreResult = true;
                 } else if (summaryForLogging.startsWith(AbstractSoftwareProcessSshDriver.KILLING)) {
                     jvc.stop();

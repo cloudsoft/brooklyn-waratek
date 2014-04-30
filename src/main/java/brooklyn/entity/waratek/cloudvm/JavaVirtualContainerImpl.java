@@ -25,6 +25,7 @@ import javax.management.ObjectName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.Lifecycle;
 import brooklyn.entity.basic.SoftwareProcess;
@@ -206,6 +207,15 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     public String getLogFileLocation() {
         JavaVirtualMachine jvm = getJavaVirtualMachine();
         return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), getAttribute(JVC_NAME), "console.log");
+    }
+
+    @Override
+    public Entity getRunningEntity() {
+        return getAttribute(ENTITY);
+    }
+
+    public void setRunningEntity(Entity entity) {
+        setAttribute(ENTITY, entity);
     }
 
     @Override

@@ -135,6 +135,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
                 if (object != null) {
                     getEntity().shutDown();
                     jmxHelper.operation(object.getObjectName(), "undefineContainer");
+                    getEntity().getDynamicLocation().setEntity(null);
                 }
             } catch (Exception e) {
                 throw Exceptions.propagate(e);

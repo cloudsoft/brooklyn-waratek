@@ -65,12 +65,10 @@ public class WaratekNodePlacementStrategy extends BalancingNodePlacementStrategy
         List<WaratekMachineLocation> available = Lists.newArrayList(Iterables.filter(locs,  WaratekMachineLocation.class));
         int remaining = numToAdd;
         for (WaratekMachineLocation machine : available) {
-            int maxSize = machine.getOwner().getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
-            int currentSize = Iterables.size(machine.getOwner().getStoppedJvcs());
-            remaining -= (maxSize - currentSize);
+            remaining -= machine.getAvailableJvcCount();
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Requested {}/{}, Remaining JVMs: {}",
+            LOG.debug("Requested {}, Need {} more from new JVMs, Current JVMs {}",
                     new Object[] { numToAdd, remaining, Iterables.toString(Iterables.transform(locs, identity())) });
         }
 

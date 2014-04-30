@@ -76,15 +76,15 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     public WaratekContainerLocation obtain(Map<?,?> flags) throws NoMachinesAvailableException {
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
-        Iterable<Entity> stopped = jvm.getStoppedJvcs();
+        Iterable<Entity> available = jvm.getAvailableJvcs();
         if (LOG.isDebugEnabled()) {
-            LOG.debug("JVM {}: {} containers, {} stopped, max {}", new Object[] { jvm.getJvmName(), currentSize, Iterables.size(stopped), maxSize });
+            LOG.debug("JVM {}: {} containers, {} available, max {}", new Object[] { jvm.getJvmName(), currentSize, Iterables.size(available), maxSize });
         }
 
         // also try to satisfy the affinty rules etc.
 
         // If there are no stopped JVCs then add a new one
-        if (Iterables.isEmpty(stopped)) {
+        if (Iterables.isEmpty(available)) {
             if (currentSize != null && currentSize >= maxSize) {
                 throw new NoMachinesAvailableException(String.format("Limit of %d containers reached at %s", maxSize, jvm.getJvmName()));
             }
@@ -97,7 +97,7 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
             }
             return ((JavaVirtualContainer) Iterables.getOnlyElement(added)).getDynamicLocation();
         } else {
-            return ((JavaVirtualContainer) Iterables.getLast(stopped)).getDynamicLocation();
+            return ((JavaVirtualContainer) Iterables.getLast(available)).getDynamicLocation();
         }
     }
 
@@ -162,7 +162,11 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
     }
 
     public int getCurrentJvcCount() {
-        return jvm.getCurrentSize() - Iterables.size(jvm.getStoppedJvcs());
+        return jvm.getCurrentSize() - Iterables.size(jvm.getAvailableJvcs());
+    }
+
+    public int getAvailableJvcCount() {
+        return Iterables.size(jvm.getAvailableJvcs()) + (getMaxSize() - jvm.getCurrentSize());
     }
 
     public int getMaxSize() {

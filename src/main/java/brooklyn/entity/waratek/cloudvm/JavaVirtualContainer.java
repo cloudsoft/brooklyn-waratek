@@ -16,6 +16,7 @@
 package brooklyn.entity.waratek.cloudvm;
 
 import brooklyn.config.ConfigKey;
+import brooklyn.entity.Entity;
 import brooklyn.entity.annotation.Effector;
 import brooklyn.entity.annotation.EffectorParam;
 import brooklyn.entity.basic.ConfigKeys;
@@ -48,8 +49,9 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     ConfigKey<JavaVirtualMachine> JVM = ConfigKeys.newConfigKey(JavaVirtualMachine.class, "waratek.jvm", "The parent JVM");
 
     ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
-
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
+
+    AttributeSensor<Entity> ENTITY = Sensors.newSensor(Entity.class, "waratek.jvc.entity", "The entity running in this JVC");
 
     MethodEffector<Void> SHUT_DOWN = new MethodEffector<Void>(JavaVirtualContainer.class, "shutDown");
     MethodEffector<Void> PAUSE = new MethodEffector<Void>(JavaVirtualContainer.class, "pause");
@@ -81,6 +83,9 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     Long allocateHeap(@EffectorParam(name="size") Long size);
 
     String getJvcName();
+
+    Entity getRunningEntity();
+    void setRunningEntity(Entity entity);
 
     JavaVirtualMachine getJavaVirtualMachine();
 

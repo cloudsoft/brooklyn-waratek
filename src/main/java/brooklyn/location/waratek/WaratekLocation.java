@@ -126,6 +126,8 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                     obtained.add(machine);
                     return machine;
                 }
+            } else {
+                throw new IllegalStateException("Invalid location context: " + context);
             }
 
             // Use the waratek strategy to add a single JVM
@@ -139,6 +141,8 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
 
             // Obtain a new JVC location, save and return it
             WaratekContainerLocation container = machine.obtain();
+            container.setEntity((Entity) context);
+
             Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
                 if (LOG.isDebugEnabled()) {

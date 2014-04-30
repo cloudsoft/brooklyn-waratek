@@ -209,21 +209,21 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                         .callable(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
-                                return Iterables.size(getStoppedJvcs());
+                                return Iterables.size(getAvailableJvcs());
                             }
                         }))
                 .poll(new FunctionPollConfig<Integer, Integer>(RUNNING_JVCS)
                         .callable(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
-                                return Iterables.size(getRunningJvcs());
+                                return getRunningJvcs();
                             }
                         }))
                 .poll(new FunctionPollConfig<Integer, Integer>(PAUSED_JVCS)
                         .callable(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
-                                return Iterables.size(getPausedJvcs());
+                                return getPausedJvcs();
                             }
                         }))
                 .build();
@@ -291,33 +291,36 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     }
 
     @Override
-    public Iterable<Entity> getStoppedJvcs() {
+    public Iterable<Entity> getAvailableJvcs() {
         return Iterables.filter(getJvcList(), new Predicate<Entity>() {
             @Override
             public boolean apply(@Nullable Entity input) {
-                return JavaVirtualContainer.STATUS_SHUT_OFF.equals(input.getAttribute(WaratekAttributes.STATUS));
+                return input.getAttribute(JavaVirtualContainer.ENTITY) == null &&
+                        JavaVirtualContainer.STATUS_SHUT_OFF.equals(input.getAttribute(WaratekAttributes.STATUS));
             }
         });
     }
 
     @Override
-    public Iterable<Entity> getRunningJvcs() {
-        return Iterables.filter(getJvcList(), new Predicate<Entity>() {
+    public Integer getRunningJvcs() {
+        return Iterables.size(Iterables.filter(getJvcList(), new Predicate<Entity>() {
             @Override
             public boolean apply(@Nullable Entity input) {
-                return JavaVirtualContainer.STATUS_RUNNING.equals(input.getAttribute(WaratekAttributes.STATUS));
+                return input.getAttribute(JavaVirtualContainer.ENTITY) != null &&
+                        JavaVirtualContainer.STATUS_RUNNING.equals(input.getAttribute(WaratekAttributes.STATUS));
             }
-        });
+        }));
     }
 
     @Override
-    public Iterable<Entity> getPausedJvcs() {
-        return Iterables.filter(getJvcList(), new Predicate<Entity>() {
+    public Integer getPausedJvcs() {
+        return Iterables.size(Iterables.filter(getJvcList(), new Predicate<Entity>() {
             @Override
             public boolean apply(@Nullable Entity input) {
-                return JavaVirtualContainer.STATUS_PAUSED.equals(input.getAttribute(WaratekAttributes.STATUS));
+                return input.getAttribute(JavaVirtualContainer.ENTITY) != null &&
+                        JavaVirtualContainer.STATUS_PAUSED.equals(input.getAttribute(WaratekAttributes.STATUS));
             }
-        });
+        }));
     }
 
     @Override

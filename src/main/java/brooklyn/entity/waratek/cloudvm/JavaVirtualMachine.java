@@ -129,8 +129,9 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     AttributeSensor<Integer> RUNNING_JVCS = Sensors.newIntegerSensor("waratek.jvm.running", "The number of running JVCs in the JVM");
     AttributeSensor<Integer> PAUSED_JVCS = Sensors.newIntegerSensor("waratek.jvm.paused", "The number of paused JVCs in the JVM");
 
-    Iterable<Entity> getStoppedJvcs();
-    Iterable<Entity> getRunningJvcs();
-    Iterable<Entity> getPausedJvcs();
+    Iterable<Entity> getAvailableJvcs();
+
+    Integer getRunningJvcs();
+    Integer getPausedJvcs();
 
 }
