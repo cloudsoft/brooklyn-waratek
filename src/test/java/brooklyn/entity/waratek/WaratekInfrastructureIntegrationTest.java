@@ -18,9 +18,15 @@ package brooklyn.entity.waratek;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import brooklyn.entity.Application;
 import brooklyn.entity.BrooklynAppLiveTestSupport;
 import brooklyn.entity.basic.ApplicationBuilder;
 import brooklyn.entity.basic.Entities;
@@ -36,12 +42,16 @@ import brooklyn.test.EntityTestUtils;
 
 import com.waratek.cloudvm.SimpleJavaApplication;
 
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 
 /**
  * Waratek integration tests.
  */
 public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSupport {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WaratekInfrastructureIntegrationTest.class);
 
     protected Location testLocation;
     protected WaratekInfrastructure infrastructure;
@@ -105,8 +115,23 @@ public class WaratekInfrastructureIntegrationTest extends BrooklynAppLiveTestSup
         // Wait until Java application started
         EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, true);
 
+        // Dump info about applications
+        dumpInfo(this, ImmutableList.of(app, simple));
+
         // Stop Java application and wait until stopped
         simple.stop();
         EntityTestUtils.assertAttributeEqualsEventually(simple, Startable.SERVICE_UP, false);
     }
+
+    public static final void dumpInfo(Object context, Iterable<? extends Application> applications) {
+        try {
+            PrintWriter out = new PrintWriter("enitites-" + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_HYPHEN, context.getClass().getSimpleName()) + ".txt", Charsets.UTF_8.name());
+            for (Application application : applications) {
+                Entities.dumpInfo(application, out);
+            }
+        } catch (IOException ioe) {
+            LOG.warn("Error writing application data to file", ioe);
+        }
+    }
+
 }
