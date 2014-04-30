@@ -28,13 +28,13 @@ import brooklyn.enricher.HttpLatencyDetector;
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.StartableApplication;
 import brooklyn.entity.database.mysql.MySqlNode;
 import brooklyn.entity.group.DynamicCluster;
 import brooklyn.entity.java.JavaEntityMethods;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.UsesJmx.JmxAgentModes;
+import brooklyn.entity.proxy.nginx.NginxController;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
 import brooklyn.entity.webapp.ControlledDynamicWebAppCluster;
@@ -42,7 +42,7 @@ import brooklyn.entity.webapp.DynamicWebAppCluster;
 import brooklyn.entity.webapp.JavaWebAppService;
 import brooklyn.entity.webapp.WebAppService;
 import brooklyn.entity.webapp.WebAppServiceConstants;
-import brooklyn.entity.webapp.tomcat.TomcatServer;
+import brooklyn.entity.webapp.jetty.Jetty6Server;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.Sensors;
 import brooklyn.location.basic.PortRanges;
@@ -52,22 +52,22 @@ import com.google.common.collect.ImmutableMap;
 
 /**
  * Launches a 3-tier app with {@link NginxController Nginx}, clustered
- * {@link TomcatServer Tomcat}, and {@link MySqlNode MySQL}.
+ * {@link Jetty6Server Jetty}, and {@link MySqlNode MySQL}.
  * <p>
- * Uses {@link JmxAgentModes#JMX_RMI_CUSTOM_AGENT JMXRMI} for JMX access.
+ * Uses {@link JmxAgentModes#JMXMP JMXMP} for JMX access.
  *
- * @see JettyClusterApplication
+ * @see TomcatClusterApplication
  */
 @Catalog(name="Elastic Web Cluster",
-        description="Load-balanced elastic Tomcat cluster with a database.",
+        description="Load-balanced elastic Jetty cluster with a database.",
         iconUrl="classpath://glossy-3d-blue-web-icon.png")
-public class TomcatClusterApplication extends AbstractApplication implements StartableApplication {
+public class JettyClusterApplication extends AbstractApplication implements StartableApplication {
 
     public static final String DEFAULT_WAR_PATH = "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/hello-world-sql.war";
     public static final String DEFAULT_DB_SETUP_SQL_URL = "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/visitors-creation-script.sql";
 
-    @CatalogConfig(label="Tomcat Cluster Size", priority=3)
-    public static final ConfigKey<Integer> TOMCAT_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
+    @CatalogConfig(label="Jetty Cluster Size", priority=3)
+    public static final ConfigKey<Integer> JETTY_CLUSTER_SIZE = ConfigKeys.newConfigKeyWithDefault(DynamicCluster.INITIAL_SIZE, 2);
 
     @CatalogConfig(label="War File (URL)", priority=2)
     public static final ConfigKey<String> WAR_PATH = ConfigKeys.newConfigKey(
@@ -92,21 +92,19 @@ public class TomcatClusterApplication extends AbstractApplication implements Sta
                 .configure(MySqlNode.CREATION_SCRIPT_URL, Entities.getRequiredUrlConfig(this, DB_SETUP_SQL_URL)));
 
         ControlledDynamicWebAppCluster web = addChild(EntitySpec.create(ControlledDynamicWebAppCluster.class)
-                .displayName("Tomcat Cluster")
+                .displayName("Jetty Cluster")
                 .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
-                .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, EntitySpec.create(TomcatServer.class)
-                        .configure(SoftwareProcess.SUGGESTED_VERSION, "7.0.53")
+                .configure(ControlledDynamicWebAppCluster.MEMBER_SPEC, EntitySpec.create(Jetty6Server.class)
                         .configure(UsesJmx.USE_JMX, Boolean.TRUE)
-                        .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
-                        .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+"))
-                        .configure(UsesJmx.RMI_REGISTRY_PORT, PortRanges.fromString("31000+")))
+                        .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMXMP)
+                        .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+")))
                 .configure(ControlledDynamicWebAppCluster.WEB_CLUSTER_SPEC, EntitySpec.create(DynamicWebAppCluster.class)
                         .configure(DynamicCluster.ENABLE_AVAILABILITY_ZONES, true)
                         .configure(DynamicCluster.ZONE_PLACEMENT_STRATEGY, new WaratekNodePlacementStrategy()))
                 .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
                 .configure(JavaEntityMethods.javaSysProp("brooklyn.example.db.url"),
                         formatString("jdbc:%s%s?user=%s\\&password=%s", attributeWhenReady(mysql, MySqlNode.DATASTORE_URL), DB_TABLE, DB_USERNAME, DB_PASSWORD))
-                .configure(DynamicCluster.INITIAL_SIZE, getConfig(TOMCAT_CLUSTER_SIZE)));
+                .configure(DynamicCluster.INITIAL_SIZE, getConfig(JETTY_CLUSTER_SIZE)));
 
         web.addEnricher(HttpLatencyDetector.builder()
                 .url(ROOT_URL)

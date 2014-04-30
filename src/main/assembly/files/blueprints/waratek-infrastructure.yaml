@@ -24,7 +24,7 @@ services:
   id: infrastructure
   brooklyn.config:
     entity.dynamicLocation.name: waratek-infrastructure
-    waratek.jvm.cluster.initial.size: 3
+    waratek.jvm.cluster.initial.size: 2
     waratek.jvm.register: true
     waratek.jvm.spec:
       $brooklyn:entitySpec:

@@ -84,6 +84,7 @@ public class Main extends brooklyn.cli.Main {
             catalog.addItem(BasicInfrastructure.class);
             catalog.addItem(SimpleJavaApplication.class);
             catalog.addItem(TomcatClusterApplication.class);
+            catalog.addItem(JettyClusterApplication.class);
             catalog.addItem(CassandraCluster.class);
             catalog.addItem(ActiveMQApplication.class);
             catalog.addItem(TomcatApplication.class);
