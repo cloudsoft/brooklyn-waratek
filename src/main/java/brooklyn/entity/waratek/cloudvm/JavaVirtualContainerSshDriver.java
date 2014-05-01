@@ -14,6 +14,7 @@ import brooklyn.entity.basic.Entities;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.location.waratek.WaratekContainerLocation;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.internal.ssh.SshTool;
@@ -135,7 +136,8 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
                 if (object != null) {
                     getEntity().shutDown();
                     jmxHelper.operation(object.getObjectName(), "undefineContainer");
-                    getEntity().getDynamicLocation().setEntity(null);
+                    WaratekContainerLocation container = getEntity().getDynamicLocation();
+                    if (container != null) container.setEntity(null);
                 }
             } catch (Exception e) {
                 throw Exceptions.propagate(e);
