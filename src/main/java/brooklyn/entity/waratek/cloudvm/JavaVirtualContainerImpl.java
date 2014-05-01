@@ -184,6 +184,25 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     }
 
     @Override
+    public void updateJafRules(String fileUrl) {
+        String jvc = getAttribute(JavaVirtualContainer.JVC_NAME);
+        log.info("Loading JAF file {}", fileUrl);
+
+        setAttribute(JavaVirtualContainer.JAF_RULES_FILE_URL, fileUrl);
+
+        //first update the JAF rule file itself
+        ((JavaVirtualContainerDriver)getDriver()).updateJafRuleFile();
+
+        //now make the JMX call to have the JVC load the new file
+        try {
+            ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(WaratekUtils.waratekMXBeanName(jvc, "VirtualContainer")));
+            jmxHelper.operation(object.getObjectName(), "loadFirewall");
+        } catch (Exception e) {
+            throw Exceptions.propagate(e);
+        }
+    }
+
+    @Override
     public Long allocateHeap(Long size) {
         String jvc = getAttribute(JavaVirtualContainer.JVC_NAME);
         log.info("Allocate {} to {}", Strings.makeSizeString(size), jvc);

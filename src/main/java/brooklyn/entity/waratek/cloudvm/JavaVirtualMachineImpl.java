@@ -188,6 +188,16 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
     }
 
     @Override
+    public String getLogDirectory() {
+        return getAttribute(LOG_DIRECTORY);
+    }
+
+    @Override
+    public String getLibDirectory() {
+        return getAttribute(LIB_DIRECTORY);
+    }
+
+    @Override
     public String getJavaHome() {
         return getAttribute(JAVA_HOME);
     }
@@ -360,5 +370,4 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
 
     @Override
     public String getShortName() { return "JVM"; }
-
 }

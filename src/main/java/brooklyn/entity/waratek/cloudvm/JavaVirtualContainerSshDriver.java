@@ -12,8 +12,10 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
+import brooklyn.util.ResourceUtils;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.os.Os;
+import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.text.ByteSizeStrings;
 
 /**
@@ -22,6 +24,7 @@ import brooklyn.util.text.ByteSizeStrings;
 public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDriver implements JavaVirtualContainerDriver {
 
     private volatile JmxHelper jmxHelper;
+    private final static String JAF_RULE_FILE_NAME = "rules.jaf";
 
     public JavaVirtualContainerSshDriver(JavaVirtualContainerImpl entity, SshMachineLocation machine) {
         super(entity, machine);
@@ -46,7 +49,11 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void install() {
-        // Does nothing
+        updateJafRuleFile();
+    }
+
+    String getJafRulesUrl(){
+        return getEntity().getAttribute(JavaVirtualContainer.JAF_RULES_FILE_URL);
     }
 
     @Override
@@ -116,6 +123,36 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
         } finally {
             getMachine().releaseMutex("exec");
         }
+    }
+
+    private String getJvcLibLocation()
+    {
+        JavaVirtualMachine jvm = getEntity().getConfig(JavaVirtualContainer.JVM);
+        return Os.mergePaths(jvm.getLibDirectory(), "javad", jvm.getJvmName(), getJvcName());
+    }
+
+    @Override
+    public void updateJafRuleFile() {
+        if (log.isDebugEnabled()) log.debug("Updating JAF rules file for {}", getJvcName());
+        String ruleActionCommand = new String();
+
+        if (getJafRulesUrl() != null && !getJafRulesUrl().isEmpty()) {
+            //the directory we want the file in requires root permission (which cannot be obtained through ssh)
+            //so first copy the file down
+            String copyLocation = Os.mergePaths(getInstallDir(), JAF_RULE_FILE_NAME);
+            getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl(getJafRulesUrl()), copyLocation);
+            // then sudo move the file to the correct directory
+            ruleActionCommand = BashCommands.sudo("mv " + copyLocation + " " + getJvcLibLocation());
+        }
+        else {
+            // no rules file so call to delete in case there is an existing one.
+            ruleActionCommand = BashCommands.sudo("rm -rf " + Os.mergePaths(getJvcLibLocation(), JAF_RULE_FILE_NAME));
+        }
+
+        newScript(CUSTOMIZING)
+        .failOnNonZeroResultCode().body.append( ruleActionCommand)
+        .closeSshConnection()
+        .execute();
     }
 
     @Override

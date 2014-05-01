@@ -50,13 +50,14 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
 
     ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
+    AttributeSensor<String> JAF_RULES_FILE_URL = Sensors.newStringSensor("waratek.jvc.jaf.rules", "The URL location of the jaf rules file");
 
     AttributeSensor<Entity> ENTITY = Sensors.newSensor(Entity.class, "waratek.jvc.entity", "The entity running in this JVC");
 
     MethodEffector<Void> SHUT_DOWN = new MethodEffector<Void>(JavaVirtualContainer.class, "shutDown");
     MethodEffector<Void> PAUSE = new MethodEffector<Void>(JavaVirtualContainer.class, "pause");
     MethodEffector<Void> RESUME = new MethodEffector<Void>(JavaVirtualContainer.class, "resume");
-    MethodEffector<Long> ALLOCATE_HEAP = new MethodEffector<Long>(JavaVirtualContainer.class, "allocateHeap");
+    MethodEffector<Long> ALLOCATE_HEAP = new MethodEffector<Long>(JavaVirtualContainer.class, "allocateHeap");;
 
     /**
      * Shut-down the JVC.
@@ -82,6 +83,10 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     @Effector(description="Change the allocated heap memory for this JVC")
     Long allocateHeap(@EffectorParam(name="size") Long size);
 
+
+    @Effector(description="Specify a location for a new JAF rules file")
+    void updateJafRules(@EffectorParam(name="fileUrl") String fileUrl);
+
     String getJvcName();
 
     Entity getRunningEntity();
@@ -90,5 +95,4 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     JavaVirtualMachine getJavaVirtualMachine();
 
     String getLogFileLocation();
-
 }

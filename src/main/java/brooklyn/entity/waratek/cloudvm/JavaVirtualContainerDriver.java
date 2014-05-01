@@ -23,4 +23,5 @@ public interface JavaVirtualContainerDriver extends VanillaJavaAppDriver {
 
     String getRootDirectory();
 
+    void updateJafRuleFile();
 }

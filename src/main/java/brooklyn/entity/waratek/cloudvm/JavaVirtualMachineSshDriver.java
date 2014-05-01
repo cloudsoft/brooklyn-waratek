@@ -53,6 +53,8 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         super(entity, machine);
 
         entity.setAttribute(JavaVirtualMachine.ROOT_DIRECTORY, getRootDirectory());
+        entity.setAttribute(JavaVirtualMachine.LOG_DIRECTORY, getLogDirectory());
+        entity.setAttribute(JavaVirtualMachine.LIB_DIRECTORY, getLibDirectory());
         entity.setAttribute(JavaVirtualMachine.JAVA_HOME, getJavaHome());
     }
 
