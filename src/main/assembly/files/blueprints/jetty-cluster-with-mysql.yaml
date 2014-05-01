@@ -36,6 +36,7 @@ services:
       $brooklyn:entitySpec:
         type: brooklyn.entity.webapp.jetty.Jetty6Server
         brooklyn.config:
+          waratek.elasticPool: 500 MB
           jmx.enabled: true
           jmx.agent.mode: "JMX_RMI_CUSTOM_AGENT"
           jmx.direct.port: "30000+"
