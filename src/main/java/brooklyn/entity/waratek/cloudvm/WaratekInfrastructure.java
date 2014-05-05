@@ -61,6 +61,9 @@ public interface WaratekInfrastructure extends BasicStartable, Resizable, Locati
 
     AttributeSensor<Integer> JVM_COUNT = WaratekAttributes.JVM_COUNT;
     AttributeSensor<Integer> JVC_COUNT = WaratekAttributes.JVC_COUNT;
+    AttributeSensor<Integer> STOPPED_JVCS = JavaVirtualMachine.STOPPED_JVCS;
+    AttributeSensor<Integer> RUNNING_JVCS = JavaVirtualMachine.RUNNING_JVCS;
+    AttributeSensor<Integer> PAUSED_JVCS = JavaVirtualMachine.PAUSED_JVCS;
 
     List<Entity> getJvmList();
 

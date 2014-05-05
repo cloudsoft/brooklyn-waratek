@@ -70,7 +70,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
 
     private DynamicCluster virtualMachines;
     private DynamicGroup fabric;
-    private DynamicMultiGroup buckets;
+    private DynamicMultiGroup applications, entities;
 
     private volatile AtomicBoolean started = new AtomicBoolean(false);
 
@@ -108,7 +108,7 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                 .configure(DynamicGroup.ENTITY_FILTER, Predicates.instanceOf(JavaVirtualContainer.class))
                 .displayName("All Java Virtual Containers"));
 
-        buckets = addChild(EntitySpec.create(DynamicMultiGroup.class)
+        applications = addChild(EntitySpec.create(DynamicMultiGroup.class)
                 .configure(DynamicMultiGroup.ENTITY_FILTER, sameInfrastructure)
                 .configure(DynamicMultiGroup.RESCAN_INTERVAL, 15L)
                 .configure(DynamicMultiGroup.BUCKET_SPEC, EntitySpec.create(WaratekApplicationGroup.class))
@@ -120,10 +120,23 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                     })
                 .displayName("Waratek Java Applications"));
 
+        entities = addChild(EntitySpec.create(DynamicMultiGroup.class)
+                .configure(DynamicMultiGroup.ENTITY_FILTER, sameInfrastructure)
+                .configure(DynamicMultiGroup.RESCAN_INTERVAL, 15L)
+                .configure(DynamicMultiGroup.BUCKET_SPEC, EntitySpec.create(WaratekApplicationGroup.class))
+                .configure(DynamicMultiGroup.BUCKET_FUNCTION, new Function<Entity, String>() {
+                        @Override
+                        public String apply(@Nullable Entity input) {
+                            return input.getEntityType().getName();
+                        }
+                    })
+                .displayName("Waratek Java Entities"));
+
         if (Entities.isManaged(this)) {
             Entities.manage(virtualMachines);
             Entities.manage(fabric);
-            Entities.manage(buckets);
+            Entities.manage(applications);
+            Entities.manage(entities);
         }
 
         virtualMachines.addEnricher(Enrichers.builder()
@@ -150,9 +163,27 @@ public class WaratekInfrastructureImpl extends BasicStartableImpl implements War
                 .fromMembers()
                 .publishing(JVC_COUNT)
                 .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(JavaVirtualMachine.STOPPED_JVCS)
+                .computingSum()
+                .fromMembers()
+                .publishing(STOPPED_JVCS)
+                .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(JavaVirtualMachine.RUNNING_JVCS)
+                .computingSum()
+                .fromMembers()
+                .publishing(RUNNING_JVCS)
+                .build());
+        virtualMachines.addEnricher(Enrichers.builder()
+                .aggregating(JavaVirtualMachine.PAUSED_JVCS)
+                .computingSum()
+                .fromMembers()
+                .publishing(PAUSED_JVCS)
+                .build());
 
         addEnricher(Enrichers.builder()
-                .propagating(WaratekAttributes.TOTAL_HEAP_MEMORY, JVC_COUNT, WaratekAttributes.AVERAGE_CPU_USAGE, WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW)
+                .propagating(WaratekAttributes.TOTAL_HEAP_MEMORY, WaratekAttributes.AVERAGE_CPU_USAGE, WaratekAttributes.HEAP_MEMORY_DELTA_PER_SECOND_IN_WINDOW, JVC_COUNT, STOPPED_JVCS, RUNNING_JVCS, PAUSED_JVCS)
                 .from(virtualMachines)
                 .build());
         addEnricher(Enrichers.builder()
