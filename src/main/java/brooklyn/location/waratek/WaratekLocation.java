@@ -137,7 +137,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             JavaVirtualMachine jvm = machine.getOwner();
 
             // Now wait until the JVM has started up
-            Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
+            Entities.waitForServiceUp(jvm);
 
             // Obtain a new JVC location, save and return it
             WaratekContainerLocation container = machine.obtain();

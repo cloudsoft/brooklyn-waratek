@@ -22,12 +22,13 @@ import brooklyn.entity.java.VanillaJavaApp;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.util.flags.SetFromFlag;
+import brooklyn.util.time.Duration;
 
 @ImplementedBy(WaratekJavaApplicationImpl.class)
 public interface WaratekJavaApplication extends VanillaJavaApp {
 
     @SetFromFlag("startTimeout")
-    ConfigKey<Integer> START_TIMEOUT = ConfigKeys.newConfigKeyWithDefault(BrooklynConfigKeys.START_TIMEOUT, 300);
+    ConfigKey<Duration> START_TIMEOUT = ConfigKeys.newConfigKeyWithDefault(BrooklynConfigKeys.START_TIMEOUT, Duration.FIVE_MINUTES);
 
     @SetFromFlag("maxHeapSize")
     BasicAttributeSensorAndConfigKey<Long> MAX_HEAP_SIZE = new BasicAttributeSensorAndConfigKey(Long.class,

@@ -3,9 +3,6 @@ package brooklyn.entity.waratek.cloudvm;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_CONTAINER_MX_BEAN;
 import static brooklyn.entity.waratek.cloudvm.WaratekUtils.VIRTUAL_MACHINE_MX_BEAN;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
@@ -15,9 +12,7 @@ import brooklyn.entity.java.UsesJmx;
 import brooklyn.event.feed.jmx.JmxHelper;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.waratek.WaratekContainerLocation;
-import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
-import brooklyn.util.internal.ssh.SshTool;
 import brooklyn.util.os.Os;
 import brooklyn.util.text.ByteSizeStrings;
 
@@ -33,7 +28,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
         // Wait until the JVM has started up
         JavaVirtualMachine jvm = getEntity().getConfig(JavaVirtualContainer.JVM);
-        Entities.waitForServiceUp(jvm, jvm.getConfig(JavaVirtualMachine.START_TIMEOUT), TimeUnit.SECONDS);
+        Entities.waitForServiceUp(jvm);
 
         jmxHelper = new JmxHelper(jvm.getAttribute(UsesJmx.JMX_URL));
         try {
