@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +40,7 @@ import brooklyn.location.basic.Machines;
 import brooklyn.location.basic.SshMachineLocation;
 import brooklyn.location.cloud.AvailabilityZoneExtension;
 import brooklyn.location.dynamic.DynamicLocation;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.guava.Maybe;
 import brooklyn.util.javalang.Reflections;
@@ -140,8 +140,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             Entities.waitForServiceUp(jvm);
 
             // Obtain a new JVC location, save and return it
-            WaratekContainerLocation container = machine.obtain();
-            container.setEntity((Entity) context);
+            WaratekContainerLocation container = machine.obtain(MutableMap.of("entity", context));
 
             Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {

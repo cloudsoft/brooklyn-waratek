@@ -60,6 +60,7 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
     @SetFromFlag("owner")
     private JavaVirtualContainer jvc;
 
+    @SetFromFlag("entity")
     private Entity entity;
 
     public WaratekContainerLocation() {
@@ -75,17 +76,22 @@ public class WaratekContainerLocation extends SshMachineLocation implements Dyna
     }
 
     @Override
+    public void init() {
+        super.init();
+        setEntity(entity);
+    }
+
+    @Override
     public JavaVirtualContainer getOwner() {
         return jvc;
     }
 
     public void setEntity(Entity entity) {
-        this.entity = entity;
         jvc.setRunningEntity(entity);
     }
 
     public Entity getEntity() {
-        return entity;
+        return jvc.getRunningEntity();
     }
 
     public JavaVirtualMachine getJavaVirtualMachine() {

@@ -41,6 +41,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 
 import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -77,6 +78,7 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
         Integer maxSize = jvm.getConfig(JavaVirtualMachine.JVC_CLUSTER_MAX_SIZE);
         Integer currentSize = jvm.getAttribute(WaratekAttributes.JVC_COUNT);
         Iterable<Entity> available = jvm.getAvailableJvcs();
+        Entity entity = (Entity) flags.get("entity");
         if (LOG.isDebugEnabled()) {
             LOG.debug("JVM {}: {} containers, {} available, max {}", new Object[] { jvm.getJvmName(), currentSize, Iterables.size(available), maxSize });
         }
@@ -91,13 +93,15 @@ public class WaratekMachineLocation extends AbstractLocation implements MachineL
 
             // increase size of JVC cluster
             DynamicCluster cluster = jvm.getJvcCluster();
-            Collection<Entity> added = cluster.resizeByDelta(1);
-            if (added.isEmpty()) {
+            Optional<Entity> added = cluster.addInSingleLocation(this, MutableMap.of("entity", entity));
+            if (!added.isPresent()) {
                 throw new NoMachinesAvailableException(String.format("Failed to create containers reached in %s", jvm.getJvmName()));
             }
-            return ((JavaVirtualContainer) Iterables.getOnlyElement(added)).getDynamicLocation();
+            return ((JavaVirtualContainer) added.get()).getDynamicLocation();
         } else {
-            return ((JavaVirtualContainer) Iterables.getLast(available)).getDynamicLocation();
+            WaratekContainerLocation container = ((JavaVirtualContainer) Iterables.getLast(available)).getDynamicLocation();
+            container.setEntity(entity);
+            return container;
         }
     }
 

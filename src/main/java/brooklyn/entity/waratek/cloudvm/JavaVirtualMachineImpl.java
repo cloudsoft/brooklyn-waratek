@@ -210,22 +210,22 @@ public class JavaVirtualMachineImpl extends SoftwareProcessImpl implements JavaV
                             @Override
                             public Integer call() throws Exception {
                                 return Iterables.size(getAvailableJvcs());
-                            }
-                        }))
+                            }})
+                        .onFailureOrException(Functions.constant(0)))
                 .poll(new FunctionPollConfig<Integer, Integer>(RUNNING_JVCS)
                         .callable(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
                                 return getRunningJvcs();
-                            }
-                        }))
+                            }})
+                        .onFailureOrException(Functions.constant(0)))
                 .poll(new FunctionPollConfig<Integer, Integer>(PAUSED_JVCS)
                         .callable(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
                                 return getPausedJvcs();
-                            }
-                        }))
+                            }})
+                        .onFailureOrException(Functions.constant(0)))
                 .build();
     }
 
