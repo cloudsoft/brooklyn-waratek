@@ -88,6 +88,8 @@ public class Main extends brooklyn.cli.Main {
             catalog.addItem(CassandraCluster.class);
             catalog.addItem(ActiveMQApplication.class);
             catalog.addItem(TomcatApplication.class);
+            catalog.addItem(JettyApplication.class);
+            catalog.addItem(SolrApplication.class);
         }
 
         @Override

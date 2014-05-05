@@ -21,23 +21,22 @@ import brooklyn.config.ConfigKey;
 import brooklyn.entity.basic.AbstractApplication;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.basic.Entities;
-import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.basic.StartableApplication;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.entity.java.UsesJmx.JmxAgentModes;
 import brooklyn.entity.proxying.EntitySpec;
 import brooklyn.entity.webapp.JavaWebAppService;
 import brooklyn.entity.webapp.WebAppService;
-import brooklyn.entity.webapp.tomcat.TomcatServer;
+import brooklyn.entity.webapp.jetty.Jetty6Server;
 import brooklyn.location.basic.PortRanges;
 
 /**
- * Single-node Tomcat server instance.
+ * Single-node Jetty server instance.
  */
-@Catalog(name="Tomcat",
-        description="Single Tomcat server.",
-        iconUrl="classpath://tomcat-logo.png")
-public class TomcatApplication extends AbstractApplication implements StartableApplication {
+@Catalog(name="Jetty",
+        description="Single Jetty server.",
+        iconUrl="classpath://jetty-logo.png")
+public class JettyApplication extends AbstractApplication implements StartableApplication {
 
     public static final String DEFAULT_WAR_PATH = "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/hello-world.war";
 
@@ -47,15 +46,13 @@ public class TomcatApplication extends AbstractApplication implements StartableA
 
     @Override
     public void init() {
-        addChild(EntitySpec.create(TomcatServer.class)
-                .displayName("Tomcat Server")
+        addChild(EntitySpec.create(Jetty6Server.class)
+                .displayName("Jetty Server")
                 .configure(WebAppService.HTTP_PORT, PortRanges.fromString("8080+"))
                 .configure(JavaWebAppService.ROOT_WAR, Entities.getRequiredUrlConfig(this, WAR_PATH))
-                .configure(SoftwareProcess.SUGGESTED_VERSION, "7.0.53")
                 .configure(UsesJmx.USE_JMX, Boolean.TRUE)
-                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMX_RMI_CUSTOM_AGENT)
-                .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+"))
-                .configure(UsesJmx.RMI_REGISTRY_PORT, PortRanges.fromString("40000+")));
+                .configure(UsesJmx.JMX_AGENT_MODE, JmxAgentModes.JMXMP)
+                .configure(UsesJmx.JMX_PORT, PortRanges.fromString("30000+")));
     }
 
 }
