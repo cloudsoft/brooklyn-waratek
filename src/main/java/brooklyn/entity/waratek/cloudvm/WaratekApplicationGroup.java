@@ -47,6 +47,9 @@ public interface WaratekApplicationGroup extends BasicGroup, HasShortName {
     @Effector(description="Change the allocated heap memory for this elastic group")
     void setElasticGroupHeap(@EffectorParam(name="heapSize") Long heapSize);
 
+    @Effector(description="Set the URL for the JAF rules to be used for this group")
+    void setJafRules(@EffectorParam(name="fileUrl") String fileUrl);
+
     Integer getElasticGroup();
     Long getElasticGroupHeap();
 

@@ -50,7 +50,8 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
 
     ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
-    AttributeSensor<String> JAF_RULES_FILE_URL = Sensors.newStringSensor("waratek.jvc.jaf.rules", "The URL location of the jaf rules file");
+
+    ConfigKey<String> JAF_RULES_FILE_URL = ConfigKeys.newStringConfigKey("waratek.jafRules.url", "The URL location of the jaf rules file");
 
     AttributeSensor<Entity> ENTITY = Sensors.newSensor(Entity.class, "waratek.jvc.entity", "The entity running in this JVC");
 
@@ -85,7 +86,7 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
 
 
     @Effector(description="Specify a location for a new JAF rules file")
-    void updateJafRules(@EffectorParam(name="fileUrl") String fileUrl);
+    void setJafRules(@EffectorParam(name="fileUrl") String fileUrl);
 
     String getJvcName();
 

@@ -27,6 +27,7 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.group.DynamicCluster.NodePlacementStrategy;
 import brooklyn.entity.java.UsesJava;
+import brooklyn.entity.waratek.cloudvm.JavaVirtualContainer;
 import brooklyn.entity.waratek.cloudvm.JavaVirtualMachine;
 import brooklyn.entity.waratek.cloudvm.WaratekInfrastructure;
 import brooklyn.entity.waratek.cloudvm.WaratekNodePlacementStrategy;
@@ -44,6 +45,7 @@ import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.SetFromFlag;
 import brooklyn.util.guava.Maybe;
 import brooklyn.util.javalang.Reflections;
+import brooklyn.util.text.Strings;
 
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Predicates;
@@ -150,7 +152,32 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                 machines.put(deployed.get(), container.getId());
                 containers.put(container.getId(), deployed.get());
             }
+            setJafRulesforEntityContainer((Entity) context, container.getOwner(), jvm);
             return container;
+        }
+    }
+
+    private void setJafRulesforEntityContainer(Entity entity, JavaVirtualContainer jvc, JavaVirtualMachine jvm)
+    {
+        // Configure the JVM and JVCs based on the entity being deployed
+        String jafRules = entity.getConfig(JavaVirtualContainer.JAF_RULES_FILE_URL);
+
+        // if the entity has rules
+        if (Strings.isNonEmpty(jafRules))
+        {
+            LOG.debug("Using JVC JAF rules file: " + jafRules);
+            jvc.setJafRules(jafRules);
+            return;
+        }
+
+        //if the entity has no rules applied to it, see if the JVM has a "default" jaf rules file to use.
+        String jvmJafRules = jvm.getConfig(JavaVirtualMachine.DEFAULT_JAF_RULES_FILE_URL);
+
+        // if the jvm  has rules
+        if (Strings.isNonEmpty(jvmJafRules))
+        {
+            LOG.debug("Using default JVM JAF rules file: " + jvmJafRules);
+            jvc.setJafRules(jvmJafRules);
         }
     }
 

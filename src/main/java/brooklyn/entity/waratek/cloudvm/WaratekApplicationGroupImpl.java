@@ -98,8 +98,8 @@ public class WaratekApplicationGroupImpl extends BasicGroupImpl implements Warat
         setAttribute(ELASTIC_GROUP_ID, groupId);
         for (JavaVirtualMachine jvm : layout.keySet()) {
             // create the elastic group if not exists
-        }
         for (JavaVirtualContainer jvc : layout.values()) {
+        }
             // add it to the elstic group
         }
     }
@@ -121,5 +121,13 @@ public class WaratekApplicationGroupImpl extends BasicGroupImpl implements Warat
 
     @Override
     public Long getElasticGroupHeap() { return getAttribute(ELASTIC_MEMORY); }
+
+    @Override
+    public void setJafRules(String fileUrl) {
+        for (JavaVirtualContainer jvc : layout.values()) {
+            jvc.setJafRules(fileUrl);
+        }
+
+    }
 
 }

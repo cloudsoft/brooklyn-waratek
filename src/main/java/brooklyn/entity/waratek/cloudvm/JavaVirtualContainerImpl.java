@@ -184,11 +184,11 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     }
 
     @Override
-    public void updateJafRules(String fileUrl) {
+    public void setJafRules(String fileUrl) {
         String jvc = getAttribute(JavaVirtualContainer.JVC_NAME);
         log.info("Loading JAF file {}", fileUrl);
 
-        setAttribute(JavaVirtualContainer.JAF_RULES_FILE_URL, fileUrl);
+        setConfig(JavaVirtualContainer.JAF_RULES_FILE_URL, fileUrl);
 
         //first update the JAF rule file itself
         ((JavaVirtualContainerDriver)getDriver()).updateJafRuleFile();

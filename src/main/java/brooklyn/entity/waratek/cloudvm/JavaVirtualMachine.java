@@ -57,7 +57,6 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     @SetFromFlag("downloadUrl")
     BasicAttributeSensorAndConfigKey<String> DOWNLOAD_URL = new BasicAttributeSensorAndConfigKey<String>(SoftwareProcess.DOWNLOAD_URL,
             "https://s3-eu-west-1.amazonaws.com/brooklyn-waratek/waratek_release_${version}_package.tar.gz");
-//            "http://download.waratek.com/brooklyn/waratek_release_${version}_package.tar.gz?src=brooklyn");
 
     @SetFromFlag("debug")
     ConfigKey<Boolean> DEBUG = ConfigKeys.newBooleanConfigKey("waratek.debug", "Enable debug options", false);
@@ -108,6 +107,8 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
     ConfigKey<WaratekInfrastructure> WARATEK_INFRASTRUCTURE = ConfigKeys.newConfigKey(WaratekInfrastructure.class, "waratek.infrastructure", "The parent Waratek infrastructure");
 
     ConfigKey<String> JVM_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvm.nameFormat", "Format for generating JVM names", DEFAULT_JVM_NAME_FORMAT);
+
+    ConfigKey<String> DEFAULT_JAF_RULES_FILE_URL = ConfigKeys.newStringConfigKey("waratek.jafRules.url", "The URL location of the jaf rules file that is the default rules for all conatienrs in this JVM");
 
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
 

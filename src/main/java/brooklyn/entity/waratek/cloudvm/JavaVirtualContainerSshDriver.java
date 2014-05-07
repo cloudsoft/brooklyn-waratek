@@ -49,11 +49,11 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
 
     @Override
     public void install() {
-        updateJafRuleFile();
+
     }
 
     String getJafRulesUrl(){
-        return getEntity().getAttribute(JavaVirtualContainer.JAF_RULES_FILE_URL);
+        return getEntity().getConfig(JavaVirtualContainer.JAF_RULES_FILE_URL);
     }
 
     @Override
@@ -71,6 +71,7 @@ public class JavaVirtualContainerSshDriver extends AbstractSoftwareProcessSshDri
             } catch (Exception e) {
                 throw Exceptions.propagate(e);
             }
+            updateJafRuleFile();
         } catch (InterruptedException ie) {
             throw Exceptions.propagate(ie);
         } finally {
