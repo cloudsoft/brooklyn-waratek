@@ -25,6 +25,7 @@ import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.proxying.ImplementedBy;
 import brooklyn.entity.trait.HasShortName;
 import brooklyn.event.AttributeSensor;
+import brooklyn.event.basic.AttributeSensorAndConfigKey;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
 import brooklyn.event.basic.Sensors;
 import brooklyn.location.dynamic.LocationOwner;
@@ -51,7 +52,9 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     ConfigKey<String> JVC_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvc.nameFormat", "Format for generating JVC names", DEFAULT_JVC_NAME_FORMAT);
     AttributeSensor<String> JVC_NAME = Sensors.newStringSensor("waratek.jvc.name", "The name of the JVC");
 
-    ConfigKey<String> JAF_RULES_FILE_URL = ConfigKeys.newStringConfigKey("waratek.jafRules.url", "The URL location of the jaf rules file");
+    @SetFromFlag("jafRulesUrl")
+    AttributeSensorAndConfigKey<String, String> JAF_RULES_FILE_URL = ConfigKeys.newSensorAndConfigKey(String.class,
+            "waratek.jafRules.url", "The URL location of the jaf rules file");
 
     AttributeSensor<Entity> ENTITY = Sensors.newSensor(Entity.class, "waratek.jvc.entity", "The entity running in this JVC");
 
@@ -84,9 +87,11 @@ public interface JavaVirtualContainer extends SoftwareProcess, HasShortName, Loc
     @Effector(description="Change the allocated heap memory for this JVC")
     Long allocateHeap(@EffectorParam(name="size") Long size);
 
-
+    /**
+     * Apply JAF rules file from a URL to this JVC.
+     */
     @Effector(description="Specify a location for a new JAF rules file")
-    void setJafRules(@EffectorParam(name="fileUrl") String fileUrl);
+    void applyJafRules(@EffectorParam(name="fileUrl") String fileUrl);
 
     String getJvcName();
 

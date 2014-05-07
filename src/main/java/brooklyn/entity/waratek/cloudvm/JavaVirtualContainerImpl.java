@@ -184,22 +184,22 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     }
 
     @Override
-    public void setJafRules(String fileUrl) {
+    public void applyJafRules(String fileUrl) {
         String jvc = getAttribute(JavaVirtualContainer.JVC_NAME);
-        log.info("Loading JAF file {}", fileUrl);
+        log.info("Loading JAF file {} for {}", fileUrl, jvc);
 
-        setConfig(JavaVirtualContainer.JAF_RULES_FILE_URL, fileUrl);
+        // first update the JAF rule file itself
+        getDriver().deployJafRuleFile(fileUrl);
 
-        //first update the JAF rule file itself
-        ((JavaVirtualContainerDriver)getDriver()).updateJafRuleFile();
-
-        //now make the JMX call to have the JVC load the new file
+        // now make the JMX call to have the JVC load the new file
         try {
             ObjectInstance object = jmxHelper.findMBean(ObjectName.getInstance(WaratekUtils.waratekMXBeanName(jvc, "VirtualContainer")));
             jmxHelper.operation(object.getObjectName(), "loadFirewall");
         } catch (Exception e) {
             throw Exceptions.propagate(e);
         }
+
+        setAttribute(JAF_RULES_FILE_URL, fileUrl);
     }
 
     @Override
@@ -225,7 +225,7 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     @Override
     public String getLogFileLocation() {
         JavaVirtualMachine jvm = getJavaVirtualMachine();
-        return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), getAttribute(JVC_NAME), "console.log");
+        return Os.mergePaths(jvm.getRootDirectory(), "var/log/javad", jvm.getJvmName(), getJvcName(), "console.log");
     }
 
     @Override
@@ -240,6 +240,11 @@ public class JavaVirtualContainerImpl extends SoftwareProcessImpl implements Jav
     @Override
     public Class getDriverInterface() {
         return JavaVirtualContainerDriver.class;
+    }
+
+    @Override
+    public JavaVirtualContainerDriver getDriver() {
+        return (JavaVirtualContainerDriver) super.getDriver();
     }
 
     @Override

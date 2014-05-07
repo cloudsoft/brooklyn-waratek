@@ -131,6 +131,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             } else {
                 throw new IllegalStateException("Invalid location context: " + context);
             }
+            Entity entity = (Entity) context;
 
             // Use the waratek strategy to add a single JVM
             List<Location> jvms = getExtension(AvailabilityZoneExtension.class).getAllSubLocations();
@@ -142,7 +143,7 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
             Entities.waitForServiceUp(jvm);
 
             // Obtain a new JVC location, save and return it
-            WaratekContainerLocation container = machine.obtain(MutableMap.of("entity", context));
+            WaratekContainerLocation container = machine.obtain(MutableMap.of("entity", entity));
 
             Maybe<SshMachineLocation> deployed = Machines.findUniqueSshMachineLocation(jvm.getLocations());
             if (deployed.isPresent()) {
@@ -152,32 +153,26 @@ public class WaratekLocation extends AbstractLocation implements WaratekVirtualL
                 machines.put(deployed.get(), container.getId());
                 containers.put(container.getId(), deployed.get());
             }
-            setJafRulesforEntityContainer((Entity) context, container.getOwner(), jvm);
+
+            configureContainer(entity, container.getOwner());
+
             return container;
         }
     }
 
-    private void setJafRulesforEntityContainer(Entity entity, JavaVirtualContainer jvc, JavaVirtualMachine jvm)
-    {
-        // Configure the JVM and JVCs based on the entity being deployed
-        String jafRules = entity.getConfig(JavaVirtualContainer.JAF_RULES_FILE_URL);
+    /**
+     * Configure the JVC based on the entity being deployed.
+     */
+    private void configureContainer(Entity entity, JavaVirtualContainer jvc) {
+        // TODO not currently used
+        JavaVirtualMachine jvm = jvc.getJavaVirtualMachine();
 
-        // if the entity has rules
-        if (Strings.isNonEmpty(jafRules))
-        {
-            LOG.debug("Using JVC JAF rules file: " + jafRules);
-            jvc.setJafRules(jafRules);
-            return;
-        }
-
-        //if the entity has no rules applied to it, see if the JVM has a "default" jaf rules file to use.
-        String jvmJafRules = jvm.getConfig(JavaVirtualMachine.DEFAULT_JAF_RULES_FILE_URL);
-
-        // if the jvm  has rules
-        if (Strings.isNonEmpty(jvmJafRules))
-        {
-            LOG.debug("Using default JVM JAF rules file: " + jvmJafRules);
-            jvc.setJafRules(jvmJafRules);
+        String rulesUrl = entity.getConfig(JavaVirtualContainer.JAF_RULES_FILE_URL);
+        if (Strings.isNonEmpty(rulesUrl)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Configuring {} with JAF rules {} from {}", new Object[] { jvc, rulesUrl, entity });
+            }
+            jvc.applyJafRules(rulesUrl);
         }
     }
 

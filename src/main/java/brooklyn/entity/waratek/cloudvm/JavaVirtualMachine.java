@@ -108,7 +108,8 @@ public interface JavaVirtualMachine extends SoftwareProcess, UsesJmx, UsesJavaMX
 
     ConfigKey<String> JVM_NAME_FORMAT = ConfigKeys.newStringConfigKey("waratek.jvm.nameFormat", "Format for generating JVM names", DEFAULT_JVM_NAME_FORMAT);
 
-    ConfigKey<String> DEFAULT_JAF_RULES_FILE_URL = ConfigKeys.newStringConfigKey("waratek.jafRules.url", "The URL location of the jaf rules file that is the default rules for all conatienrs in this JVM");
+    @SetFromFlag("jafRulesUrl")
+    ConfigKey<String> JAF_RULES_FILE_URL = JavaVirtualContainer.JAF_RULES_FILE_URL.getConfigKey();
 
     AttributeSensor<String> JVM_NAME = Sensors.newStringSensor("waratek.jvm.name", "The name of the JVM");
 

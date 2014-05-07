@@ -29,16 +29,17 @@ import brooklyn.entity.java.JavaSoftwareProcessSshDriver;
 import brooklyn.entity.java.UsesJmx;
 import brooklyn.location.basic.PortRanges;
 import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.util.ResourceUtils;
 import brooklyn.util.collections.MutableList;
 import brooklyn.util.collections.MutableMap;
 import brooklyn.util.collections.MutableSet;
+import brooklyn.util.internal.ssh.ShellTool;
 import brooklyn.util.net.Networking;
 import brooklyn.util.os.Os;
 import brooklyn.util.ssh.BashCommands;
 import brooklyn.util.task.DynamicTasks;
 import brooklyn.util.task.ssh.SshTasks;
 import brooklyn.util.text.ByteSizeStrings;
+import brooklyn.util.text.Strings;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
@@ -96,8 +97,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
     }
 
     @Override
-    public String getLicenseUrl()
-    {
+    public String getLicenseUrl() {
         return getEntity().getConfig(JavaVirtualMachine.WARATEK_LICENSE_URL);
     }
 
@@ -167,7 +167,6 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
             }
             String javaagent = Iterables.find(super.getJmxJavaConfigOptions(), Predicates.containsPattern("javaagent"));
             builder.put("com.waratek.javaagent", javaagent);
-
         }
         return builder.build();
     }
@@ -220,7 +219,7 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
                 .body.append(commands)
                 .execute();
 
-        getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl("classpath://brooklyn-waratek-container.jar"),
+        getMachine().installTo("classpath://brooklyn-waratek-container.jar",
                 Os.mergePaths(getInstallDir(), "brooklyn-waratek-container.jar"));
     }
 
@@ -245,9 +244,10 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         }
 
         newScript(CUSTOMIZING)
-                .failOnNonZeroResultCode().body.append(
-                "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
-                BashCommands.sudo(autoinstall.toString()))
+                .failOnNonZeroResultCode()
+                .body.append(
+                        "sed -i.bak \"s/fail \\\"Could not set access control lists/echo \\\"Could not set access control lists/g\" " + installScript,
+                        BashCommands.sudo(autoinstall.toString()))
                 .closeSshConnection()
                 .execute();
 
@@ -256,25 +256,15 @@ public class JavaVirtualMachineSshDriver extends JavaSoftwareProcessSshDriver im
         installed.set(true);
     }
 
-    private void installLicenseFile()
-    {
-        String moveLicenseFileCommands = new String();
-        if (getLicenseUrl() != null && !getLicenseUrl().isEmpty()) {
-            //the directory we want the license file in require root permission (which cannot be obtained through ssh)
-            //so first copy the file down
-            getMachine().copyTo(ResourceUtils.create(this).getResourceFromUrl(getLicenseUrl()),
-                    Os.mergePaths(getInstallDir(), LICENSE_KEY_NAME));
-            //then sudo move the file to the correct directory.
-            moveLicenseFileCommands = "mv " + Os.mergePaths(getInstallDir(), LICENSE_KEY_NAME) + " "
-                    + Os.mergePaths(getLibDirectory(), "javad", LICENSE_KEY_NAME);
-            moveLicenseFileCommands = BashCommands.sudo(moveLicenseFileCommands);
-
-            newScript(CUSTOMIZING)
-            .failOnNonZeroResultCode().body.append( moveLicenseFileCommands)
-            .closeSshConnection()
-            .execute();
+    private void installLicenseFile() {
+        String fileUrl = getLicenseUrl();
+        if (Strings.isNonEmpty(fileUrl)) {
+            String copyLocation = Os.mergePaths(getLibDirectory(), "javad", LICENSE_KEY_NAME);
+            int result = getMachine().installTo(MutableMap.of(ShellTool.PROP_RUN_AS_ROOT.getName(), Boolean.TRUE), fileUrl, copyLocation);
+            if (result != 0) {
+                throw new IllegalStateException("Failed to deploy JAF rules from " + fileUrl);
+            }
         }
-
     }
 
     @Override
